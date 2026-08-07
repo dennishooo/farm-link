@@ -14,7 +14,15 @@ import { formatError, formatLogEntry } from '@/lib/i18n/format'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { currentPlayer, workersLeft, type ActionPayload } from '@/game/engine'
+import {
+  cardActionNeedsTarget,
+  currentPlayer,
+  workersLeft,
+  type ActionPayload,
+  type CardAction,
+  type CardActionPayload,
+  type TargetedCardAction,
+} from '@/game/engine'
 import { HARVEST_ROUNDS } from '@/game/rules'
 import { rankPlayers } from '@/game/scoring'
 import { useGameStore } from '@/stores/game'
@@ -51,6 +59,11 @@ function RoundTrack({ round, total }: { round: number; total: number }) {
   )
 }
 
+/** 'plow' becomes 'Plow', to reach the `cards.actionPlow` key. */
+function capitalise(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
 export default function App() {
   const { t } = useTranslation()
   const game = useGameStore((state) => state.game)
@@ -61,6 +74,7 @@ export default function App() {
   const skipWorker = useGameStore((state) => state.skipWorker)
   const convert = useGameStore((state) => state.convert)
   const adjustForCard = useGameStore((state) => state.adjustForCard)
+  const cardAction = useGameStore((state) => state.cardAction)
   const moveAnimals = useGameStore((state) => state.moveAnimals)
   const undo = useGameStore((state) => state.undo)
   const canUndo = useGameStore((state) => state.history.length > 0)
@@ -70,6 +84,12 @@ export default function App() {
   const abandon = useGameStore((state) => state.abandon)
 
   const [pendingSpace, setPendingSpace] = useState<ActionSpaceId | null>(null)
+  // A card effect that still needs a place on the board picked for it.
+  const [pendingCard, setPendingCard] = useState<{
+    playerIndex: number
+    cardId: string
+    action: TargetedCardAction
+  } | null>(null)
 
   if (!game) return <SetupScreen onStart={startGame} />
 
@@ -82,6 +102,22 @@ export default function App() {
     // Actions needing a board choice open a dialog; the rest resolve at once.
     if (actionModeFor(spaceId) === 'none') play(spaceId)
     else setPendingSpace(spaceId)
+  }
+
+  /**
+   * Apply a card effect. The ones that put something on the farm borrow the
+   * action board's own picker, so a card-granted room is placed under exactly
+   * the same adjacency rules as a bought one.
+   */
+  function beginCardAction(
+    playerIndex: number,
+    cardId: string,
+    action: CardAction,
+    payload?: CardActionPayload,
+  ) {
+    clearError()
+    if (cardActionNeedsTarget(action)) setPendingCard({ playerIndex, cardId, action })
+    else cardAction(playerIndex, cardId, action, payload)
   }
 
   function confirmAction(payload: ActionPayload) {
@@ -203,6 +239,7 @@ export default function App() {
                 onConvert={convert}
                 onMoveAnimals={moveAnimals}
                 onAdjustForCard={adjustForCard}
+                onCardAction={beginCardAction}
               />
             ))}
           </div>
@@ -245,6 +282,20 @@ export default function App() {
             setPendingSpace(null)
           }}
           onCancel={() => setPendingSpace(null)}
+        />
+      )}
+
+      {pendingCard && (
+        <ActionDialog
+          spaceId={pendingCard.action}
+          mode={pendingCard.action}
+          title={t(`cards.action${capitalise(pendingCard.action)}` as 'cards.actionPlow')}
+          player={game.players[pendingCard.playerIndex]}
+          onConfirm={(payload) => {
+            cardAction(pendingCard.playerIndex, pendingCard.cardId, pendingCard.action, payload)
+            setPendingCard(null)
+          }}
+          onCancel={() => setPendingCard(null)}
         />
       )}
 

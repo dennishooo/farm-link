@@ -16,12 +16,27 @@ type ActionDialogProps = {
   player: Player
   onConfirm: (payload: ActionPayload) => void
   onCancel: () => void
+  /**
+   * Force the mode instead of deriving it from the space. A card that grants a
+   * room needs the same board picker the action space uses, without being an
+   * action space — the picking is identical, only the cost differs.
+   */
+  mode?: ActionMode
+  /** Heading to show when the dialog is not opened from an action space. */
+  title?: string
 }
 
-export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDialogProps) {
+export function ActionDialog({
+  spaceId,
+  player,
+  onConfirm,
+  onCancel,
+  mode: forcedMode,
+  title,
+}: ActionDialogProps) {
   const { t } = useTranslation()
-  const initialMode = actionModeFor(spaceId)
-  const [mode, setMode] = useState<ActionMode>(initialMode === 'expansion' ? 'expansion' : initialMode)
+  const initialMode = forcedMode ?? actionModeFor(spaceId)
+  const [mode, setMode] = useState<ActionMode>(initialMode)
   const [spaces, setSpaces] = useState<number[]>([])
   const [fences, setFences] = useState<string[]>([])
   const [sowPlan, setSowPlan] = useState<{ spaceIndex: number; crop: 'grain' | 'vegetable' }[]>([])
@@ -161,11 +176,13 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={t(`spaces.${spaceId}.name`, spaceName(spaceId))}
+      aria-label={title ?? t(`spaces.${spaceId}.name`, spaceName(spaceId))}
       className="animate-[var(--animate-fade-in)] fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 backdrop-blur-sm sm:items-center"
     >
       <div className="animate-[var(--animate-sheet-in)] surface-panel max-h-[88vh] w-full max-w-lg overflow-auto rounded-xl border border-border p-4 shadow-[var(--shadow-float)]">
-        <h2 className="text-lg font-bold">{t(`spaces.${spaceId}.name`, spaceName(spaceId))}</h2>
+        <h2 className="text-lg font-bold">
+          {title ?? t(`spaces.${spaceId}.name`, spaceName(spaceId))}
+        </h2>
 
         {mode === 'expansion' && (
           <div className="mt-3 flex flex-col gap-2">

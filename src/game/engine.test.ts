@@ -7,6 +7,7 @@ import {
   breedAnimals,
   buildFences,
   completeHarvest,
+  applyCardAction,
   createGame,
   getDeckOrder,
   revealForRound,
@@ -18,6 +19,7 @@ import {
   takeAction,
   workersLeft,
 } from './engine'
+import { scorePlayer } from './scoring'
 import { horizontalEdge, verticalEdge } from './geometry'
 import { capacityFor, houseAnimals, pastureInfo } from './farm'
 import { HARVEST_ROUNDS, STAGE_ACTION_SPACES, STAGE_ROUNDS } from './rules'
@@ -620,12 +622,37 @@ describe('card adjustments', () => {
     })
   })
 
-  it('refuses animals, which belong to housing placements', () => {
-    // Granting a sheep here would leave the counter and the farm disagreeing.
-    const result = adjustForCard(state, 0, UNENFORCED, 'sheep' as 'wood', 1)
+  it('houses animals rather than only counting them', () => {
+    // Animals used to be refused outright, because bumping the counter would
+    // leave it disagreeing with the farm. They go through the same placement
+    // the action spaces use now, so the two cannot drift apart.
+    state.players[0].fences = fenceRect(0, 0, 0, 0)
 
-    expect(result).toMatchObject({ ok: false, reason: 'adjustmentGood' })
+    const result = adjustForCard(state, 0, UNENFORCED, 'sheep', 1)
+
+    expect(result.ok).toBe(true)
+    expect(state.players[0].sheep).toBe(1)
+    expect(state.players[0].animalPlacement).toEqual([{ key: '0', type: 'sheep', count: 1 }])
+  })
+
+  it('says so when a granted animal has nowhere to live', () => {
+    const result = adjustForCard(state, 0, UNENFORCED, 'cattle', 3)
+
+    expect(result.ok).toBe(true)
+    // One pet fits in the house; the rest wander off, as they do anywhere else.
+    expect(state.players[0].cattle).toBe(1)
+    expect(state.log.at(-1)).toMatchObject({ key: 'cardAdjustStray', values: { lost: 2 } })
+  })
+
+  it('takes housed animals back off the farm', () => {
+    state.players[0].fences = fenceRect(0, 0, 0, 0)
+    adjustForCard(state, 0, UNENFORCED, 'sheep', 2)
+
+    const result = adjustForCard(state, 0, UNENFORCED, 'sheep', -2)
+
+    expect(result.ok).toBe(true)
     expect(state.players[0].sheep).toBe(0)
+    expect(state.players[0].animalPlacement).toEqual([])
   })
 
   it('works for an enforced card too, since rulings vary', () => {
@@ -780,5 +807,120 @@ describe('the stage-card deck', () => {
     expect(rebuilt).toHaveLength(
       STAGE_ACTION_SPACES.filter((space) => (space.minPlayers ?? 1) <= 2).length,
     )
+  })
+})
+
+describe('card effects that grant more than goods', () => {
+  const UNENFORCED = 'occupation-net-fisherman'
+  let state: GameState
+
+  beforeEach(() => {
+    state = game()
+    state.players[0].played.push(UNENFORCED)
+  })
+
+  function apply(action: Parameters<typeof applyCardAction>[3], payload = {}) {
+    return applyCardAction(state, 0, UNENFORCED, action, payload)
+  }
+
+  it('records bonus points a card awards, and scores them', () => {
+    expect(apply('points', { points: 3 }).ok).toBe(true)
+
+    expect(state.players[0].bonusPoints).toBe(3)
+    expect(scorePlayer(state.players[0]).bonus).toBe(3)
+  })
+
+  it('takes points away again', () => {
+    apply('points', { points: 3 })
+    apply('points', { points: -1 })
+    expect(scorePlayer(state.players[0]).bonus).toBe(2)
+  })
+
+  it('plows a field without charging for it', () => {
+    expect(apply('plow', { spaceIndex: 6 }).ok).toBe(true)
+    expect(state.players[0].farm[6]).toEqual({ kind: 'field' })
+  })
+
+  it('builds a room free but still next to the house', () => {
+    const player = state.players[0]
+    player.wood = 0
+    player.reed = 0
+
+    expect(apply('room', { spaceIndices: [6] }).ok).toBe(true)
+    expect(player.farm[6].kind).toBe('room')
+    // Nothing was taken for it — that is the point of a card granting a room.
+    expect(player.wood).toBe(0)
+    expect(player.reed).toBe(0)
+  })
+
+  it('still refuses a room that does not touch the house', () => {
+    // Free does not mean anywhere: the adjacency rule is the game, the cost is
+    // only the price.
+    expect(apply('room', { spaceIndices: [14] })).toMatchObject({ ok: false })
+  })
+
+  it('builds a stable free but within the supply of four', () => {
+    const player = state.players[0]
+    player.wood = 0
+    player.stablesRemaining = 0
+
+    expect(apply('stable', { spaceIndices: [6] })).toMatchObject({ ok: false })
+
+    player.stablesRemaining = 1
+    expect(apply('stable', { spaceIndices: [6] }).ok).toBe(true)
+    expect(player.farm[6].kind).toBe('stable')
+    expect(player.wood).toBe(0)
+  })
+
+  it('fences free but still only around a real pasture', () => {
+    const player = state.players[0]
+    player.wood = 0
+
+    expect(apply('fence', { fences: ['h:0:0'] })).toMatchObject({ ok: false })
+
+    expect(apply('fence', { fences: fenceRect(0, 0, 0, 0) }).ok).toBe(true)
+    expect(player.wood).toBe(0)
+    expect(pastureInfo(player)).toHaveLength(1)
+  })
+
+  it('renovates free, and refuses once the house is stone', () => {
+    const player = state.players[0]
+    player.clay = 0
+    player.reed = 0
+
+    expect(apply('renovate').ok).toBe(true)
+    expect(player.house).toBe('clay')
+    expect(apply('renovate').ok).toBe(true)
+    expect(player.house).toBe('stone')
+    expect(apply('renovate')).toMatchObject({ ok: false, reason: 'alreadyStone' })
+  })
+
+  it('grows the family without needing a spare room', () => {
+    const player = state.players[0]
+    const before = player.people
+
+    expect(apply('growth').ok).toBe(true)
+
+    expect(player.people).toBe(before + 1)
+    expect(player.newborns).toBe(1)
+  })
+
+  it('names the card and what it did in the log', () => {
+    apply('growth')
+    expect(state.log.at(-1)).toMatchObject({
+      key: 'cardActionApplied',
+      values: { cardId: UNENFORCED, action: 'growth' },
+    })
+  })
+
+  it('refuses a card the player has not played', () => {
+    expect(applyCardAction(state, 0, 'occupation-academic', 'growth')).toMatchObject({
+      ok: false,
+      reason: 'noSuchCardAdjustment',
+    })
+  })
+
+  it('refuses a pointless points adjustment', () => {
+    expect(apply('points', { points: 0 })).toMatchObject({ ok: false })
   })
 })

@@ -122,7 +122,7 @@ describe('AdjustPanel', () => {
     expect(screen.getByRole('button', { name: /Gain/ })).toBeEnabled()
   })
 
-  it('never offers animals, which belong to housing slots', async () => {
+  it('offers livestock too, since 40 unenforced cards hand out animals', async () => {
     const user = userEvent.setup()
     await renderUI(
       <AdjustPanel player={played('occupation-net-fisherman')} playerIndex={0} onAdjust={vi.fn()} />,
@@ -130,7 +130,18 @@ describe('AdjustPanel', () => {
 
     await user.click(screen.getByText('Apply a card effect'))
     const options = [...screen.getByLabelText<HTMLSelectElement>('Good').options].map((o) => o.value)
-    expect(options).toEqual(['wood', 'clay', 'reed', 'stone', 'grain', 'vegetable', 'food'])
+    expect(options).toEqual([
+      'wood',
+      'clay',
+      'reed',
+      'stone',
+      'grain',
+      'vegetable',
+      'food',
+      'sheep',
+      'boar',
+      'cattle',
+    ])
   })
 
   it('lists every played card to attribute the effect to', async () => {

@@ -58,6 +58,11 @@ export type Player = {
    */
   newborns: number
   beggingMarkers: number
+  /**
+   * Points a card awarded that the engine could not read off the card itself.
+   * Optional: games saved before this existed simply have none.
+   */
+  bonusPoints?: number
 
   farm: FarmSpace[]
   fences: FenceEdge[]
@@ -162,5 +167,7 @@ export type ScoreBreakdown = {
   people: number
   beggingMarkers: number
   cards: number
+  /** Points the players awarded for a card the engine cannot enforce. */
+  bonus: number
   total: number
 }

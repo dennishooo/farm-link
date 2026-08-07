@@ -68,6 +68,21 @@ are looking at.
 
 ### Added
 
+- **"Apply a card effect" covers what the cards actually say.** It could only move seven goods,
+  which left most of the two thirds of the deck the engine cannot enforce with no way to act on
+  them. Ranking what the 271 unenforced cards ask for: livestock (40 cards), bonus points (39), a
+  field (38), a person (29), a room (24), a renovation (15), fences (14), a stable (11). The panel
+  now does each of those.
+
+  The farm ones reuse the action board's own picker and its placement rules — a card-granted room
+  still has to touch the house, fences still have to enclose a real pasture, stables still come out
+  of your supply of four. Only the cost is skipped, which is the whole point of a card that grants
+  something. Livestock goes through the same housing placement the action spaces use, so the
+  counters and the board cannot drift apart, and animals with nowhere to live wander off and are
+  said to have done so. Bonus points get their own line in the score breakdown.
+
+  Every one of these names the card in the log next to what it did, because the players adjudicated
+  it rather than the engine reading it, and that log line is the whole audit trail.
 - **Undo, on the record.** An "Undo" button in the header takes back the last move — a worker
   placement, a pass, an anytime card exchange, an animal move, a resolved harvest — and restores
   the board exactly as it was. The log is the exception: it never rewinds. What was taken back

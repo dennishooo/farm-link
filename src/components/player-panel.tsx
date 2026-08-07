@@ -12,7 +12,7 @@ import { AdjustPanel } from '@/components/adjust-panel'
 import { GoodIcon, PersonIcon, type GoodIconName } from '@/components/ui/icons'
 import type { Player } from '@/game/types'
 import type { Payable } from '@/game/cards/types'
-import type { AdjustableGood } from '@/game/engine'
+import type { AdjustableGood, CardAction, CardActionPayload } from '@/game/engine'
 
 /**
  * The supply, in the order the goods appear on the player board: building
@@ -48,6 +48,12 @@ type PlayerPanelProps = {
     good: AdjustableGood,
     delta: number,
   ) => void
+  onCardAction?: (
+    playerIndex: number,
+    cardId: string,
+    action: CardAction,
+    payload?: CardActionPayload,
+  ) => void
 }
 
 export function PlayerPanel({
@@ -58,6 +64,7 @@ export function PlayerPanel({
   onConvert,
   onMoveAnimals,
   onAdjustForCard,
+  onCardAction,
 }: PlayerPanelProps) {
   const { t, i18n } = useTranslation()
   // Scored every render, not just at the end: players asked to see where they
@@ -191,7 +198,12 @@ export function PlayerPanel({
         )}
 
         {onAdjustForCard && !showScore && (
-          <AdjustPanel player={player} playerIndex={playerIndex} onAdjust={onAdjustForCard} />
+          <AdjustPanel
+            player={player}
+            playerIndex={playerIndex}
+            onAdjust={onAdjustForCard}
+            onCardAction={onCardAction}
+          />
         )}
 
         {(() => {

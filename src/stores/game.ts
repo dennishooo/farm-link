@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
   adjustForCard,
+  applyCardAction,
   advanceTurn,
   completeHarvest,
   convertGoods,
@@ -12,6 +13,8 @@ import {
   workersLeft,
   type ActionPayload,
   type AdjustableGood,
+  type CardAction,
+  type CardActionPayload,
 } from '@/game/engine'
 import type { ActionSpaceId, GameState, LogEntry } from '@/game/types'
 import type { Payable } from '@/game/cards/types'
@@ -73,6 +76,12 @@ type GameStore = {
     delta: number,
   ) => void
   moveAnimals: (playerIndex: number, fromKey: string, toKey: string, count: number) => void
+  cardAction: (
+    playerIndex: number,
+    cardId: string,
+    action: CardAction,
+    payload?: CardActionPayload,
+  ) => void
   undo: () => void
   redo: () => void
   clearError: () => void
@@ -217,6 +226,25 @@ export const useGameStore = create<GameStore>()(
         set(
           commit(current, next, get().history, 'undoAnimals', 'redoAnimals', {
             name: current.players[playerIndex].name,
+          }),
+        )
+      },
+
+      /** Apply a card effect that grants something other than goods. */
+      cardAction: (playerIndex, cardId, action, payload) => {
+        const current = get().game
+        if (!current) return
+
+        const next = draft(current)
+        const result = applyCardAction(next, playerIndex, cardId, action, payload)
+        if (!result.ok) {
+          set({ error: { key: result.reason, values: result.values } })
+          return
+        }
+        set(
+          commit(current, next, get().history, 'undoCard', 'redoCard', {
+            name: current.players[playerIndex].name,
+            cardId,
           }),
         )
       },
