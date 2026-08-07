@@ -764,6 +764,330 @@ export const CARD_TRANSLATIONS: Record<string, CardTranslation> = {
     title: '蘆葦小屋',
     text: '將一個尚未進入遊戲的家庭成員放在此卡上，往後都住在這裡。他可以進行行動（從打出此卡的回合起）也必須被餵食，但住在蘆葦小屋期間不計分。',
   },
+
+  // ---- Occupations, batch 1. ----
+  'occupation-clay-firer': {
+    title: '燒陶工',
+    text: '任何時候都可以用燒陶工將 2／3 黏土轉換成 1／2 石頭。',
+  },
+  'occupation-undergardener': {
+    title: '園丁助手',
+    text: '每當你使用「打零工」行動格時，同時獲得 1 蔬菜。',
+  },
+  'occupation-greengrocer': {
+    title: '蔬果商',
+    text: '每當你使用「取得 1 穀物」行動格時，同時獲得 1 蔬菜。',
+  },
+  'occupation-turner': {
+    title: '車工',
+    text: '任何時候都可以用車工將任意數量的木材各轉換成 1 食物。',
+  },
+  'occupation-yeoman-farmer': {
+    title: '自耕農',
+    text: '遊戲結束時，你只會因未使用格與乞討卡而失分。',
+  },
+  'occupation-field-watchman': {
+    title: '田地看守員',
+    text: '每當你使用「取得 1 穀物」行動格時，也可以開墾最多 1 塊田地。',
+  },
+  'occupation-bricklayer': {
+    title: '砌磚工',
+    text: '每張進步卡與每次翻修少付 1 黏土，每個房間少付 2 黏土。',
+  },
+  'occupation-clay-worker': {
+    title: '黏土工',
+    text: '每當你以行動取得木材或黏土時，額外獲得 1 黏土。',
+  },
+  'occupation-woodcutter': {
+    title: '伐木工',
+    text: '每當你派家庭成員取得木材時，額外獲得 1 木材。',
+  },
+  'occupation-stablemaster': {
+    title: '馬廄總管',
+    text: '你其中一座（且僅限一座）無圍欄的馬廄最多可容納 3 隻同種動物。',
+  },
+  'occupation-weaver': {
+    title: '織工',
+    text: '每當行動階段開始時你有至少 2 隻綿羊，就獲得 1 食物。',
+  },
+  'occupation-berry-picker': {
+    title: '採莓人',
+    text: '每當你派家庭成員取得木材時，額外獲得 1 食物。',
+  },
+  'occupation-clay-mixer': {
+    title: '拌泥工',
+    text: '每當你的家庭成員行動只取得黏土時，額外獲得 2 黏土。',
+  },
+  'occupation-mendicant': {
+    title: '乞食者',
+    text: '遊戲結束時，你可以棄掉最多 2 張乞討卡而不因此失分。',
+  },
+  'occupation-renovator': {
+    title: '翻修師',
+    text: '翻修成黏土屋少付 2 黏土，翻修成石屋少付 2 石頭。',
+  },
+  'occupation-tutor': {
+    title: '家庭教師',
+    text: '遊戲結束時，在此卡之後打出的每張職業卡各得 1 分。',
+  },
+  'occupation-outrider': {
+    title: '前導騎士',
+    text: '每當你派家庭成員使用最新的回合卡時，額外獲得 1 穀物。',
+  },
+  'occupation-street-musician': {
+    title: '街頭樂手',
+    text: '每當其他玩家使用「流浪藝人」行動格時，你獲得 1 穀物。',
+  },
+  'occupation-well-builder': {
+    title: '水井匠',
+    text: '對你而言水井是小進步卡而非主要進步卡，且只需 1 石頭和 1 木材即可建造。',
+  },
+  'occupation-plow-driver': {
+    title: '犁田手',
+    text: '當你擁有石屋後，每回合開始時可支付 1 食物開墾最多 1 塊田地。',
+  },
+  'occupation-academic': {
+    title: '學者',
+    text: '此卡在小進步卡與「里正」職業卡計分時視為 2 張職業卡。',
+  },
+  'occupation-animal-tamer': {
+    title: '馴獸師',
+    text: '你的每個房間各可容納 1 隻動物，且可以是不同種類。',
+  },
+  'occupation-quarryman': {
+    title: '採石工',
+    text: '任何時候都可以用採石工將石頭轉換成食物，每 1 石頭換 2 食物。',
+  },
+  'occupation-braggart': {
+    title: '吹牛者',
+    text: '遊戲結束時，面前有 5／6／7／8／9 張以上進步卡，分別得 1／3／5／7／9 分。',
+  },
+  'occupation-patron': {
+    title: '贊助人',
+    text: '此後每當你打出職業卡時，在支付費用前先獲得 2 食物。',
+  },
+  'occupation-foreman': {
+    title: '工頭',
+    text: '行動階段開始時，你可以從供應區放 1 食物到任一你選擇的行動格上。',
+  },
+  'occupation-conjurer': {
+    title: '魔術師',
+    text: '每當你使用「流浪藝人」行動格時，除食物外還獲得 1 穀物。',
+  },
+  'occupation-farmer': {
+    title: '農夫',
+    text: '你下次建造柵欄時獲得 1 野豬；此後每次建造至少 1 段柵欄，獲得 1 牛。',
+  },
+  'occupation-charcoal-burner': {
+    title: '燒炭工',
+    text: '每當任何玩家（包括你）建造帶有麵包符號的烘焙進步卡時，你獲得 1 食物和 1 木材。',
+  },
+  'occupation-dance-instructor': {
+    title: '舞蹈教師',
+    text: '在支付此卡費用前先獲得 4 食物，然後立即將此卡收回手中。',
+  },
+  'occupation-master-builder': {
+    title: '建築大師',
+    text: '遊戲中一次，當你的房屋達到至少 5 個房間後，可隨時免費擴建 1 個房間。',
+  },
+  'occupation-storehouse-keeper': {
+    title: '倉庫管理員',
+    text: '每當你派家庭成員取得蘆葦與石頭時，另外獲得 1 黏土或 1 穀物（由你選擇）。',
+  },
+  'occupation-estate-manager': {
+    title: '莊園管家',
+    text: '在 3／4／5 人遊戲結束時，若沒有玩家的任一種動物比你多，你得 2／3／4 分。',
+  },
+  'occupation-head-of-the-family': {
+    title: '一家之主',
+    text: '即使其他玩家已佔用「擴建房間」或「家庭成長」行動格，你仍可使用該格。',
+  },
+  'occupation-cook': {
+    title: '廚師',
+    text: '每次收成的餵食階段，只有 2 位家庭成員各需 2 食物，其餘每人只需 1 食物。',
+  },
+  'occupation-wood-carver': {
+    title: '木雕師',
+    text: '每回合，你在下列其中一項少付 1 木材：進步卡、木屋的房間、馬廄或柵欄。',
+  },
+  'occupation-field-worker': {
+    title: '農工',
+    text: '每當其他玩家在一塊或多塊田地播種時，3 人遊戲你獲得 1 穀物，4 或 5 人遊戲獲得 1 食物。',
+  },
+  'occupation-mason': {
+    title: '石工',
+    text: '遊戲中一次，當你的石屋達到至少 4 個房間後，可隨時免費擴建 1 個房間。',
+  },
+  'occupation-cooper': {
+    title: '桶匠',
+    text: '每當你或其他玩家從行動格取得超過 2 食物時，你從供應區獲得 1 食物。',
+  },
+  'occupation-sower': {
+    title: '播種者',
+    text: '在收成階段以外獲得、原本要放入供應區的每個蔬菜，你都可以立即播種。',
+  },
+
+  // ---- Occupations, batch 2. ----
+  'occupation-puppeteer': {
+    title: '木偶師',
+    text: '每當其他玩家選擇「流浪藝人」行動格時，你可以支付 1 食物打出 1 張職業卡。',
+  },
+  'occupation-animal-keeper': {
+    title: '動物飼育員',
+    text: '你可以在同一個牧場飼養綿羊、野豬和牛，適用於你所有的牧場（林地牧場除外）。',
+  },
+  'occupation-gardener': {
+    title: '園丁',
+    text: '收成蔬菜時從供應區取得，而非從你的蔬菜田——田地上的蔬菜保留不動。',
+  },
+  'occupation-hide-farmer': {
+    title: '隱田農夫',
+    text: '遊戲結束時，你可以為任意數量的未使用田地各支付 1 食物，使其不再扣分。',
+  },
+  'occupation-pig-breeder': {
+    title: '養豬人',
+    text: '若有空間容納小豬，你的野豬在第 12 回合結束時繁殖。打出此卡時，獲得 1 野豬。',
+  },
+  'occupation-clay-plasterer': {
+    title: '泥水匠',
+    text: '將木屋翻修成黏土屋只需 1 黏土和 1 蘆葦。黏土屋的每個房間只需 3 黏土和 2 蘆葦。',
+  },
+  'occupation-seed-trader': {
+    title: '種子商',
+    text: '在此卡上放 2 穀物和 2 蔬菜，任何時候都可以購買：每個穀物 2 食物，每個蔬菜 3 食物。',
+  },
+  'occupation-wood-buyer': {
+    title: '木材買家',
+    text: '每當其他玩家透過行動取得木材時，你可以用 1 食物向他購買 1 木材（不需對方同意）。',
+  },
+  'occupation-market-woman': {
+    title: '市場女商販',
+    text: '每當你透過家庭成員行動或小進步卡取得蔬菜時，額外獲得 2 穀物。',
+  },
+  'occupation-storyteller': {
+    title: '說書人',
+    text: '每當你使用「流浪藝人」行動格時，可留下 1 食物在格上，改為取得 1 蔬菜。',
+  },
+  'occupation-merchant': {
+    title: '商人',
+    text: '每當你使用「小進步」或「小／主要進步」行動時，可支付 1 食物再使用該行動一次。',
+  },
+  'occupation-plow-maker': {
+    title: '製犁匠',
+    text: '每當你使用「開墾 1 塊田地」或「開墾 1 塊田地及／或播種」行動格時，可支付 1 食物額外開墾 1 塊田地。',
+  },
+  'occupation-cattle-whisperer': {
+    title: '馴牛人',
+    text: '在目前回合數加 5 和加 9 的回合格上各放 1 牛。這些回合開始時，你獲得該牛。',
+  },
+  'occupation-pig-catcher': {
+    title: '捕豬人',
+    text: '每當你派家庭成員取走行動格上的木材時，可留下 2 木材在格上，改為取得 1 野豬。',
+  },
+  'occupation-layabout': {
+    title: '懶漢',
+    text: '打出此卡後，你不能參與下一次收成。（該次收成你也不需要餵食家庭成員。）',
+  },
+  'occupation-magician': {
+    title: '魔法師',
+    text: '每當你用最後一位家庭成員選擇「流浪藝人」行動格時，額外獲得 1 穀物和 1 食物。',
+  },
+  'occupation-clay-seller': {
+    title: '黏土商',
+    text: '任何時候都可以用黏土商轉換：2 黏土換 1 綿羊或 1 蘆葦、3 黏土換 1 野豬或 1 石頭、4 黏土換 1 牛。',
+  },
+  'occupation-seasonal-worker': {
+    title: '季節工',
+    text: '每當你使用「打零工」行動格時，額外獲得 1 穀物；第 6 回合起可改為選擇 1 蔬菜。',
+  },
+  'occupation-meat-seller': {
+    title: '肉販',
+    text: '若你擁有烤爐，任何時候都可以將動物轉換成食物：每隻綿羊 2 食物、野豬 3 食物、牛 4 食物。',
+  },
+  'occupation-sheep-whisperer': {
+    title: '馴羊人',
+    text: '在目前回合數加 4、7、9、11 的回合格上各放 1 綿羊。這些回合開始時，你獲得該綿羊。',
+  },
+  'occupation-field-warden': {
+    title: '田地管理員',
+    text: '即使其他玩家已佔用「取得 1 蔬菜」、「開墾 1 塊田地」或「開墾 1 塊田地及／或播種」行動格，你仍可使用。',
+  },
+  'occupation-shepherd': {
+    title: '牧羊人',
+    text: '每次收成的繁殖階段，若你有至少 4 隻綿羊且有空間容納，可獲得 2 隻小羊而非 1 隻。',
+  },
+  'occupation-mushroom-collector': {
+    title: '採菇人',
+    text: '每當你派家庭成員取走行動格上的木材時，可留下 1 木材在格上，換取 2 食物。',
+  },
+  'occupation-stone-carrier': {
+    title: '石材搬運工',
+    text: '每當你以行動取得石頭時，可額外取得 1 石頭；若同時取得其他建材，則需支付 1 食物。',
+  },
+  'occupation-smallholder': {
+    title: '小農',
+    text: '你原本只能容納 2 隻動物的牧場改為可容納 3 隻。此外，當你的田地不超過 2 塊時，播種可額外多放 1 穀物或 1 蔬菜。',
+  },
+  'occupation-frame-builder': {
+    title: '框架建造者',
+    text: '每次翻修時，可用 1 木材代替剛好 1 黏土或 1 石頭；每次擴建時，可用 1 木材代替剛好 2 黏土或 2 石頭。',
+  },
+  'occupation-cowherd': {
+    title: '牧牛人',
+    text: '每當你使用「取得 1 牛」行動格時，從供應區額外獲得 1 牛。（該行動格在第 4 階段加入。）',
+  },
+  'occupation-pig-whisperer': {
+    title: '馴豬人',
+    text: '在目前回合數加 4、7、10 的回合格上各放 1 野豬。這些回合開始時，你獲得該野豬。',
+  },
+  'occupation-grocer': {
+    title: '雜貨商',
+    text: '在此卡上由下至上疊放：蔬菜、蘆葦、黏土、木材、蔬菜、石頭、穀物、蘆葦各 1。任何時候都可以用 1 食物購買最上面那個。',
+  },
+  'occupation-serf': {
+    title: '農奴',
+    text: '每當你使用「播種及／或烤麵包」行動時，在行動前先獲得 1 穀物；或者你可以用 1 穀物換 1 蔬菜。',
+  },
+  'occupation-animal-handler': {
+    title: '動物管理員',
+    text: '在第 7 回合格放 1 綿羊、第 10 回合格放 1 野豬、第 14 回合格放 1 牛。這些回合開始時，你可用 1 食物買下該動物。',
+  },
+  'occupation-rancher': {
+    title: '牧場主',
+    text: '每當回合開始時你的未使用農場格比所有其他玩家都少，你獲得 1 木材。（平手則沒有。）',
+  },
+  'occupation-stone-breaker': {
+    title: '碎石工',
+    text: '你可以在任何時候將黏土屋翻修成石屋，不需使用「翻修」行動格（仍需支付翻修費用）。',
+  },
+  'occupation-pastor': {
+    title: '牧師',
+    text: '若在打出此卡時或之後，你是最後一位只有 2 個房間的玩家，你獲得 3 木材、2 黏土、1 蘆葦和 1 石頭。',
+  },
+  'occupation-hut-builder': {
+    title: '小屋建造者',
+    text: '須在第 1 階段打出。第 11 回合開始時，只要你尚未翻修成石屋，就可以免費擴建 1 個房間。',
+  },
+  'occupation-businessman': {
+    title: '生意人',
+    text: '每當你使用「起始玩家」行動格時，在打出小進步卡之後，可以再打出 1 張小進步卡或 1 張主要進步卡。',
+  },
+  'occupation-harvest-helper': {
+    title: '收成幫手',
+    text: '每次收成的餵食階段開始時，你可以從其他玩家的 1 塊田地取 1 穀物，該玩家從供應區獲得 2 食物。',
+  },
+  'occupation-swineherd': {
+    title: '養豬倌',
+    text: '每當你使用「取得 1 野豬」行動格時，從供應區額外獲得 1 野豬。（該行動格在第 3 階段加入。）',
+  },
+  'occupation-resource-seller': {
+    title: '資源商販',
+    text: '在此卡上由下至上疊放：石頭、黏土、石頭、黏土、蘆葦、黏土、木材各 1。當你取得該種建材時，即獲得最上面的標記。',
+  },
+  'occupation-net-fisherman': {
+    title: '撒網漁夫',
+    text: '若你的家庭成員使用提供蘆葦的行動格，你可以在返家階段（第 4 階段）取走「釣魚」格上所有的食物標記。',
+  },
 }
 
 /** The Chinese text for a card, or null when it has not been translated yet. */
