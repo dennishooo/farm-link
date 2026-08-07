@@ -76,6 +76,35 @@ describe('game store', () => {
     expect(JSON.parse(saved!).state.game.players[0].name).toBe('Ann')
   })
 
+  it('moves animals between housing slots', () => {
+    const { startGame } = useGameStore.getState()
+    startGame(['Ann', 'Bo'])
+
+    // Two 1x1 pastures, one sheep in the first.
+    const game = useGameStore.getState().game!
+    game.players[0].fences = [
+      'h:0:0', 'h:1:0', 'v:0:0', 'v:0:1',
+      'h:0:2', 'h:1:2', 'v:0:2', 'v:0:3',
+    ]
+    game.players[0].animalPlacement = [{ key: '0', type: 'sheep', count: 1 }]
+    game.players[0].sheep = 1
+    useGameStore.setState({ game: { ...game } })
+
+    useGameStore.getState().moveAnimals(0, '0', '2', 1)
+
+    const after = useGameStore.getState().game!.players[0]
+    expect(after.animalPlacement).toEqual([{ key: '2', type: 'sheep', count: 1 }])
+    expect(after.sheep).toBe(1)
+    expect(useGameStore.getState().error).toBeNull()
+  })
+
+  it('surfaces a translatable error for an illegal move', () => {
+    const { startGame } = useGameStore.getState()
+    startGame(['Ann', 'Bo'])
+    useGameStore.getState().moveAnimals(0, 'nowhere', 'pet', 1)
+    expect(useGameStore.getState().error).toMatchObject({ key: 'invalidMove' })
+  })
+
   it('abandons the game and clears the board', () => {
     useGameStore.getState().startGame(['Ann', 'Bo'])
     useGameStore.getState().abandon()

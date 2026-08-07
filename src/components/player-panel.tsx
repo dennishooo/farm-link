@@ -7,6 +7,7 @@ import { scorePlayer } from '@/game/scoring'
 import { cn } from '@/lib/utils'
 import { localiseCard } from '@/lib/i18n/format'
 import { ConvertPanel } from '@/components/convert-panel'
+import { AnimalPanel } from '@/components/animal-panel'
 import type { Player } from '@/game/types'
 
 const GOODS: { key: keyof Player; icon: string }[] = [
@@ -28,6 +29,7 @@ type PlayerPanelProps = {
   isCurrent: boolean
   showScore?: boolean
   onConvert?: (playerIndex: number, cardId: string, units: number) => void
+  onMoveAnimals?: (playerIndex: number, fromKey: string, toKey: string, count: number) => void
 }
 
 export function PlayerPanel({
@@ -36,6 +38,7 @@ export function PlayerPanel({
   isCurrent,
   showScore = false,
   onConvert,
+  onMoveAnimals,
 }: PlayerPanelProps) {
   const { t, i18n } = useTranslation()
   const score = showScore ? scorePlayer(player) : null
@@ -112,6 +115,10 @@ export function PlayerPanel({
               )
             })}
           </ul>
+        )}
+
+        {onMoveAnimals && !showScore && (
+          <AnimalPanel player={player} playerIndex={playerIndex} onMove={onMoveAnimals} />
         )}
 
         {onConvert && !showScore && (

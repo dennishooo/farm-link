@@ -5,6 +5,7 @@ import {
   completeHarvest,
   convertGoods,
   createGame,
+  rearrangeAnimals,
   STATE_VERSION,
   takeAction,
   workersLeft,
@@ -28,6 +29,7 @@ type GameStore = {
   resolveHarvest: () => void
   skipWorker: () => void
   convert: (playerIndex: number, cardId: string, units: number) => void
+  moveAnimals: (playerIndex: number, fromKey: string, toKey: string, count: number) => void
   clearError: () => void
   abandon: () => void
 }
@@ -89,6 +91,20 @@ export const useGameStore = create<GameStore>()(
 
         const next = draft(current)
         const result = convertGoods(next, playerIndex, cardId, units)
+        if (!result.ok) {
+          set({ error: { key: result.reason, values: result.values } })
+          return
+        }
+        set({ game: next, error: null })
+      },
+
+      /** Rearrange animals between pastures, stables and the house. */
+      moveAnimals: (playerIndex, fromKey, toKey, count) => {
+        const current = get().game
+        if (!current) return
+
+        const next = draft(current)
+        const result = rearrangeAnimals(next, playerIndex, fromKey, toKey, count)
         if (!result.ok) {
           set({ error: { key: result.reason, values: result.values } })
           return
