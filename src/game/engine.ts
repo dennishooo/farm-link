@@ -4,7 +4,7 @@
  * the caller whether the action was legal.
  */
 
-import { edgesOfSpace, findPastures, SPACE_COUNT } from './geometry'
+import { edgesOfSpace, findPastures, pastureBoundaryEdges, SPACE_COUNT } from './geometry'
 import { canPlace, countKind, houseAnimals, pastureInfo, syncAnimalTotals } from './farm'
 import {
   actionBonuses,
@@ -206,16 +206,25 @@ function revealForRound(state: GameState, deck = getDeckOrder(state)): void {
   }
 }
 
+/**
+ * How much a space gains each round. Solo games get 2 wood on the Forest
+ * instead of 3. Shared with the UI so the displayed rate always matches what
+ * the engine actually pays out.
+ */
+export function accumulationRate(space: ActionSpace, playerCount: number): number {
+  if (!space.accumulates) return 0
+  if (space.id === 'forest' && playerCount === 1) return 2
+  return space.accumulates.amount
+}
+
 /** Add this round's goods to every accumulating space that is in play. */
 function replenish(state: GameState, playerCount = state.players.length): void {
   for (const space of allSpacesFor(playerCount)) {
     if (!space.accumulates) continue
     const inPlay = space.stage === 0 || state.revealed.includes(space.id)
     if (!inPlay) continue
-    // Solo games get 2 wood on the Forest instead of 3.
-    const amount =
-      space.id === 'forest' && playerCount === 1 ? 2 : space.accumulates.amount
-    state.accumulated[space.id] = (state.accumulated[space.id] ?? 0) + amount
+    state.accumulated[space.id] =
+      (state.accumulated[space.id] ?? 0) + accumulationRate(space, playerCount)
   }
 }
 
@@ -758,6 +767,14 @@ export function buildFences(state: GameState, player: Player, edges: string[]): 
   const after = findPastures(proposed)
   const beforeKeys = new Set(before.map((pasture) => pasture.key))
   if (after.length === before.length && after.every((pasture) => beforeKeys.has(pasture.key))) {
+    return fail('fenceMustEnclose')
+  }
+
+  // Every new fence must itself border a pasture. Without this, a legal
+  // enclosure could be bundled with dangling segments that enclose nothing —
+  // the player would pay wood for fences the rulebook does not allow.
+  const boundary = pastureBoundaryEdges(proposed)
+  if (additions.some((edge) => !boundary.has(edge))) {
     return fail('fenceMustEnclose')
   }
 

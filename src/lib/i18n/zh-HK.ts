@@ -37,6 +37,7 @@ export default {
     results: '結算',
     points: '{{count}} 分',
     takenBy: '已被 {{name}} 佔用',
+    perRound: '每回合 +{{amount}} {{good}}',
     workersRemaining: '剩 {{count}}',
     toAct: '行動中',
   },
@@ -93,6 +94,8 @@ export default {
     buildStables: '建造馬廄（每座 {{cost}} 木材，剩餘 {{remaining}}）',
     fenceCost: '{{count}} 段柵欄 · {{wood}} 木材 · 你擁有 {{have}}',
     sowHint: '格 {{number}}：{{crop}} — 再點一次可更換',
+    fenceDangling: '有 {{count}} 段柵欄未圍成牧場，請移除或完整圍起。',
+    fencePastures: '將圍成 {{count}} 個牧場',
     instructions: {
       plow: '選擇一塊空地開墾。田地必須與你現有的田地相鄰。',
       room: '選擇要擴建房間的位置。房間必須與你的房屋相鄰。',
