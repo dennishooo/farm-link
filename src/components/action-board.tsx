@@ -1,8 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { accumulationRate, allSpacesFor } from '@/game/engine'
+import { capacityFor } from '@/game/farm'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import type { ActionSpaceId, GameState } from '@/game/types'
+import type { ActionSpaceId, AnimalType, GameState } from '@/game/types'
+
+const ANIMALS: AnimalType[] = ['sheep', 'boar', 'cattle']
+
+function isAnimal(good: string): good is AnimalType {
+  return (ANIMALS as string[]).includes(good)
+}
 
 const GOOD_ICON: Record<string, string> = {
   wood: '🪵',
@@ -35,6 +42,16 @@ export function ActionBoard({ game, onChoose, disabled = false }: ActionBoardPro
         const amount = game.accumulated[space.id] ?? 0
         const isNew = game.revealed[game.revealed.length - 1] === space.id && space.stage !== 0
 
+        // Animals with nowhere to live wander off (rulebook p.7). That is easy
+        // to walk into unknowingly, so warn before the action rather than
+        // reporting the loss in the log afterwards.
+        const good = space.accumulates?.good
+        const room =
+          good && isAnimal(good) && amount > 0
+            ? capacityFor(game.players[game.currentPlayerIndex], good)
+            : null
+        const wouldStray = room !== null ? Math.max(0, amount - room) : 0
+
         return (
           <li key={space.id}>
             <Button
@@ -64,6 +81,11 @@ export function ActionBoard({ game, onChoose, disabled = false }: ActionBoardPro
                     amount: accumulationRate(space, game.players.length),
                     good: t(`goods.${space.accumulates.good}` as 'goods.wood'),
                   })}
+                </span>
+              )}
+              {!occupant && wouldStray > 0 && (
+                <span className="text-xs font-semibold text-destructive">
+                  {t('game.animalsWouldStray', { count: wouldStray })}
                 </span>
               )}
               {occupant && (

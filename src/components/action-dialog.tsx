@@ -4,11 +4,12 @@ import { Farmyard } from '@/components/farmyard'
 import { Button } from '@/components/ui/button'
 import { allEdges, findPastures, pastureBoundaryEdges } from '@/game/geometry'
 import { legalPlacements } from '@/game/farm'
+import { cardById, discountFor } from '@/game/cards'
 import { ROOM_COST, STABLE_COST_WOOD, FENCE_COST_WOOD } from '@/game/rules'
 import type { ActionPayload } from '@/game/engine'
 import type { TFunction } from 'i18next'
 import type { ActionSpaceId, Player } from '@/game/types'
-import { actionModeFor, spaceName, type ActionMode } from '@/lib/actions'
+import { actionModeFor, selectableFor, spaceName, type ActionMode } from '@/lib/actions'
 
 type ActionDialogProps = {
   spaceId: ActionSpaceId
@@ -57,24 +58,48 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
 
   const roomCost = ROOM_COST[player.house]
 
+  // Mirror the engine's discounted costs so the menu can say up front what is
+  // affordable, rather than failing after a space has been chosen.
+  const playedCards = useMemo(
+    () => player.played.map(cardById).filter((card) => card !== undefined),
+    [player.played],
+  )
+  const canAffordRoom =
+    roomTargets.length > 0 &&
+    player[roomCost.resource] >=
+      Math.max(0, roomCost.amount - discountFor(playedCards, roomCost.resource, 'room')) &&
+    player.reed >= Math.max(0, roomCost.reed - discountFor(playedCards, 'reed', 'room'))
+  const canAffordStable =
+    stableTargets.length > 0 &&
+    player.stablesRemaining > 0 &&
+    player.wood >= STABLE_COST_WOOD
+
   function selectableSpaces(): number[] {
-    switch (mode) {
-      case 'plow':
-      case 'cultivate':
-        return plowTargets
-      case 'room':
-        return roomTargets
-      case 'stable':
-        return stableTargets
-      case 'sow':
-        return sowTargets
-      default:
-        return []
-    }
+    return selectableFor(mode, {
+      plow: plowTargets,
+      room: roomTargets,
+      stable: stableTargets,
+      sow: sowTargets,
+    })
   }
 
   function handleSpace(index: number) {
     if (mode === 'sow') {
+      const existing = sowPlan.find((entry) => entry.spaceIndex === index)
+      if (!existing) {
+        setSowPlan([...sowPlan, { spaceIndex: index, crop: 'grain' }])
+      } else if (existing.crop === 'grain') {
+        setSowPlan(sowPlan.map((e) => (e.spaceIndex === index ? { ...e, crop: 'vegetable' } : e)))
+      } else {
+        setSowPlan(sowPlan.filter((e) => e.spaceIndex !== index))
+      }
+      return
+    }
+
+    // In cultivate mode the same board serves both halves of the action, so
+    // the space itself decides which: an existing field is sown, anything else
+    // is plowed.
+    if (mode === 'cultivate' && sowTargets.includes(index)) {
       const existing = sowPlan.find((entry) => entry.spaceIndex === index)
       if (!existing) {
         setSowPlan([...sowPlan, { spaceIndex: index, crop: 'grain' }])
@@ -126,7 +151,9 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
         ? sowPlan.length > 0
         : mode === 'cultivate'
           ? spaces.length > 0 || sowPlan.length > 0
-          : mode === 'expansion'
+          : // Both pick their option from a button, so there is nothing left
+            // for a footer Confirm to do.
+            mode === 'expansion' || mode === 'resource'
             ? false
             : spaces.length > 0
 
@@ -143,30 +170,60 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
         {mode === 'expansion' && (
           <div className="mt-3 flex flex-col gap-2">
             <p className="text-sm text-muted-foreground">{t('dialog.whatToBuild')}</p>
-            <Button onClick={() => setMode('room')}>
+            <Button disabled={!canAffordRoom} onClick={() => setMode('room')}>
               {t('dialog.buildRooms', {
                 amount: roomCost.amount,
                 resource: t(`goods.${roomCost.resource}`),
                 reed: roomCost.reed,
               })}
             </Button>
-            <Button variant="outline" onClick={() => setMode('stable')}>
+            <Button
+              variant="outline"
+              disabled={!canAffordStable}
+              onClick={() => setMode('stable')}
+            >
               {t('dialog.buildStables', {
                 cost: STABLE_COST_WOOD,
                 remaining: player.stablesRemaining,
               })}
             </Button>
+            {/* Cost was only checked on confirm, so an unaffordable build looked
+                like the board simply refusing to respond. */}
+            {(!canAffordRoom || !canAffordStable) && (
+              <p className="text-xs text-destructive">{t('dialog.cannotAffordBuild')}</p>
+            )}
           </div>
         )}
 
-        {mode !== 'expansion' && mode !== 'none' && (
+        {mode === 'resource' && (
+          <div className="mt-3 flex flex-col gap-2">
+            <p className="text-sm text-muted-foreground">{t('dialog.chooseResource')}</p>
+            {(['reed', 'stone'] as const).map((resource) => (
+              <Button
+                key={resource}
+                variant={resource === 'reed' ? 'default' : 'outline'}
+                onClick={() => onConfirm({ resource })}
+              >
+                {t('dialog.takeResourceAndFood', { resource: t(`goods.${resource}`) })}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {mode !== 'expansion' && mode !== 'resource' && mode !== 'none' && (
           <>
             <p className="mt-1 text-sm text-muted-foreground">{instructionFor(mode, t)}</p>
             <div className="mt-3">
               <Farmyard
                 player={player}
                 selectable={selectableSpaces()}
-                selected={mode === 'sow' ? sowPlan.map((e) => e.spaceIndex) : spaces}
+                selected={
+                  mode === 'sow'
+                    ? sowPlan.map((e) => e.spaceIndex)
+                    : mode === 'cultivate'
+                      ? [...spaces, ...sowPlan.map((e) => e.spaceIndex)]
+                      : spaces
+                }
                 onSelectSpace={handleSpace}
                 selectableFences={mode === 'fence' ? fenceOptions : []}
                 stagedFences={fences}
@@ -174,7 +231,7 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
               />
             </div>
 
-            {mode === 'sow' && sowPlan.length > 0 && (
+            {(mode === 'sow' || mode === 'cultivate') && sowPlan.length > 0 && (
               <ul className="mt-2 text-xs text-muted-foreground">
                 {sowPlan.map((entry) => (
                   <li key={entry.spaceIndex}>

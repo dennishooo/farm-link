@@ -51,7 +51,10 @@ export function PlayerPanel({
   onAdjustForCard,
 }: PlayerPanelProps) {
   const { t, i18n } = useTranslation()
-  const score = showScore ? scorePlayer(player) : null
+  // Scored every render, not just at the end: players asked to see where they
+  // stand mid-game. The same breakdown is shown either way — collapsed while
+  // playing, open once the game is over.
+  const score = scorePlayer(player)
 
   return (
     <Card className={cn('overflow-hidden', isCurrent && 'ring-2 ring-primary')}>
@@ -65,9 +68,9 @@ export function PlayerPanel({
           )}
         </CardTitle>
         <span className="text-xs font-semibold text-muted-foreground">
-          {score
+          {showScore
             ? t('game.points', { count: score.total })
-            : t('game.workersRemaining', { count: workersLeft(player) })}
+            : `${t('game.workersRemaining', { count: workersLeft(player) })} · ${t('game.points', { count: score.total })}`}
         </span>
       </CardHeader>
 
@@ -103,24 +106,33 @@ export function PlayerPanel({
         </p>
 
         {player.played.length > 0 && (
-          <ul className="flex flex-wrap gap-1">
+          <ul className="flex flex-col gap-1">
             {player.played.map((id) => {
               const card = cardById(id)
               if (!card) return null
               const localised = localiseCard(card, i18n.language)
               return (
-                <li
-                  key={id}
-                  title={localised.text}
-                  className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[11px] font-semibold"
-                >
-                  {localised.title}
-                  {card.points !== 0 && (
-                    <span className="text-muted-foreground">
-                      {' '}
-                      {t('cards.pointsShort', { count: card.points })}
-                    </span>
-                  )}
+                <li key={id}>
+                  {/* The rules text used to live only in a `title` tooltip,
+                      which never appears on a touch screen — the card's effect
+                      was unreadable on a phone. */}
+                  <details className="rounded-sm border border-border bg-muted px-1.5 py-0.5">
+                    <summary className="cursor-pointer text-[11px] font-semibold">
+                      {localised.title}
+                      {card.points !== 0 && (
+                        <span className="text-muted-foreground">
+                          {' '}
+                          {t('cards.pointsShort', { count: card.points })}
+                        </span>
+                      )}
+                      {!card.enforced && (
+                        <span className="text-muted-foreground"> · {t('cards.manualShort')}</span>
+                      )}
+                    </summary>
+                    <p className="mt-1 text-[11px] leading-snug font-normal text-muted-foreground">
+                      {localised.text}
+                    </p>
+                  </details>
                 </li>
               )
             })}
@@ -139,18 +151,34 @@ export function PlayerPanel({
           <AdjustPanel player={player} playerIndex={playerIndex} onAdjust={onAdjustForCard} />
         )}
 
-        {score && (
-          <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5 border-t border-border pt-2 text-xs">
-            {Object.entries(score)
-              .filter(([key]) => key !== 'total')
-              .map(([key, value]) => (
-                <div key={key} className="flex justify-between gap-2">
-                  <dt className="text-muted-foreground">{t(`score.${key}` as 'score.fields')}</dt>
-                  <dd className={cn('font-semibold', value < 0 && 'text-destructive')}>{value}</dd>
-                </div>
-              ))}
-          </dl>
-        )}
+        {(() => {
+          const breakdown = (
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+              {Object.entries(score)
+                .filter(([key]) => key !== 'total')
+                .map(([key, value]) => (
+                  <div key={key} className="flex justify-between gap-2">
+                    <dt className="text-muted-foreground">{t(`score.${key}` as 'score.fields')}</dt>
+                    <dd className={cn('font-semibold', value < 0 && 'text-destructive')}>
+                      {value}
+                    </dd>
+                  </div>
+                ))}
+            </dl>
+          )
+
+          // Final scores are the point of the end screen, so they stay open.
+          return showScore ? (
+            <div className="border-t border-border pt-2">{breakdown}</div>
+          ) : (
+            <details className="border-t border-border pt-2">
+              <summary className="cursor-pointer text-[11px] font-bold text-muted-foreground">
+                {t('score.liveBreakdown', { count: score.total })}
+              </summary>
+              <div className="mt-1.5">{breakdown}</div>
+            </details>
+          )
+        })()}
       </CardContent>
     </Card>
   )

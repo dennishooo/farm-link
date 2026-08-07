@@ -389,16 +389,23 @@ export function feedFamily(state: GameState, playerIndex: number): void {
 export function breedAnimals(state: GameState, playerIndex: number): void {
   const player = state.players[playerIndex]
   const born: AnimalType[] = []
+  const crowded: AnimalType[] = []
 
   syncAnimalTotals(player)
   for (const type of ['sheep', 'boar', 'cattle'] as const) {
     if (player[type] < 2) continue
     if (houseAnimals(player, type, 1) === 0) born.push(type)
+    else crowded.push(type)
   }
 
   syncAnimalTotals(player)
   if (born.length > 0) {
     logMessage(state, 'breed', { name: player.name, types: born.join(', ') })
+  }
+  // A pair that cannot house its newborn simply does not breed (rulebook p.8).
+  // Silence made that look like a bug, so say it happened and why.
+  if (crowded.length > 0) {
+    logMessage(state, 'breedNoRoom', { name: player.name, types: crowded.join(', ') })
   }
 }
 
@@ -433,6 +440,8 @@ export type ActionPayload = {
   cardId?: string
   /** Index of the chosen cost alternative, when a card offers a choice. */
   costOption?: number
+  /** Which resource to take on the Resource Market space. */
+  resource?: 'reed' | 'stone'
 }
 
 /**
@@ -669,6 +678,16 @@ function applyAction(
       player.vegetable += 1
       logMessage(state, 'takeGoods', { name: player.name, amount: 1, good: 'vegetable' })
       return ok
+
+    case 'resource-market': {
+      // The player picks reed or stone; both come with 1 food.
+      const choice = payload.resource ?? 'reed'
+      if (choice !== 'reed' && choice !== 'stone') return fail('chooseReedOrStone')
+      player[choice] += 1
+      player.food += 1
+      logMessage(state, 'resourceMarket', { name: player.name, resource: choice })
+      return ok
+    }
 
     case 'day-laborer':
       player.food += 2

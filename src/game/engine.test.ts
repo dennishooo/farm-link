@@ -3,6 +3,7 @@ import {
   accumulationRate,
   adjustForCard,
   advanceTurn,
+  allSpacesFor,
   breedAnimals,
   buildFences,
   completeHarvest,
@@ -17,7 +18,7 @@ import {
 } from './engine'
 import { horizontalEdge, verticalEdge } from './geometry'
 import { capacityFor, houseAnimals, pastureInfo } from './farm'
-import { HARVEST_ROUNDS } from './rules'
+import { HARVEST_ROUNDS, STAGE_ACTION_SPACES, STAGE_ROUNDS } from './rules'
 import type { GameState } from './types'
 
 /** Deterministic games so stage-card order never flakes a test. */
@@ -630,5 +631,112 @@ describe('card adjustments', () => {
     const result = adjustForCard(state, 0, 'major-fireplace-2', 'food', 1)
 
     expect(result.ok).toBe(true)
+  })
+})
+
+describe('action board setup', () => {
+  // Issue #5: the stage assignments were checked against the Revised Edition
+  // appendix, which lists each card's stage explicitly.
+  it('reveals Cultivation in stage 5 and Western Quarry in stage 2', () => {
+    // These two were swapped, so Cultivation arrived in round 5 instead of 12
+    // and the second stone quarry did not appear until the endgame.
+    expect(findSpace('sow-and-bake')?.stage).toBe(5)
+    expect(findSpace('west-quarry')?.stage).toBe(2)
+  })
+
+  it('matches the appendix stage for every stage card', () => {
+    const expected: Record<string, number> = {
+      'major-improvement': 1,
+      fences: 1,
+      'grain-utilization': 1,
+      'sheep-market': 1,
+      'wish-for-children': 2,
+      'house-redevelopment': 2,
+      'west-quarry': 2,
+      'vegetable-seeds': 3,
+      'pig-market': 3,
+      'cattle-market': 4,
+      'east-quarry': 4,
+      'urgent-wish-for-children': 5,
+      'sow-and-bake': 5,
+      'farm-redevelopment': 6,
+    }
+    for (const [id, stage] of Object.entries(expected)) {
+      expect(findSpace(id)?.stage, id).toBe(stage)
+    }
+  })
+
+  it('fills every stage with the number of rounds it covers', () => {
+    // A stage short of cards would leave a round with nothing revealed.
+    for (let stage = 1; stage <= STAGE_ROUNDS.length; stage++) {
+      const cards = STAGE_ACTION_SPACES.filter((space) => space.stage === stage)
+      expect(cards.length, `stage ${stage}`).toBe(STAGE_ROUNDS[stage - 1].length)
+    }
+  })
+
+  it('adds Grove, Hollow and Resource Market only from 3 players', () => {
+    const two = allSpacesFor(2).map((space) => space.id)
+    const three = allSpacesFor(3).map((space) => space.id)
+    for (const id of ['grove', 'hollow', 'resource-market']) {
+      expect(two, id).not.toContain(id)
+      expect(three, id).toContain(id)
+    }
+  })
+
+  it('seeds the 3-player accumulation spaces at their printed rates', () => {
+    const state = createGame({ names: ['A', 'B', 'C'], random: () => 0.42 })
+    expect(state.accumulated['grove']).toBe(2)
+    expect(state.accumulated['hollow']).toBe(1)
+    // The Resource Market is not an accumulation space.
+    expect(state.accumulated['resource-market']).toBeUndefined()
+  })
+})
+
+describe('resource market', () => {
+  it('gives the chosen resource plus 1 food', () => {
+    const state = createGame({ names: ['A', 'B', 'C'], random: () => 0.42 })
+    const player = state.players[0]
+    const food = player.food
+
+    expect(takeAction(state, 'resource-market', { resource: 'stone' }).ok).toBe(true)
+    expect(player.stone).toBe(1)
+    expect(player.reed).toBe(0)
+    expect(player.food).toBe(food + 1)
+  })
+
+  it('defaults to reed when no choice is passed', () => {
+    const state = createGame({ names: ['A', 'B', 'C'], random: () => 0.42 })
+    expect(takeAction(state, 'resource-market').ok).toBe(true)
+    expect(state.players[0].reed).toBe(1)
+  })
+})
+
+describe('breeding reports why it did not happen', () => {
+  it('logs crowded animals that could not produce a newborn', () => {
+    // Issue #8: a full farm bred nothing and said nothing, which read as a bug.
+    const state = game(['Ann'])
+    const player = state.players[0]
+    player.fences = fenceRect(0, 3, 0, 4) // one 2-space pasture, capacity 4
+    houseAnimals(player, 'sheep', 4)
+    houseAnimals(player, 'boar', 1) // takes the pet slot
+
+    breedAnimals(state, 0)
+
+    expect(player.sheep).toBe(4)
+    const entry = state.log.at(-1)
+    expect(entry?.key).toBe('breedNoRoom')
+    expect(entry?.values?.types).toBe('sheep')
+  })
+
+  it('still breeds and reports normally when there is room', () => {
+    const state = game(['Ann'])
+    const player = state.players[0]
+    player.fences = fenceRect(0, 3, 0, 4)
+    houseAnimals(player, 'sheep', 2)
+
+    breedAnimals(state, 0)
+
+    expect(player.sheep).toBe(3)
+    expect(state.log.at(-1)?.key).toBe('breed')
   })
 })

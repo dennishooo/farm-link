@@ -37,6 +37,12 @@ const TRANSLATED_VALUES: Record<string, (value: string, t: TFunction) => string>
   // names into English log lines.
   cardId: (value) => cardTitleFor(value, activeLanguage()),
   good: (value, t) => t(`goods.${value}`, value),
+  // A comma-separated list of animal ids, as the breeding phase reports.
+  types: (value, t) =>
+    value
+      .split(',')
+      .map((id) => t(`goods.${id.trim()}`, id.trim()))
+      .join(t('game.listSeparator')),
   house: (value, t) => t(`house.${value}`, value),
   resource: (value, t) => t(`goods.${value}`, value),
   material: (value, t) => t(`goods.${value}`, value),
