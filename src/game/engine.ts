@@ -12,7 +12,9 @@ import {
   applyImmediateEffects,
   cardById,
   dealCards,
+  discountFor,
   payOption,
+  scheduledDrips,
 } from './cards'
 import {
   BASE_ACTION_SPACES,
@@ -60,7 +62,7 @@ const fail = (reason: string, values?: Record<string, string | number>): ActionR
 
 const COLORS: PlayerColor[] = ['green', 'blue', 'red', 'purple']
 
-export const STATE_VERSION = 4
+export const STATE_VERSION = 5
 
 /** Deterministic shuffle so a seed reproduces the same stage-card order. */
 export function shuffle<T>(items: T[], random: () => number): T[] {
@@ -108,6 +110,7 @@ function makePlayer(name: string, index: number, hand: Player['hand']): Player {
     animalPlacement: [],
     hand,
     played: [],
+    roundGoods: [],
   }
 }
 
@@ -297,6 +300,7 @@ export function beginNextRound(state: GameState): void {
   state.currentPlayerIndex = state.startPlayerIndex
   revealForRound(state)
   replenish(state)
+  collectRoundGoods(state)
   logMessage(state, 'roundBegins', { round: state.round })
 }
 
@@ -440,9 +444,75 @@ export function takeAction(
   return ok
 }
 
+/**
+ * Pay out any goods that played cards placed on this round's space. Animals
+ * still have to fit on the farm; anything that does not is lost, as it would
+ * be on the table.
+ */
+export function collectRoundGoods(state: GameState): void {
+  for (const player of state.players) {
+    const due = player.roundGoods.filter((entry) => entry.round === state.round)
+    if (due.length === 0) continue
+    player.roundGoods = player.roundGoods.filter((entry) => entry.round !== state.round)
+
+    const gained: string[] = []
+    for (const { good, amount } of due) {
+      if (good === 'sheep' || good === 'boar' || good === 'cattle') {
+        houseAnimals(player, good, amount)
+        syncAnimalTotals(player)
+      } else {
+        player[good as Payable] += amount
+      }
+      gained.push(`${amount} ${good}`)
+    }
+    logMessage(state, 'roundGoods', { name: player.name, goods: gained.join(', ') })
+  }
+}
+
+/**
+ * Convert goods into food using a played card ("Bake bread", cooking hearths,
+ * and similar). Available at any time, which is how the rulebook treats these.
+ */
+export function convertGoods(
+  state: GameState,
+  playerIndex: number,
+  cardId: string,
+  units: number,
+): ActionResult {
+  const player = state.players[playerIndex]
+  const card = cardById(cardId)
+  if (!card || !player.played.includes(cardId)) return fail('noSuchConversion')
+
+  const effect = card.effects.find((entry) => entry.kind === 'convert')
+  if (effect?.kind !== 'convert') return fail('noSuchConversion')
+
+  const amount = Math.min(units, effect.limit ?? units)
+  if (amount <= 0 || player[effect.from] < amount) return fail('notEnoughToConvert')
+
+  const food = Math.floor(amount * effect.rate)
+  player[effect.from] -= amount
+  player.food += food
+
+  // The good and the card id are passed raw so the renderer can translate
+  // them; only the numbers are baked in here.
+  logMessage(state, 'convert', {
+    name: player.name,
+    amount,
+    good: effect.from,
+    count: food,
+    cardId: card.id,
+  })
+  return ok
+}
+
+/** The cards this player has in front of them, resolved from their ids. */
+function playedCards(player: Player) {
+  return player.played.map(cardById).filter((card) => card !== undefined)
+}
+
 /** Grant any bonus goods the player's played cards attach to this space. */
 function applyActionBonuses(state: GameState, player: Player, spaceId: ActionSpaceId): void {
-  const cards = player.played.map(cardById).filter((card) => card !== undefined)
+  const cards = playedCards(player)
   const bonuses = actionBonuses(cards, spaceId)
 
   const gained: string[] = []
@@ -622,8 +692,12 @@ function farmExpansion(state: GameState, player: Player, payload: ActionPayload)
 
 function buildRooms(state: GameState, player: Player, targets: number[]): ActionResult {
   const cost = ROOM_COST[player.house]
-  const totalMaterial = cost.amount * targets.length
-  const totalReed = cost.reed * targets.length
+  const cards = playedCards(player)
+  // Discounts apply per room built, and can never take a cost below zero.
+  const perRoom = Math.max(0, cost.amount - discountFor(cards, cost.resource, 'room'))
+  const perRoomReed = Math.max(0, cost.reed - discountFor(cards, 'reed', 'room'))
+  const totalMaterial = perRoom * targets.length
+  const totalReed = perRoomReed * targets.length
 
   if (player[cost.resource] < totalMaterial || player.reed < totalReed) {
     return fail('roomCost', { count: targets.length, material: totalMaterial, resource: cost.resource, reed: totalReed })
@@ -706,14 +780,19 @@ function renovate(state: GameState, player: Player): ActionResult {
   if (player.house === 'stone') return fail('alreadyStone')
   const target = RENOVATION_TARGET[player.house]
   const material = target === 'clay' ? 'clay' : 'stone'
-  const rooms = countKind(player.farm, 'room')
+  const cards = playedCards(player)
+  const rooms = Math.max(
+    0,
+    countKind(player.farm, 'room') - discountFor(cards, material, 'renovation'),
+  )
+  const reedCost = Math.max(0, 1 - discountFor(cards, 'reed', 'renovation'))
 
-  if (player[material] < rooms || player.reed < 1) {
+  if (player[material] < rooms || player.reed < reedCost) {
     return fail('renovationCost', { count: rooms, material })
   }
 
   player[material] -= rooms
-  player.reed -= 1
+  player.reed -= reedCost
   player.house = target
   logMessage(state, 'renovate', { name: player.name, house: target })
   return ok
@@ -757,6 +836,7 @@ function playOccupation(
   player.hand.occupations = player.hand.occupations.filter((id) => id !== payload.cardId)
   player.played.push(card.id)
   applyImmediateEffects(player, card)
+  player.roundGoods.push(...scheduledDrips(card, state.round))
 
   logMessage(state, 'playOccupation', { name: player.name, card: card.title })
   if (!card.enforced) {
@@ -790,6 +870,7 @@ function playImprovement(state: GameState, player: Player, payload: ActionPayloa
 
   player.played.push(card.id)
   applyImmediateEffects(player, card)
+  player.roundGoods.push(...scheduledDrips(card, state.round))
 
   logMessage(state, 'buildImprovement', { name: player.name, card: card.title })
   if (!card.enforced) {

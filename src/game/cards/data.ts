@@ -3,8 +3,8 @@
  * Regenerate with: bun run cards:build
  *
  * Source: agricolacards.com community database, base-game decks only.
- * 394 cards — 202 occupations, 184 minor
- * improvements, 8 major improvements. 41 have effects the
+ * 337 cards — 181 occupations, 146 minor
+ * improvements, 10 major improvements. 46 have effects the
  * engine applies automatically; the rest are dealt and scored, with their
  * ongoing text applied by the players.
  */
@@ -53,15 +53,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "When you play this card, take 1 Food for each completed round of the game.",
     "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "food": 1
-        }
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "occupation-animal-breeder",
@@ -167,8 +160,16 @@ export const CARDS: Card[] = [
     "points": 5,
     "text": "Whenever you use the \"Bake bread\" Action, you can use the Bakehouse to convert up to 2 Grain into 5 Food each. When you play this card, you can also take the \"Bake bread\" Action.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 5,
+        "limit": 2
+      }
+    ]
   },
   {
     "id": "occupation-baker",
@@ -193,8 +194,16 @@ export const CARDS: Card[] = [
     "points": 4,
     "text": "Whenever you use the \"Bake bread\" action, you can use the Baker's Kitchen to convert up to 2 Grain into 5 Food each. When you play this card, you can also take the \"Bake bread\" action.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 5,
+        "limit": 2
+      }
+    ]
   },
   {
     "id": "occupation-basin-maker",
@@ -208,21 +217,6 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-basket",
-    "title": "Basket",
-    "type": "minor",
-    "cost": [
-      {
-        "reed": 1
-      }
-    ],
-    "points": 0,
-    "text": "Immediately after each time you use a wood accumulation space, you can exchange 2 wood for 3 food. If you do, place those 2 wood on the accumulation space.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
     "id": "occupation-basketmaker",
     "title": "Basketmaker",
     "type": "occupation",
@@ -230,23 +224,16 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "In each Harvest, the Basketmaker can convert up to 1 Reed to 3 Food.",
     "minPlayers": 4,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-beanfield",
-    "title": "Beanfield",
-    "type": "minor",
-    "cost": [
+    "enforced": true,
+    "effects": [
       {
-        "food": 1
+        "kind": "convert",
+        "from": "reed",
+        "to": "food",
+        "rate": 3,
+        "limit": 1
       }
-    ],
-    "points": 1,
-    "text": "This card is a field that can only grow vegetables.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    ]
   },
   {
     "id": "minor-beehive",
@@ -256,8 +243,23 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "Place 2 Food on each remaining even-numbered Round space. At the start of these rounds, you take the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 2,
+        "rounds": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-berry-picker",
@@ -472,23 +474,16 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "In each Harvest, the Cabinetmaker can convert up to 1 Wood to 2 Food.",
     "minPlayers": 3,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-canoe",
-    "title": "Canoe",
-    "type": "minor",
-    "cost": [
+    "enforced": true,
+    "effects": [
       {
-        "wood": 2
+        "kind": "convert",
+        "from": "wood",
+        "to": "food",
+        "rate": 2,
+        "limit": 1
       }
-    ],
-    "points": 1,
-    "text": "Each time you use the \"Fishing\" accumulation space, you get an additional 1 food and 1 reed.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    ]
   },
   {
     "id": "occupation-carpenter",
@@ -628,15 +623,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "If there are still 1/3/6/9 rounds to play, you immediately receive 1/2/3/4 Wood. At the end of the game, any player who performed actions with at least 5 people in Round 14 receives 3 Bonus points. (A Guest is counted.)",
     "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "wood": 4
-        }
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "minor-clapper",
@@ -661,8 +649,25 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "Place 1 Clay on each of the spaces for rounds 6 to 14. At the start of these rounds, you receive the Clay.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "clay",
+        "amount": 1,
+        "rounds": [
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ]
+      }
+    ]
   },
   {
     "id": "minor-clay-deposit",
@@ -734,6 +739,30 @@ export const CARDS: Card[] = [
     "minPlayers": 1,
     "enforced": false,
     "effects": []
+  },
+  {
+    "id": "major-clay-oven",
+    "title": "Clay Oven",
+    "type": "major",
+    "cost": [
+      {
+        "clay": 3,
+        "stone": 2
+      }
+    ],
+    "points": 2,
+    "text": "\"Bake Bread\" action: At most 1 time Grain → 5 Food When you build this improvement, you can immediately take a \"Bake Bread\" action.",
+    "minPlayers": 6,
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 5,
+        "limit": 1
+      }
+    ]
   },
   {
     "id": "minor-clay-path",
@@ -832,15 +861,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "If there are still 1/3/6/9 rounds to play, you immediately receive 1/2/3/4 Wood. At the end of the game, any player who has no negative points receives 5 Bonus points.",
     "minPlayers": 3,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "wood": 4
-        }
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "occupation-cook",
@@ -900,29 +922,6 @@ export const CARDS: Card[] = [
     "minPlayers": 4,
     "enforced": false,
     "effects": []
-  },
-  {
-    "id": "minor-corn-scoop",
-    "title": "Corn Scoop",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 1
-      }
-    ],
-    "points": 0,
-    "text": "Each time you use the \"Grain Seeds\" action space, you get 1 additional grain.",
-    "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "onAction",
-        "spaceId": "grain-seeds",
-        "goods": {
-          "grain": 1
-        }
-      }
-    ]
   },
   {
     "id": "minor-corn-sheaf",
@@ -1059,8 +1058,19 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "Place 1 Food on each of the next 3 Round spaces. At the start of these rounds, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-educator",
@@ -1501,8 +1511,21 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "Place 1 Food on each of the next 5 Round spaces. At the start of each round, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-hide-farmer",
@@ -1583,15 +1606,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "If there are still 1/3/6/9 rounds to play, you immediately receive 1/2/3/4 Wood. At the end of the game, the player(s) with the most rooms in their home receive 3 Bonus points each.",
     "minPlayers": 3,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "wood": 4
-        }
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "occupation-hut-builder",
@@ -1786,21 +1802,6 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-manger",
-    "title": "Manger",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 2
-      }
-    ],
-    "points": 0,
-    "text": "During scoring, if your pastures cover at least 6/7/8/10 farm yard spaces, you get 1/2/3/4 bonus points.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
     "id": "occupation-manservant",
     "title": "Manservant",
     "type": "occupation",
@@ -1910,8 +1911,16 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "In the Feeding phase of each Harvest, the Master Brewer can convert up to 1 Grain to 3 Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 3,
+        "limit": 1
+      }
+    ]
   },
   {
     "id": "occupation-master-builder",
@@ -1943,8 +1952,19 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "Place 1 Sheep on each of the next 3 Round spaces. At the start of these rounds, you receive the Sheep.",
     "minPlayers": 4,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "sheep",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-meat-seller",
@@ -2033,21 +2053,6 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-mini-pasture",
-    "title": "Mini Pasture",
-    "type": "minor",
-    "cost": [
-      {
-        "food": 2
-      }
-    ],
-    "points": 0,
-    "text": "Immediately fence a farmyard space, without paying wood for the fences. (If you already have pastures, the new one must be adjacent to an existing one.)",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
     "id": "minor-moldboard-plow",
     "title": "Moldboard Plow",
     "type": "minor",
@@ -2092,15 +2097,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "At the end of the game, you receive 1 Bonus point for each pasture that contains at least 1 animal, but could contain at least 3 more animals than it does. (This also applies to the Forest Pasture.)",
     "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "pointsPer",
-        "per": "pasture",
-        "points": 1,
-        "each": 1
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "occupation-outrider",
@@ -2283,8 +2281,16 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "In each Harvest, the Potter can convert up to 1 Clay to 2 Food.",
     "minPlayers": 3,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "clay",
+        "to": "food",
+        "rate": 2,
+        "limit": 1
+      }
+    ]
   },
   {
     "id": "minor-punner",
@@ -2390,8 +2396,20 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "Place 1 Reed on each of the next 4 Round spaces. At the start of these rounds, you receive the Reed.",
     "minPlayers": 3,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "reed",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    ]
   },
   {
     "id": "minor-reed-exchange",
@@ -2483,21 +2501,6 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-sack-cart",
-    "title": "Sack Cart",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 2
-      }
-    ],
-    "points": 0,
-    "text": "Place 1 grain each on the remaining spaces for rounds 5, 8, 11, and 14. At the start of these rounds, you get the grain.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
     "id": "minor-sawhorse",
     "title": "Sawhorse",
     "type": "minor",
@@ -2531,8 +2534,16 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "In the Feeding phase of each Harvest, you can convert up to 1 Vegetable to 5 Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "vegetable",
+        "to": "food",
+        "rate": 5,
+        "limit": 1
+      }
+    ]
   },
   {
     "id": "minor-schnaps-distillery",
@@ -2569,16 +2580,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "Whenever you use the \"Day Laborer\" Action space, you receive 1 additional Grain. From Round 6, you can choose to receive 1 Vegetable instead.",
     "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "onAction",
-        "spaceId": "day-laborer",
-        "goods": {
-          "grain": 1
-        }
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "occupation-seed-seller",
@@ -2652,28 +2655,6 @@ export const CARDS: Card[] = [
     "minPlayers": 4,
     "enforced": false,
     "effects": []
-  },
-  {
-    "id": "minor-shepherd-s-crook",
-    "title": "Shepherd's Crook",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 1
-      }
-    ],
-    "points": 0,
-    "text": "Each time you fence a new pasture covering at least 4 farmyard spaces, you immediately get 2 sheep on this pasture.",
-    "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "sheep": 2
-        }
-      }
-    ]
   },
   {
     "id": "minor-slaughterhouse",
@@ -2877,8 +2858,23 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "Place 1 Stone on each remaining even-numbered Round space. At the start of these rounds, you receive the Stone.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "stone",
+        "amount": 1,
+        "rounds": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-stone-carver",
@@ -2888,8 +2884,16 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "In each Harvest, the Stone Carver can convert up to 1 Stone to 3 Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "stone",
+        "to": "food",
+        "rate": 3,
+        "limit": 1
+      }
+    ]
   },
   {
     "id": "occupation-stonecutter",
@@ -2899,8 +2903,15 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "All Improvements, Rooms and Renovations cost 1 Stone less.",
     "minPlayers": 3,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "discount",
+        "good": "stone",
+        "amount": 1,
+        "applies": "both"
+      }
+    ]
   },
   {
     "id": "minor-stone-exchange",
@@ -2944,19 +2955,28 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-stone-tongs",
-    "title": "Stone Tongs",
-    "type": "minor",
+    "id": "major-stone-oven",
+    "title": "Stone Oven",
+    "type": "major",
     "cost": [
       {
-        "wood": 1
+        "clay": 2,
+        "stone": 3
       }
     ],
-    "points": 0,
-    "text": "Each time you use a stone accumulation space, you get 1 additional stone.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "points": 3,
+    "text": "\"Bake Bread\" action: Up to 2 times Grain → 4 Food When you build this improvement, you can immediately take a \"Bake Bread\" action.",
+    "minPlayers": 6,
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 4,
+        "limit": 2
+      }
+    ]
   },
   {
     "id": "occupation-storehouse-clerk",
@@ -3010,8 +3030,19 @@ export const CARDS: Card[] = [
     "points": 2,
     "text": "Place 1 Food on each of the next 3 Round spaces. At the start of these rounds, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-street-musician",
@@ -3247,15 +3278,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "If there are still 1/3/6/9 rounds to play, you immediately receive 1/2/3/4 Wood. At the end of the game, all players with the most played Improvements receive 3 Bonus points each.",
     "minPlayers": 3,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "wood": 4
-        }
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "minor-village-well",
@@ -3294,8 +3318,16 @@ export const CARDS: Card[] = [
     "points": 2,
     "text": "After the Field phase of a Harvest, each player can use the Water Mill to convert up to 1 Grain to 3 Food. Each player that uses the Water Mill must give you 1 of the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 3,
+        "limit": 1
+      }
+    ]
   },
   {
     "id": "occupation-weaver",
@@ -3412,8 +3444,21 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "Place 1 Wood on each of the next 5 Round spaces. At the start of these rounds, you receive the Wood.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "wood",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-wood-deliveryman",
@@ -3423,8 +3468,23 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "Place 1 Wood on each remaining space for rounds 8 to 14. At the start of these rounds, you receive the Wood.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "wood",
+        "amount": 1,
+        "rounds": [
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-wood-distributor",
@@ -3606,21 +3666,6 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-shifting-cultivation",
-    "title": "Shifting Cultivation",
-    "type": "minor",
-    "cost": [
-      {
-        "food": 2
-      }
-    ],
-    "points": 0,
-    "text": "Immediately plow 1 field.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
     "id": "major-cooking-hearth",
     "title": "Cooking Hearth",
     "type": "major",
@@ -3649,28 +3694,6 @@ export const CARDS: Card[] = [
     "minPlayers": 1,
     "enforced": false,
     "effects": []
-  },
-  {
-    "id": "minor-clay-embankment",
-    "title": "Clay Embankment",
-    "type": "minor",
-    "cost": [
-      {
-        "food": 1
-      }
-    ],
-    "points": 0,
-    "text": "You immediately get 1 clay for every 2 clay you already have in your supply.",
-    "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "clay": 3
-        }
-      }
-    ]
   },
   {
     "id": "major-joinery",
@@ -3721,44 +3744,6 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-young-animal-market",
-    "title": "Young Animal Market",
-    "type": "minor",
-    "cost": [
-      {
-        "sheep": 1
-      }
-    ],
-    "points": 0,
-    "text": "You immediately get 1 cattle. (Effectively, you are exchanging 1 sheep for 1 cattle.)",
-    "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "cattle": 1
-        }
-      }
-    ]
-  },
-  {
-    "id": "minor-caravan",
-    "title": "Caravan",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 3,
-        "food": 3
-      }
-    ],
-    "points": 0,
-    "text": "This card provides room for 1 person.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
     "id": "major-well",
     "title": "Well",
     "type": "major",
@@ -3797,16 +3782,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "Whenever you use the \"Fishing\" Action space, you receive 1 additional Food. From Round 8, you receive 2 additional Food.",
     "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "onAction",
-        "spaceId": "fishing",
-        "goods": {
-          "food": 1
-        }
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "minor-axe",
@@ -3825,22 +3802,6 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-carpenter-s-parlor",
-    "title": "Carpenter's Parlor",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 1,
-        "stone": 1
-      }
-    ],
-    "points": 0,
-    "text": "Wooden rooms only cost you 2 wood and 2 reed each.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
     "id": "minor-baker-s-oven",
     "title": "Baker's Oven",
     "type": "minor",
@@ -3848,8 +3809,16 @@ export const CARDS: Card[] = [
     "points": 3,
     "text": "Whenever you use the \"Bake bread\" action, you can use the Baker's Oven to convert up to 2 Grain into 5 Food each. When you play this card, you can also take the \"Bake bread\" Action.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 5,
+        "limit": 2
+      }
+    ]
   },
   {
     "id": "minor-baking-tray",
@@ -3876,46 +3845,6 @@ export const CARDS: Card[] = [
     "minPlayers": 1,
     "enforced": false,
     "effects": []
-  },
-  {
-    "id": "minor-mining-hammer",
-    "title": "Mining Hammer",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 1
-      }
-    ],
-    "points": 0,
-    "text": "When you play this card, you immediately get 1 food. Each time you renovate, you can also build a stable without paying wood.",
-    "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "food": 1
-        }
-      }
-    ]
-  },
-  {
-    "id": "minor-rammed-clay",
-    "title": "Rammed Clay",
-    "type": "minor",
-    "cost": [],
-    "points": 0,
-    "text": "When you play this card, you immediately get 1 clay. You can use clay instead of wood to build fences.",
-    "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "clay": 1
-        }
-      }
-    ]
   },
   {
     "id": "minor-windmill",
@@ -3955,21 +3884,6 @@ export const CARDS: Card[] = [
     ],
     "points": 1,
     "text": "Whenever you convert any 2 goods to Food at one time using a Fireplace, Cooking Hearth or Cooking Corner, you receive 1 additional Food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-handplow",
-    "title": "Handplow",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 1
-      }
-    ],
-    "points": 0,
-    "text": "Add 5 to the current round and place 1 field tile on the corresponding round space. At the start of that round, you can plow the field.",
     "minPlayers": 1,
     "enforced": false,
     "effects": []
@@ -4026,20 +3940,11 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "Whenever you use the \"Fishing\" Action space, you receive an additional 1 Food or 1 Reed.",
     "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "onAction",
-        "spaceId": "fishing",
-        "goods": {
-          "food": 1,
-          "reed": 1
-        }
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
-    "id": "minor-manger-2",
+    "id": "minor-manger",
     "title": "Manger",
     "type": "minor",
     "cost": [
@@ -4061,8 +3966,30 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "Place 2 Food on each remaining Round space. At the start of each round, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 2,
+        "rounds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ]
+      }
+    ]
   },
   {
     "id": "minor-spices",
@@ -4133,7 +4060,7 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-canoe-2",
+    "id": "minor-canoe",
     "title": "Canoe",
     "type": "minor",
     "cost": [
@@ -4164,8 +4091,23 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "Place 1 Food on each remaining odd-numbered Round space. At the start of these rounds, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 1,
+        "rounds": [
+          1,
+          3,
+          5,
+          7,
+          9,
+          11,
+          13
+        ]
+      }
+    ]
   },
   {
     "id": "minor-potato-dibber",
@@ -4181,24 +4123,6 @@ export const CARDS: Card[] = [
     "minPlayers": 1,
     "enforced": false,
     "effects": []
-  },
-  {
-    "id": "minor-big-country",
-    "title": "Big Country",
-    "type": "minor",
-    "cost": [],
-    "points": 0,
-    "text": "For each complete round left to play, you immediately get 1 bonus point and 2 food.",
-    "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "food": 2
-        }
-      }
-    ]
   },
   {
     "id": "minor-ceramics",
@@ -4223,22 +4147,7 @@ export const CARDS: Card[] = [
     ]
   },
   {
-    "id": "minor-mantlepiece",
-    "title": "Mantlepiece",
-    "type": "minor",
-    "cost": [
-      {
-        "stone": 1
-      }
-    ],
-    "points": -3,
-    "text": "When you play this card, you immediately get 1 bonus point for each complete round left to play. You may no longer renovate your house.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-basket-2",
+    "id": "minor-basket",
     "title": "Basket",
     "type": "minor",
     "cost": [
@@ -4253,7 +4162,7 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-corn-scoop-2",
+    "id": "minor-corn-scoop",
     "title": "Corn Scoop",
     "type": "minor",
     "cost": [
@@ -4263,17 +4172,6 @@ export const CARDS: Card[] = [
     ],
     "points": 0,
     "text": "Whenever you use the \"Take 1 Grain\" Action, you receive 1 additional Grain.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-bottles",
-    "title": "Bottles",
-    "type": "minor",
-    "cost": [],
-    "points": 4,
-    "text": "For each person you have, you must pay an additional 1 clay and 1 food to play this card.",
     "minPlayers": 1,
     "enforced": false,
     "effects": []
@@ -4316,17 +4214,6 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-wool-blankets",
-    "title": "Wool Blankets",
-    "type": "minor",
-    "cost": [],
-    "points": 0,
-    "text": "During scoring, if you live in a wooden/clay/stone house by then, you get 3/2/0 bonus points.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
     "id": "minor-market-stall",
     "title": "Market Stall",
     "type": "minor",
@@ -4349,7 +4236,7 @@ export const CARDS: Card[] = [
     ]
   },
   {
-    "id": "minor-mini-pasture-2",
+    "id": "minor-mini-pasture",
     "title": "Mini Pasture",
     "type": "minor",
     "cost": [
@@ -4393,16 +4280,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "When you play this card, you receive either 1 Stone or 1 Reed.",
     "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "stone": 1,
-          "reed": 1
-        }
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "minor-fruit-tree",
@@ -4412,8 +4291,23 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "Place 1 Food on each remaining Round space for rounds 8 to 14. At the start of these rounds, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 1,
+        "rounds": [
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ]
+      }
+    ]
   },
   {
     "id": "minor-outhouse",
@@ -4432,21 +4326,6 @@ export const CARDS: Card[] = [
     "effects": []
   },
   {
-    "id": "minor-pond-hut",
-    "title": "Pond Hut",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 1
-      }
-    ],
-    "points": 1,
-    "text": "Place 1 food on each of the next 3 round spaces. At the start of these rounds, you get the food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
     "id": "minor-private-forest",
     "title": "Private Forest",
     "type": "minor",
@@ -4458,315 +4337,23 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "Place 1 Wood on each remaining even-numbered Round space. At the start of these rounds, you receive the Wood.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-herring-pot",
-    "title": "Herring Pot",
-    "type": "minor",
-    "cost": [
-      {
-        "clay": 1
-      }
-    ],
-    "points": 0,
-    "text": "Each time you use the \"Fishing\" accumulation space, place 1 food on each of the next 3 round spaces. At the start of these rounds, you get the food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-milk-jug",
-    "title": "Milk Jug",
-    "type": "minor",
-    "cost": [
-      {
-        "clay": 1
-      }
-    ],
-    "points": 0,
-    "text": "Each time any player (including you) uses the \"Cattle Market\" accumulation space, you get 3 food, and each other player gets 1 food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-claypipe",
-    "title": "Claypipe",
-    "type": "minor",
-    "cost": [
-      {
-        "clay": 1
-      }
-    ],
-    "points": 0,
-    "text": "In the returning home phase of each round, if you gained at least 7 building resources in the preceding work phase, you get 2 food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-junk-room",
-    "title": "Junk Room",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 1,
-        "clay": 1
-      }
-    ],
-    "points": 0,
-    "text": "Each time after you build an improvement, including this one, you get 1 food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-brook",
-    "title": "Brook",
-    "type": "minor",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you use one of the four action spaces above the \"Fishing\" accumulation space, you get 1 additional food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-scullery",
-    "title": "Scullery",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 1,
-        "clay": 1
-      }
-    ],
-    "points": 0,
-    "text": "At the start of each round, if you live in a wooden house, you get 1 food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-three-field-rotation",
-    "title": "Three-Field Rotation",
-    "type": "minor",
-    "cost": [],
-    "points": 0,
-    "text": "At the start of the field phase of each harvest, if you have at least 1 grain field, 1 vegetable field, and 1 empty field, you get 3 food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-pitchfork",
-    "title": "Pitchfork",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 1
-      }
-    ],
-    "points": 0,
-    "text": "Each time you use the \"Grain Seeds\" action space, if the \"Farmland\" action space is occupied you also get 3 food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-dutch-windmill",
-    "title": "Dutch Windmill",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 2,
-        "stone": 2
-      }
-    ],
-    "points": 2,
-    "text": "Each time you take a \"Bake Bread\" action in a round immediately following a harvest, you get 3 additional food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-large-greenhouse",
-    "title": "Large Greenhouse",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 2
-      }
-    ],
-    "points": 0,
-    "text": "Add 4, 7, and 9 to the current round and place 1 vegetable on each corresponding round space. At the start of these rounds, you get the vegetable.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-clearing-spade",
-    "title": "Clearing Spade",
-    "type": "minor",
-    "cost": [
-      {
-        "wood": 1
-      }
-    ],
-    "points": 0,
-    "text": "At any time, you can move 1 crop from a planted field containing at least 2 crops to an empty field.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-thick-forest",
-    "title": "Thick Forest",
-    "type": "minor",
-    "cost": [],
-    "points": 0,
-    "text": "Place 1 wood on each remaining even-numbered round space. At the start of these rounds, you get the wood.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-lumber-mill",
-    "title": "Lumber Mill",
-    "type": "minor",
-    "cost": [
-      {
-        "stone": 2
-      }
-    ],
-    "points": 2,
-    "text": "Every improvement costs you 1 wood less.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-loam-pit",
-    "title": "Loam Pit",
-    "type": "minor",
-    "cost": [
-      {
-        "food": 1
-      }
-    ],
-    "points": 1,
-    "text": "Each time you use the \"Day Laborer\" action space, you also get 3 clay.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-hard-porcelain",
-    "title": "Hard Porcelain",
-    "type": "minor",
-    "cost": [
-      {
-        "clay": 1
-      }
-    ],
-    "points": 0,
-    "text": "At any time, you can exchange 2/3/4 clay for 1/2/3 stone.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "minor-acorns-basket",
-    "title": "Acorns Basket",
-    "type": "minor",
-    "cost": [
-      {
-        "reed": 1
-      }
-    ],
-    "points": 0,
-    "text": "Place 1 wild boar on each of the 2 round spaces. At the start of these rounds, you get the wild boar.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-cottager",
-    "title": "Cottager",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you use the \"Day Laborer\" action space, you can also either build exactly 1 room or renovate your house. Either way, you have to pay the cost.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-assistant-tiller",
-    "title": "Assistant Tiller",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you use the \"Day Laborer\" action space, you can also plow 1 field.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-master-bricklayer",
-    "title": "Master Bricklayer",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you build a major improvement, reduce the stone cost by the number of rooms you have built onto you initial house.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-stable-architect",
-    "title": "Stable Architect",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "During scoring, you get 1 bonus point for each unfenced stable in your farmyard.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-consultant",
-    "title": "Consultant",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "When you play this card in a 1-/2-/3-/4- player game, you immediately get 2 grain/3 clay/2 reed/2 sheep.",
-    "minPlayers": 1,
     "enforced": true,
     "effects": [
       {
-        "kind": "gain",
-        "goods": {
-          "grain": 2,
-          "clay": 3,
-          "reed": 2,
-          "sheep": 2
-        }
+        "kind": "roundDrip",
+        "good": "wood",
+        "amount": 1,
+        "rounds": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14
+        ]
       }
     ]
-  },
-  {
-    "id": "occupation-sheep-walker",
-    "title": "Sheep Walker",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "At any time, you can exchange 1 sheep for either 1 wild boar, 1 vegetable, or 1 stone.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
   },
   {
     "id": "minor-acreage",
@@ -4776,187 +4363,6 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "When you Sow, you can plant 2 Grain fields on this card. (This card does not count as a field when scoring.)",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-oven-firing-boy",
-    "title": "Oven Firing Boy",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you use a wood accumulation space, you get an additional \"Bake Bread\" action.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-paper-maker",
-    "title": "Paper Maker",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Immediately before playing each occupation after this one, you can pay 1 wood total to get 1 food for each occupation you have in front of you.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-roughcaster",
-    "title": "Roughcaster",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you build at least 1 clay room or renovate your house from clay to stone, you also get 3 food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-wall-builder",
-    "title": "Wall Builder",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you build at least 1 room, you can place 1 food on each of the next 4 round spaces. At the start of these rounds, you get the food.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-scythe-worker",
-    "title": "Scythe Worker",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "When you play this card, you immediately get 1 grain. In the field phase of each harvest, you can harvest 1 additional grain from each of your grain fields.",
-    "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "grain": 1
-        }
-      }
-    ]
-  },
-  {
-    "id": "occupation-childless",
-    "title": "Childless",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "At the start of each round, if you have at least 3 rooms but only 2 people, you get 1 food and 1 crop of your choice (grain or vegetable)",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-wood-cutter",
-    "title": "Wood Cutter",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you use a wood accumulation space, you get 1 additional wood.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-small-scale-farmer",
-    "title": "Small-scale Farmer",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "As long as you live in a house with exactly 2 rooms, at the start of each round, you get 1 wood.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-firewood-collector",
-    "title": "Firewood Collector",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you use the \"Farmland\", \"Grain Seeds\", Grain Utilization\", or \"Cultivation\" action space, at the end of that turn, you get 1 wood.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-geologist",
-    "title": "Geologist",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you use the \"Forest\" or \"Reed Bank\" accumulation space, you also get 1 clay. In games with 3 or more players, this also applies to the \"Clay Pit\".",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-roof-ballaster",
-    "title": "Roof Ballaster",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "When you play this card, you can immediately pay 1 food to get 1 stone for each room you have.",
-    "minPlayers": 1,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-priest",
-    "title": "Priest",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "When you play this card, if you live in a clay house with exactly 2 rooms, you immediately get 3 clay, 2 reed, and 2 stone.",
-    "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "clay": 3,
-          "reed": 2,
-          "stone": 2
-        }
-      }
-    ]
-  },
-  {
-    "id": "occupation-harpooner",
-    "title": "Harpooner",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you use the \"Fishing\" accumulation space you can also pay 1 wood to get 1 food for each person you have, and 1 reed",
-    "minPlayers": 3,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-lutenist",
-    "title": "Lutenist",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time another player uses the \"Traveling Players\" accumulation space, you get 1 food and 1 wood. Immediately after, you can buy exactly 1 vegetable for 2 food.",
-    "minPlayers": 4,
-    "enforced": false,
-    "effects": []
-  },
-  {
-    "id": "occupation-cattle-feeder",
-    "title": "Cattle Feeder",
-    "type": "occupation",
-    "cost": [],
-    "points": 0,
-    "text": "Each time you use the \"Grain Seeds\" action space, you can also buy 1 cattle for 1 food.",
-    "minPlayers": 4,
     "enforced": false,
     "effects": []
   },
@@ -5077,15 +4483,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "For each Round that has not yet begun when you play this card, you receive 1 Bonus point and 2 Food. (Write the Bonus point(s) on the scoring pad.)",
     "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "gain",
-        "goods": {
-          "food": 2
-        }
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "minor-dozing-bull",
@@ -5106,13 +4505,8 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "Place 1 Vegetable from your own supply on this card. At any time, you can Harvest this Vegetable and convert it to Food. If it is still on the card at the end of the game, you receive 2 Bonus points. (You can count the Vegetable in scoring at the end of the game.)",
     "minPlayers": 1,
-    "enforced": true,
-    "effects": [
-      {
-        "kind": "points",
-        "points": 2
-      }
-    ]
+    "enforced": false,
+    "effects": []
   },
   {
     "id": "minor-scarecrow",

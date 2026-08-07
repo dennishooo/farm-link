@@ -11,20 +11,42 @@ import {
   canAfford,
   cardById,
   dealCards,
+  discountFor,
   payOption,
+  scheduledDrips,
 } from './index'
-import { createGame, occupationCost, takeAction, currentPlayer } from '../engine'
+import {
+  collectRoundGoods,
+  convertGoods,
+  createGame,
+  currentPlayer,
+  occupationCost,
+  takeAction,
+} from '../engine'
 import { cardPoints } from '../scoring'
 import type { Card } from './types'
 
 const deterministic = () => 0.42
 
 describe('card data', () => {
-  it('ships the full base-game pool', () => {
-    expect(CARDS.length).toBeGreaterThan(380)
-    expect(OCCUPATIONS.length).toBeGreaterThan(190)
-    expect(MINOR_IMPROVEMENTS.length).toBeGreaterThan(180)
-    expect(MAJOR_IMPROVEMENTS.length).toBeGreaterThan(0)
+  it('ships the classic base-game deck', () => {
+    expect(CARDS).toHaveLength(337)
+    expect(OCCUPATIONS).toHaveLength(181)
+    expect(MINOR_IMPROVEMENTS).toHaveLength(146)
+    // All ten base-game majors, including the two ovens the source database
+    // files under an expansion.
+    expect(MAJOR_IMPROVEMENTS).toHaveLength(10)
+  })
+
+  it('includes both ovens so bread baking is possible', () => {
+    const titles = MAJOR_IMPROVEMENTS.map((card) => card.title)
+    expect(titles).toContain('Clay Oven')
+    expect(titles).toContain('Stone Oven')
+  })
+
+  it('excludes the Revised Edition additions', () => {
+    // "Pond Hut" is Base (Revised) only; it must not be in the classic deck.
+    expect(CARDS.find((card) => card.title === 'Pond Hut')).toBeUndefined()
   })
 
   it('gives every card a unique id', () => {
@@ -269,5 +291,120 @@ describe('card scoring', () => {
     if (effect?.kind !== 'pointsPer') return
     // Two starting rooms.
     expect(cardPoints(player)).toBe(perRoom.points + 2 * effect.points)
+  })
+})
+
+describe('round-space drips', () => {
+  it('schedules only rounds still ahead of the play', () => {
+    const card = CARDS.find((c) => c.effects.some((e) => e.kind === 'roundDrip'))!
+    const early = scheduledDrips(card, 0)
+    const late = scheduledDrips(card, 12)
+    expect(early.length).toBeGreaterThan(late.length)
+    for (const entry of late) expect(entry.round).toBeGreaterThan(12)
+  })
+
+  it('pays the goods out at the start of the matching round', () => {
+    const state = createGame({ names: ['Ann', 'Bo'], random: deterministic })
+    const player = state.players[0]
+    player.roundGoods = [{ round: 2, good: 'food', amount: 3 }]
+    const before = player.food
+
+    state.round = 2
+    collectRoundGoods(state)
+
+    expect(state.players[0].food).toBe(before + 3)
+    expect(state.players[0].roundGoods).toEqual([])
+  })
+
+  it('leaves goods for other rounds untouched', () => {
+    const state = createGame({ names: ['Ann'], random: deterministic })
+    state.players[0].roundGoods = [
+      { round: 2, good: 'clay', amount: 1 },
+      { round: 5, good: 'clay', amount: 1 },
+    ]
+    state.round = 2
+    collectRoundGoods(state)
+    expect(state.players[0].roundGoods).toEqual([{ round: 5, good: 'clay', amount: 1 }])
+  })
+})
+
+describe('conversions', () => {
+  it('turns goods into food at the card rate', () => {
+    const state = createGame({ names: ['Ann'], random: deterministic })
+    const player = state.players[0]
+    const oven = cardById('major-clay-oven')!
+    player.played.push(oven.id)
+    player.grain = 2
+    const foodBefore = player.food
+
+    expect(convertGoods(state, 0, oven.id, 1)).toEqual({ ok: true })
+    expect(player.grain).toBe(1)
+    expect(player.food).toBe(foodBefore + 5)
+  })
+
+  it('honours the per-use limit', () => {
+    const state = createGame({ names: ['Ann'], random: deterministic })
+    const player = state.players[0]
+    const oven = cardById('major-clay-oven')!
+    player.played.push(oven.id)
+    player.grain = 10
+    const foodBefore = player.food
+
+    // Clay Oven converts at most 1 grain per use.
+    convertGoods(state, 0, oven.id, 5)
+    expect(player.grain).toBe(9)
+    expect(player.food).toBe(foodBefore + 5)
+  })
+
+  it('refuses a card the player has not played', () => {
+    const state = createGame({ names: ['Ann'], random: deterministic })
+    state.players[0].grain = 5
+    expect(convertGoods(state, 0, 'major-clay-oven', 1)).toMatchObject({
+      ok: false,
+      reason: 'noSuchConversion',
+    })
+  })
+
+  it('refuses when the player lacks the goods', () => {
+    const state = createGame({ names: ['Ann'], random: deterministic })
+    state.players[0].played.push('major-clay-oven')
+    state.players[0].grain = 0
+    expect(convertGoods(state, 0, 'major-clay-oven', 1)).toMatchObject({
+      ok: false,
+      reason: 'notEnoughToConvert',
+    })
+  })
+
+  it('reads "5 Food each" as five food per unit', () => {
+    const bakehouse = CARDS.find((c) => c.title === 'Bakehouse')
+    if (!bakehouse) return
+    const effect = bakehouse.effects.find((e) => e.kind === 'convert')
+    if (effect?.kind !== 'convert') return
+    expect(effect.rate).toBe(5)
+  })
+})
+
+describe('build discounts', () => {
+  it('reduces the material cost of a room', () => {
+    const cards = [cardById('occupation-stonecutter')!]
+    expect(discountFor(cards, 'stone', 'room')).toBe(1)
+    expect(discountFor(cards, 'wood', 'room')).toBe(0)
+  })
+
+  it('applies to renovation as well when the card says so', () => {
+    const cards = [cardById('occupation-stonecutter')!]
+    expect(discountFor(cards, 'stone', 'renovation')).toBe(1)
+  })
+
+  it('makes a stone room cheaper in play', () => {
+    const state = createGame({ names: ['Ann', 'Bo'], random: deterministic })
+    const player = state.players[0]
+    player.house = 'stone'
+    player.played.push('occupation-stonecutter')
+    player.stone = 4 // one less than the usual 5
+    player.reed = 2
+
+    expect(takeAction(state, 'farm-expansion', { spaceIndex: 0 }).ok).toBe(true)
+    expect(state.players[0].stone).toBe(0)
   })
 })

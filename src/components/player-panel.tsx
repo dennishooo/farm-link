@@ -5,6 +5,8 @@ import { cardById } from '@/game/cards'
 import { workersLeft } from '@/game/engine'
 import { scorePlayer } from '@/game/scoring'
 import { cn } from '@/lib/utils'
+import { localiseCard } from '@/lib/i18n/format'
+import { ConvertPanel } from '@/components/convert-panel'
 import type { Player } from '@/game/types'
 
 const GOODS: { key: keyof Player; icon: string }[] = [
@@ -22,12 +24,20 @@ const GOODS: { key: keyof Player; icon: string }[] = [
 
 type PlayerPanelProps = {
   player: Player
+  playerIndex: number
   isCurrent: boolean
   showScore?: boolean
+  onConvert?: (playerIndex: number, cardId: string, units: number) => void
 }
 
-export function PlayerPanel({ player, isCurrent, showScore = false }: PlayerPanelProps) {
-  const { t } = useTranslation()
+export function PlayerPanel({
+  player,
+  playerIndex,
+  isCurrent,
+  showScore = false,
+  onConvert,
+}: PlayerPanelProps) {
+  const { t, i18n } = useTranslation()
   const score = showScore ? scorePlayer(player) : null
 
   return (
@@ -84,13 +94,14 @@ export function PlayerPanel({ player, isCurrent, showScore = false }: PlayerPane
             {player.played.map((id) => {
               const card = cardById(id)
               if (!card) return null
+              const localised = localiseCard(card, i18n.language)
               return (
                 <li
                   key={id}
-                  title={card.text}
+                  title={localised.text}
                   className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[11px] font-semibold"
                 >
-                  {card.title}
+                  {localised.title}
                   {card.points !== 0 && (
                     <span className="text-muted-foreground">
                       {' '}
@@ -101,6 +112,10 @@ export function PlayerPanel({ player, isCurrent, showScore = false }: PlayerPane
               )
             })}
           </ul>
+        )}
+
+        {onConvert && !showScore && (
+          <ConvertPanel player={player} playerIndex={playerIndex} onConvert={onConvert} />
         )}
 
         {score && (

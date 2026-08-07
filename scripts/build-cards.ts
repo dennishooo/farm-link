@@ -15,15 +15,30 @@ import type { Card } from '../src/game/cards/types'
 const INPUT = new URL('./cards-raw.json', import.meta.url)
 const OUTPUT = new URL('../src/game/cards/data.ts', import.meta.url)
 
-/** Editions that make up the base game as this project plays it. */
-const BASE_EDITIONS = new Set(['Base', 'Base (Revised)'])
+/**
+ * The classic base-game deck, as the source database labels it. The Revised
+ * Edition additions are excluded so the deck matches one printed set.
+ */
+const BASE_EDITION = 'Base'
+
+/**
+ * Clay Oven and Stone Oven are base-game major improvements, but this database
+ * files them under the 5-6 player expansion. Bread baking needs them, so they
+ * are pulled back into the base deck by name.
+ */
+const EXTRA_MAJORS = new Set(['Clay Oven', 'Stone Oven'])
+
+function isBaseCard(entry: RawCard): boolean {
+  if (entry.base_expansion === BASE_EDITION) return true
+  return EXTRA_MAJORS.has(entry.card_title) && entry.type.includes('Major')
+}
 
 function main() {
   const raw: RawCard[] = JSON.parse(readFileSync(INPUT, 'utf-8'))
   const seen = new Map<string, number>()
 
   const cards = raw
-    .filter((entry) => BASE_EDITIONS.has(entry.base_expansion))
+    .filter(isBaseCard)
     .map((entry) => toCard(entry, seen))
     .filter((card): card is Card => card !== null)
 

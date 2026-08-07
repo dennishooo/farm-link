@@ -23,20 +23,35 @@ export type CostOption = Partial<Record<Payable, number>>
  */
 export type Cost = CostOption[]
 
+/** Things a scoring bonus can be counted against. */
+export type Countable = Payable | 'field' | 'pasture' | 'room' | 'person' | 'improvement' | 'occupation'
+
 /**
- * Effects the engine can enforce mechanically. Cards whose text does not map
- * onto one of these are still playable and still score, but their ongoing
- * text is left to the players to apply — `enforced` records which is which.
+ * Effects the engine enforces mechanically. Cards whose text does not map onto
+ * one of these are still dealt, played, and scored for printed points, but
+ * their ongoing text is left to the players — `enforced` records which is which.
  */
 export type CardEffect =
   /** Gain goods the moment the card is played. */
   | { kind: 'gain'; goods: CostOption }
-  /** Ongoing bonus goods whenever an action space is used. */
+  /** Ongoing bonus goods whenever a given action space is used. */
   | { kind: 'onAction'; spaceId: string; goods: CostOption }
   /** Flat victory points at scoring time. */
   | { kind: 'points'; points: number }
   /** Bonus points per unit of something the player owns at scoring. */
-  | { kind: 'pointsPer'; per: Payable | 'field' | 'pasture' | 'room'; points: number; each: number }
+  | { kind: 'pointsPer'; per: Countable; points: number; each: number }
+  /**
+   * Goods placed on future round spaces, collected at the start of each of
+   * those rounds. `rounds` lists the absolute round numbers.
+   */
+  | { kind: 'roundDrip'; good: Payable; amount: number; rounds: number[] }
+  /**
+   * An exchange the player may make at any time, or during feeding. Rates are
+   * per single unit of `from`. `limit` caps uses per harvest when present.
+   */
+  | { kind: 'convert'; from: Payable; to: 'food'; rate: number; limit?: number }
+  /** A standing discount when building or renovating. */
+  | { kind: 'discount'; good: Payable; amount: number; applies: 'room' | 'renovation' | 'both' }
 
 export type Card = {
   /** Stable slug derived from the title and type. */

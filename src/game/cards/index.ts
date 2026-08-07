@@ -104,3 +104,47 @@ export function actionBonuses(cards: Card[], spaceId: string): CostOption {
   }
   return total
 }
+
+/**
+ * Goods a card places on future round spaces. Rounds already played are
+ * dropped, so a card played late pays out only what is still ahead of it.
+ */
+export function scheduledDrips(
+  card: Card,
+  currentRound: number,
+): { round: number; good: Payable; amount: number }[] {
+  return card.effects.flatMap((effect) =>
+    effect.kind === 'roundDrip'
+      ? effect.rounds
+          .filter((round) => round > currentRound)
+          .map((round) => ({ round, good: effect.good, amount: effect.amount }))
+      : [],
+  )
+}
+
+/** Total discount the played cards give on a build or renovation. */
+export function discountFor(
+  cards: Card[],
+  good: Payable,
+  context: 'room' | 'renovation',
+): number {
+  return cards.reduce((total, card) => {
+    for (const effect of card.effects) {
+      if (effect.kind !== 'discount' || effect.good !== good) continue
+      if (effect.applies !== 'both' && effect.applies !== context) continue
+      total += effect.amount
+    }
+    return total
+  }, 0)
+}
+
+/** Conversions the player may make, from every card they have played. */
+export function availableConversions(cards: Card[]) {
+  return cards.flatMap((card) =>
+    card.effects.flatMap((effect) =>
+      effect.kind === 'convert'
+        ? [{ cardId: card.id, title: card.title, ...effect }]
+        : [],
+    ),
+  )
+}

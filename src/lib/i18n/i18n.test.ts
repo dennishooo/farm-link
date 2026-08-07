@@ -154,6 +154,21 @@ describe('formatting game text', () => {
     expect(text).not.toContain('木材')
   })
 
+  it('translates a card id inside a log entry', async () => {
+    await i18n.changeLanguage('zh-HK')
+    const text = formatLogEntry(
+      {
+        round: 1,
+        key: 'convert',
+        values: { name: 'Ann', amount: 1, good: 'grain', count: 5, cardId: 'major-clay-oven' },
+      },
+      i18n.getFixedT(null, 'translation'),
+    )
+    expect(text).toContain('黏土烤爐')
+    expect(text).toContain('穀物')
+    expect(text).not.toContain('Clay Oven')
+  })
+
   it('renders an error with its interpolated values', async () => {
     await i18n.changeLanguage('en')
     const text = formatError({ key: 'stablesRemaining', values: { count: 2 } }, i18n.getFixedT(null, 'translation'))

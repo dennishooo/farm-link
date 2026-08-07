@@ -1,0 +1,282 @@
+/**
+ * Traditional Chinese card text.
+ *
+ * Hand-translated, keyed by card id. This file is deliberately NOT generated:
+ * card rules text is the part players read most closely, and a machine
+ * translation that subtly changes a rule is worse than showing English.
+ *
+ * Cards absent from this map fall back to their English title and text, and
+ * the UI marks them so players know the translation is pending. Terminology
+ * follows the UI bundle in src/lib/i18n/zh-HK.ts:
+ *   木材 wood · 黏土 clay · 蘆葦 reed · 石頭 stone · 穀物 grain · 蔬菜 vegetable
+ *   食物 food · 綿羊 sheep · 野豬 boar · 牛 cattle
+ *   農場 farm · 牧場 pasture · 馬廄 stable · 房間 room · 田地 field
+ *   職業 occupation · 小進步 minor improvement · 主要進步 major improvement
+ *   收成 harvest · 回合 round · 家庭成員 family member
+ */
+
+export type CardTranslation = {
+  title: string
+  text: string
+}
+
+export const CARD_TRANSLATIONS: Record<string, CardTranslation> = {
+  // ---- Major improvements: the ten base-game cards, all translated. ----
+  'major-fireplace': {
+    title: '壁爐',
+    text: '任何時候：將蔬菜換 2 食物、綿羊換 2 食物、野豬換 2 食物、牛換 3 食物。',
+  },
+  'major-fireplace-2': {
+    title: '壁爐',
+    text: '任何時候：將蔬菜換 2 食物、綿羊換 2 食物、野豬換 2 食物、牛換 3 食物。',
+  },
+  'major-cooking-hearth': {
+    title: '爐灶',
+    text: '任何時候：將蔬菜換 3 食物、綿羊換 2 食物、野豬換 3 食物、牛換 4 食物。',
+  },
+  'major-cooking-hearth-2': {
+    title: '爐灶',
+    text: '任何時候：將蔬菜換 3 食物、綿羊換 2 食物、野豬換 3 食物、牛換 4 食物。',
+  },
+  'major-clay-oven': {
+    title: '黏土烤爐',
+    text: '「烤麵包」行動：最多可將 1 穀物轉換成 5 食物。',
+  },
+  'major-stone-oven': {
+    title: '石造烤爐',
+    text: '「烤麵包」行動：最多可將 2 穀物各轉換成 4 食物。',
+  },
+  'major-joinery': {
+    title: '木工坊',
+    text: '任何時候：將 1 木材轉換成 2 食物。計分時，供應區有 3-4 木材得 1 分，5-6 木材得 2 分，7 或以上得 3 分。',
+  },
+  'major-pottery': {
+    title: '陶器坊',
+    text: '任何時候：將 1 黏土轉換成 2 食物。計分時，供應區有 3-4 黏土得 1 分，5-6 黏土得 2 分，7 或以上得 3 分。',
+  },
+  "major-basketmaker-s-workshop": {
+    title: '編籃工坊',
+    text: '任何時候：將 1 蘆葦轉換成 3 食物。計分時，供應區有 2-3 蘆葦得 1 分，4 蘆葦得 2 分，5 或以上得 3 分。',
+  },
+  'major-well': {
+    title: '水井',
+    text: '在接下來 5 個回合的回合格上各放 1 食物。這些回合開始時，你獲得該食物。',
+  },
+
+  // ---- Minor improvements with mechanically enforced effects. ----
+  'minor-clay-pit': {
+    title: '黏土坑',
+    text: '每當你使用「打零工」行動格時，額外獲得 3 黏土。',
+  },
+  'minor-beehive': {
+    title: '蜂巢',
+    text: '在每個剩餘的偶數回合格上放 2 食物。這些回合開始時，你獲得該食物。',
+  },
+  'minor-duck-pond': {
+    title: '鴨池',
+    text: '在接下來 3 個回合格上各放 1 食物。這些回合開始時，你獲得該食物。',
+  },
+  'minor-corn-sheaf': {
+    title: '麥捆',
+    text: '打出此卡時，獲得 1 穀物。',
+  },
+  'minor-alms': {
+    title: '救濟',
+    text: '打出此卡時，每完成一個回合獲得 1 食物。',
+  },
+  'minor-cooking-corner': {
+    title: '炊事角',
+    text: '任何時候：將蔬菜換 4 食物、綿羊換 2 食物、野豬換 2 食物、牛換 3 食物。',
+  },
+  'minor-brushwood-roof': {
+    title: '柴草屋頂',
+    text: '每當你擴建或翻修房屋時，可用等量的木材代替 1 或 2 蘆葦。',
+  },
+
+  // ---- Occupations with mechanically enforced effects. ----
+  'occupation-stonecutter': {
+    title: '石匠',
+    text: '所有進步卡、房間與翻修的費用減少 1 石頭。',
+  },
+  'occupation-basketmaker': {
+    title: '編籃匠',
+    text: '每次收成時，編籃匠最多可將 1 蘆葦轉換成 3 食物。',
+  },
+  'occupation-clay-deliveryman': {
+    title: '黏土送貨員',
+    text: '在第 6 至 14 回合的回合格上各放 1 黏土。這些回合開始時，你獲得該黏土。',
+  },
+  'occupation-chief': {
+    title: '酋長',
+    text: '遊戲結束時，你的石屋每個房間額外得 1 分。（合計每個房間 3 分，而非 2 分。）',
+  },
+  'occupation-conservator': {
+    title: '保育員',
+    text: '你可以只用 1 木材翻修木屋，不需其他材料。',
+  },
+  'occupation-brushwood-collector': {
+    title: '柴草收集者',
+    text: '任何翻修或擴建時，你可用合計 1 木材代替所需的蘆葦。',
+  },
+
+  // ---- Immediate gains. ----
+  'minor-lumber': {
+    title: '木料',
+    text: '打出此卡時，獲得 3 木材。',
+  },
+  'minor-stone-exchange': {
+    title: '石頭交易所',
+    text: '打出此卡時，獲得 2 石頭。',
+  },
+  'minor-reed-exchange': {
+    title: '蘆葦交易所',
+    text: '打出此卡時，獲得 2 蘆葦。',
+  },
+  'minor-weekly-market': {
+    title: '週市集',
+    text: '打出此卡時，獲得 2 蔬菜。',
+  },
+  'minor-market-stall': {
+    title: '市集攤位',
+    text: '打出此卡時，獲得 1 蔬菜。',
+  },
+  'minor-ceramics': {
+    title: '陶藝',
+    text: '打出此卡時，獲得 2 食物。此後陶器坊對你而言視為小進步卡，且不需費用。',
+  },
+  'occupation-cattle-breeder': {
+    title: '養牛人',
+    text: '若有空間容納小牛，你的牛在第 12 回合結束時繁殖。打出此卡時，獲得 1 牛。',
+  },
+  'occupation-hobby-farmer': {
+    title: '業餘農夫',
+    text: '打出此卡時，獲得 1 蔬菜；若你有已開墾的空田，可立即播種這 1 蔬菜。',
+  },
+  'occupation-land-agent': {
+    title: '土地經紀',
+    text: '每當你使用「取得 1 蔬菜」行動格時，同時獲得 1 穀物。打出此卡時，從供應區獲得 1 蔬菜。',
+  },
+  'occupation-seed-seller': {
+    title: '種子商人',
+    text: '每當你使用「取得 1 穀物」行動格時，額外獲得 1 穀物。打出此卡時，獲得 1 穀物。',
+  },
+  'occupation-wood-distributor': {
+    title: '木材分配者',
+    text: '行動階段開始時，你可將「3 木材」行動格上的木材盡量平均分配到相鄰的黏土、蘆葦與釣魚格上。打出此卡時，獲得 2 木材。',
+  },
+  'occupation-herald': {
+    title: '傳令官',
+    text: '任何時候你都可以查看尚未放置的回合卡並重新排序（必須留在對應的階段內）。打出此卡時，獲得 2 木材。',
+  },
+
+  // ---- Goods placed on future round spaces. ----
+  'minor-herb-garden': {
+    title: '香草園',
+    text: '在接下來 5 個回合格上各放 1 食物。每個回合開始時，你獲得該食物。',
+  },
+  'minor-strawberry-patch': {
+    title: '草莓園',
+    text: '在接下來 3 個回合格上各放 1 食物。這些回合開始時，你獲得該食物。',
+  },
+  'minor-animal-pen': {
+    title: '畜欄',
+    text: '在每個剩餘的回合格上放 2 食物。每個回合開始時，你獲得該食物。',
+  },
+  'minor-carp-pond': {
+    title: '鯉魚池',
+    text: '在每個剩餘的奇數回合格上放 1 食物。這些回合開始時，你獲得該食物。',
+  },
+  'minor-fruit-tree': {
+    title: '果樹',
+    text: '在第 8 至 14 回合的回合格上各放 1 食物。這些回合開始時，你獲得該食物。',
+  },
+  'minor-stone-cart': {
+    title: '石頭推車',
+    text: '在每個剩餘的偶數回合格上放 1 石頭。這些回合開始時，你獲得該石頭。',
+  },
+  'minor-private-forest': {
+    title: '私有林地',
+    text: '在每個剩餘的偶數回合格上放 1 木材。這些回合開始時，你獲得該木材。',
+  },
+  'occupation-master-shepherd': {
+    title: '牧羊大師',
+    text: '在接下來 3 個回合格上各放 1 綿羊。這些回合開始時，你獲得該綿羊。',
+  },
+  'occupation-reed-collector': {
+    title: '蘆葦採集者',
+    text: '在接下來 4 個回合格上各放 1 蘆葦。這些回合開始時，你獲得該蘆葦。',
+  },
+  'occupation-wood-collector': {
+    title: '木材採集者',
+    text: '在接下來 5 個回合格上各放 1 木材。這些回合開始時，你獲得該木材。',
+  },
+  'occupation-wood-deliveryman': {
+    title: '木材送貨員',
+    text: '在第 8 至 14 回合剩餘的回合格上各放 1 木材。這些回合開始時，你獲得該木材。',
+  },
+
+  // ---- Conversions into food. ----
+  'minor-bakehouse': {
+    title: '麵包坊',
+    text: '每當你進行「烤麵包」行動時，可用麵包坊將最多 2 穀物各轉換成 5 食物。打出此卡時，你也可以立即進行一次「烤麵包」行動。',
+  },
+  'minor-baker-s-kitchen': {
+    title: '麵包師廚房',
+    text: '每當你進行「烤麵包」行動時，可用麵包師廚房將最多 2 穀物各轉換成 5 食物。打出此卡時，你也可以立即進行一次「烤麵包」行動。',
+  },
+  'minor-baker-s-oven': {
+    title: '麵包師烤爐',
+    text: '每當你進行「烤麵包」行動時，可用麵包師烤爐將最多 2 穀物各轉換成 5 食物。打出此卡時，你也可以立即進行一次「烤麵包」行動。',
+  },
+  'minor-water-mill': {
+    title: '水磨坊',
+    text: '收成的田地階段之後，每位玩家都可用水磨坊將最多 1 穀物轉換成 3 食物。使用水磨坊的玩家必須給你其中 1 食物。',
+  },
+  'occupation-cabinetmaker': {
+    title: '細木工',
+    text: '每次收成時，細木工最多可將 1 木材轉換成 2 食物。',
+  },
+  'occupation-potter': {
+    title: '陶匠',
+    text: '每次收成時，陶匠最多可將 1 黏土轉換成 2 食物。',
+  },
+  'occupation-stone-carver': {
+    title: '石雕師',
+    text: '每次收成時，石雕師最多可將 1 石頭轉換成 3 食物。',
+  },
+  'occupation-master-brewer': {
+    title: '釀酒大師',
+    text: '每次收成的餵食階段，釀酒大師最多可將 1 穀物轉換成 3 食物。',
+  },
+  'occupation-schnaps-distiller': {
+    title: '烈酒蒸餾師',
+    text: '每次收成的餵食階段，你最多可將 1 蔬菜轉換成 5 食物。',
+  },
+
+  // ---- Ongoing action-space bonuses. ----
+  'minor-canoe': {
+    title: '獨木舟',
+    text: '每當你使用「釣魚」行動格時，額外獲得 1 食物和 1 蘆葦。',
+  },
+
+  // ---- Scoring bonuses. ----
+  'minor-mansion': {
+    title: '宅邸',
+    text: '遊戲結束時，你的石屋每個房間額外得 2 分。（合計每個房間 4 分，而非一般的 2 分。）',
+  },
+  'minor-half-timbered-house': {
+    title: '半木結構房屋',
+    text: '遊戲結束時，你的石屋每個房間額外得 1 分。（合計每個房間 3 分，而非 2 分。）若你已打出宅邸，則此卡不再額外得分。',
+  },
+  'occupation-wooden-hut-builder': {
+    title: '木屋建造者',
+    text: '遊戲結束時，你的木屋每個房間得 1 分。',
+  },
+}
+
+/** The Chinese text for a card, or null when it has not been translated yet. */
+export function cardTranslation(cardId: string): CardTranslation | null {
+  return CARD_TRANSLATIONS[cardId] ?? null
+}
+
+export const TRANSLATED_CARD_COUNT = Object.keys(CARD_TRANSLATIONS).length
