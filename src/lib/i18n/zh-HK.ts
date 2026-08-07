@@ -34,6 +34,7 @@ export default {
     workersLeft_one: '剩餘 {{count}} 名工人',
     workersLeft_other: '剩餘 {{count}} 名工人',
     passWorker: '略過工人',
+    undo: '收回',
     newGame: '新遊戲',
     gameLog: '遊戲紀錄',
     results: '結算',
@@ -251,6 +252,11 @@ export default {
     convert: '{{name}} 使用 {{cardId}} 將 {{amount}} {{good}} 轉換成 {{count}} 食物。',
     cardAdjustGain: '{{name}} 依 {{cardId}} 獲得 {{amount}} {{good}}。',
     cardAdjustSpend: '{{name}} 依 {{cardId}} 支付 {{amount}} {{good}}。',
+    undo: '{{name}} 收回在{{space}}的行動。',
+    undoPass: '{{name}} 收回略過工人的操作。',
+    undoHarvest: '收成已收回。',
+    undoCard: '{{name}} 收回 {{cardId}} 的效果。',
+    undoAnimals: '{{name}} 收回移動動物的操作。',
   },
 
   errors: {

@@ -14,14 +14,14 @@ import type { GameState } from '@/game/types'
 
 function reset() {
   localStorage.clear()
-  useGameStore.setState({ game: null, error: null })
+  useGameStore.setState({ game: null, error: null, history: [] })
 }
 
 /** Put a deterministic game into the store, optionally tweaked first. */
 function loadGame(mutate?: (game: GameState) => void) {
   const game = createGame({ names: ['Ann', 'Bo'], random: () => 0.42 })
   mutate?.(game)
-  useGameStore.setState({ game, error: null })
+  useGameStore.setState({ game, error: null, history: [] })
   return game
 }
 
@@ -219,5 +219,45 @@ describe('game log', () => {
     expect(screen.getByText(/第 1 回合開始/)).toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('語言'), 'en')
+  })
+})
+
+describe('taking a move back', () => {
+  beforeEach(reset)
+
+  it('offers nothing to undo until a move has been made', async () => {
+    loadGame()
+    await renderUI(<App />)
+
+    expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument()
+  })
+
+  it('reverts the move and says so in the log', async () => {
+    const user = userEvent.setup()
+    loadGame()
+    await renderUI(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Forest/ }))
+    expect(screen.getByRole('button', { name: /Forest/ })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: /Undo/ }))
+
+    // The space is free again, and the board is back on Ann's turn.
+    expect(screen.getByRole('button', { name: /Forest/ })).toBeEnabled()
+    expect(screen.getByText("Ann's turn")).toBeInTheDocument()
+    expect(screen.getByText(/Ann takes back their move on Forest/)).toBeInTheDocument()
+    // What was taken back stays on the record.
+    expect(screen.getByText(/Ann takes 3 Wood/)).toBeInTheDocument()
+  })
+
+  it('stops offering undo once the history runs out', async () => {
+    const user = userEvent.setup()
+    loadGame()
+    await renderUI(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Forest/ }))
+    await user.click(screen.getByRole('button', { name: /Undo/ }))
+
+    expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument()
   })
 })

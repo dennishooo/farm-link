@@ -49,6 +49,15 @@ are looking at.
 
 ### Added
 
+- **Undo, on the record.** An "Undo" button in the header takes back the last move — a worker
+  placement, a pass, an anytime card exchange, an animal move, a resolved harvest — and restores
+  the board exactly as it was. The log is the exception: it never rewinds. What was taken back
+  keeps its line and the revert is written underneath it ("Ann takes back their move on Forest"),
+  because on a shared device anyone can quietly rewind anyone's turn, and the record of that is the
+  point rather than a side effect. The last ten moves are kept, and they persist with the save, so
+  undo survives a reload like everything else in this app. Actions the engine refused are not
+  remembered — there is nothing to take back from a move that never happened.
+
 - **Component and integration tests** — 144 of them, covering every component and the App shell.
   There were none before, and the components are where nearly every bug this project has shipped
   actually lived: the tooltip that never appeared on touch, Cultivation refusing to sow, Farm
