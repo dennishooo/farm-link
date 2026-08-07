@@ -41,6 +41,11 @@ function main() {
     .filter(isBaseCard)
     .map((entry) => toCard(entry, seen))
     .filter((card): card is Card => card !== null)
+    .map((card) =>
+      // The ovens inherit "6+" from their 5-6 player listing, which would keep
+      // them out of every normal game. They are base-game cards here.
+      EXTRA_MAJORS.has(card.title) ? { ...card, minPlayers: 1 } : card,
+    )
 
   const occupations = cards.filter((card) => card.type === 'occupation')
   const minors = cards.filter((card) => card.type === 'minor')

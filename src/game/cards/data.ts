@@ -752,7 +752,7 @@ export const CARDS: Card[] = [
     ],
     "points": 2,
     "text": "\"Bake Bread\" action: At most 1 time Grain → 5 Food When you build this improvement, you can immediately take a \"Bake Bread\" action.",
-    "minPlayers": 6,
+    "minPlayers": 1,
     "enforced": true,
     "effects": [
       {
@@ -2966,7 +2966,7 @@ export const CARDS: Card[] = [
     ],
     "points": 3,
     "text": "\"Bake Bread\" action: Up to 2 times Grain → 4 Food When you build this improvement, you can immediately take a \"Bake Bread\" action.",
-    "minPlayers": 6,
+    "minPlayers": 1,
     "enforced": true,
     "effects": [
       {

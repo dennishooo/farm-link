@@ -44,6 +44,18 @@ describe('card data', () => {
     expect(titles).toContain('Stone Oven')
   })
 
+  it('makes every major improvement reachable in a normal game', () => {
+    // Regression: the ovens inherited "6+" from their 5-6 player listing, so
+    // they were in the deck but never offered, silently disabling bread baking.
+    for (const card of MAJOR_IMPROVEMENTS) {
+      expect(card.minPlayers, card.title).toBeLessThanOrEqual(4)
+    }
+  })
+
+  it('offers all ten majors in a two-player game', () => {
+    expect(dealCards(2, deterministic).majors).toHaveLength(10)
+  })
+
   it('excludes the Revised Edition additions', () => {
     // "Pond Hut" is Base (Revised) only; it must not be in the classic deck.
     expect(CARDS.find((card) => card.title === 'Pond Hut')).toBeUndefined()
