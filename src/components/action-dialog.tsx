@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Farmyard } from '@/components/farmyard'
 import { Button } from '@/components/ui/button'
 import { allEdges } from '@/game/geometry'
 import { legalPlacements } from '@/game/farm'
 import { ROOM_COST, STABLE_COST_WOOD, FENCE_COST_WOOD } from '@/game/rules'
 import type { ActionPayload } from '@/game/engine'
+import type { TFunction } from 'i18next'
 import type { ActionSpaceId, Player } from '@/game/types'
 import { actionModeFor, spaceName, type ActionMode } from '@/lib/actions'
 
@@ -16,6 +18,7 @@ type ActionDialogProps = {
 }
 
 export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDialogProps) {
+  const { t } = useTranslation()
   const initialMode = actionModeFor(spaceId)
   const [mode, setMode] = useState<ActionMode>(initialMode === 'expansion' ? 'expansion' : initialMode)
   const [spaces, setSpaces] = useState<number[]>([])
@@ -120,27 +123,34 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={spaceName(spaceId)}
+      aria-label={t(`spaces.${spaceId}.name`, spaceName(spaceId))}
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-3 sm:items-center"
     >
       <div className="max-h-[88vh] w-full max-w-lg overflow-auto rounded-lg border border-border bg-card p-4">
-        <h2 className="text-lg font-bold">{spaceName(spaceId)}</h2>
+        <h2 className="text-lg font-bold">{t(`spaces.${spaceId}.name`, spaceName(spaceId))}</h2>
 
         {mode === 'expansion' && (
           <div className="mt-3 flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">What would you like to build?</p>
+            <p className="text-sm text-muted-foreground">{t('dialog.whatToBuild')}</p>
             <Button onClick={() => setMode('room')}>
-              Build rooms ({roomCost.amount} {roomCost.resource} + {roomCost.reed} reed each)
+              {t('dialog.buildRooms', {
+                amount: roomCost.amount,
+                resource: t(`goods.${roomCost.resource}`),
+                reed: roomCost.reed,
+              })}
             </Button>
             <Button variant="outline" onClick={() => setMode('stable')}>
-              Build stables ({STABLE_COST_WOOD} wood each, {player.stablesRemaining} left)
+              {t('dialog.buildStables', {
+                cost: STABLE_COST_WOOD,
+                remaining: player.stablesRemaining,
+              })}
             </Button>
           </div>
         )}
 
         {mode !== 'expansion' && mode !== 'none' && (
           <>
-            <p className="mt-1 text-sm text-muted-foreground">{instructionFor(mode)}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{instructionFor(mode, t)}</p>
             <div className="mt-3">
               <Farmyard
                 player={player}
@@ -157,7 +167,10 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
               <ul className="mt-2 text-xs text-muted-foreground">
                 {sowPlan.map((entry) => (
                   <li key={entry.spaceIndex}>
-                    Space {entry.spaceIndex + 1}: {entry.crop} — tap again to change
+                    {t('dialog.sowHint', {
+                      number: entry.spaceIndex + 1,
+                      crop: t(`goods.${entry.crop}`),
+                    })}
                   </li>
                 ))}
               </ul>
@@ -165,20 +178,23 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
 
             {mode === 'fence' && (
               <p className="mt-2 text-xs text-muted-foreground">
-                {fences.length} fence(s) · {fences.length * FENCE_COST_WOOD} wood · you have{' '}
-                {player.wood}
+                {t('dialog.fenceCost', {
+                  count: fences.length,
+                  wood: fences.length * FENCE_COST_WOOD,
+                  have: player.wood,
+                })}
               </p>
             )}
           </>
         )}
 
         {mode === 'none' && (
-          <p className="mt-2 text-sm text-muted-foreground">Confirm to take this action.</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t('dialog.confirmAction')}</p>
         )}
 
         <div className="mt-4 flex gap-2">
           <Button variant="outline" className="flex-1" onClick={onCancel}>
-            Cancel
+            {t('dialog.cancel')}
           </Button>
           {mode !== 'expansion' && (
             <Button
@@ -186,7 +202,7 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
               disabled={mode !== 'none' && !canConfirm}
               onClick={confirm}
             >
-              Confirm
+              {t('dialog.confirm')}
             </Button>
           )}
         </div>
@@ -195,20 +211,15 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
   )
 }
 
-function instructionFor(mode: ActionMode): string {
+function instructionFor(mode: ActionMode, t: TFunction): string {
   switch (mode) {
     case 'plow':
-      return 'Choose an empty space to plow. Fields must touch your existing fields.'
     case 'room':
-      return 'Choose spaces for new rooms. Rooms must touch your house.'
     case 'stable':
-      return 'Choose spaces for stables. Stables may go anywhere empty.'
     case 'fence':
-      return 'Tap the edges between spaces to build fences. They must fully enclose a pasture.'
     case 'sow':
-      return 'Tap a field to sow grain, again for vegetables, again to clear.'
     case 'cultivate':
-      return 'Optionally plow one field, and/or sow your empty fields.'
+      return t(`dialog.instructions.${mode}`)
     default:
       return ''
   }

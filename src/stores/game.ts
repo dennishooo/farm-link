@@ -11,10 +11,16 @@ import {
 } from '@/game/engine'
 import type { ActionSpaceId, GameState } from '@/game/types'
 
+/** An illegal action, as a translation key plus its interpolation values. */
+export type GameError = {
+  key: string
+  values?: Record<string, string | number>
+}
+
 type GameStore = {
   game: GameState | null
-  /** Message shown when an attempted action is illegal. */
-  error: string | null
+  /** Shown when an attempted action is illegal. */
+  error: GameError | null
 
   startGame: (names: string[]) => void
   play: (spaceId: ActionSpaceId, payload?: ActionPayload) => void
@@ -47,7 +53,7 @@ export const useGameStore = create<GameStore>()(
         const next = draft(current)
         const result = takeAction(next, spaceId, payload)
         if (!result.ok) {
-          set({ error: result.reason })
+          set({ error: { key: result.reason, values: result.values } })
           return
         }
         set({ game: next, error: null })
@@ -69,7 +75,7 @@ export const useGameStore = create<GameStore>()(
         const player = next.players[next.currentPlayerIndex]
         if (workersLeft(player) <= 0) return
         player.peoplePlaced += 1
-        next.log.push({ round: next.round, message: `${player.name} passes.` })
+        next.log.push({ round: next.round, key: 'pass', values: { name: player.name } })
         advanceTurn(next)
         set({ game: next, error: null })
       },

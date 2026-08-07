@@ -1,27 +1,36 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-
-const DEFAULT_NAMES = ['Player 1', 'Player 2', 'Player 3', 'Player 4']
+import { LanguageSwitcher } from '@/components/language-switcher'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export function SetupScreen({ onStart }: { onStart: (names: string[]) => void }) {
+  const { t } = useTranslation()
   const [count, setCount] = useState(2)
-  const [names, setNames] = useState(DEFAULT_NAMES)
+  // Empty means "use the localised default for this seat".
+  const [names, setNames] = useState<string[]>(['', '', '', ''])
+
+  const defaultName = (index: number) => t('setup.defaultName', { number: index + 1 })
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center gap-4 p-4">
-      <header>
-        <p className="text-sm font-bold text-primary">Agricola · Revised Edition</p>
-        <h1 className="text-4xl font-black tracking-tight">FarmLink</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Pass-and-play on one device. Fourteen rounds, six harvests, one farm to build.
-        </p>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold text-primary">{t('app.subtitle')}</p>
+          <h1 className="text-4xl font-black tracking-tight">{t('app.title')}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t('app.tagline')}</p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <LanguageSwitcher />
+          <ThemeToggle />
+        </div>
       </header>
 
       <Card>
         <CardHeader>
-          <CardTitle>Players</CardTitle>
+          <CardTitle>{t('setup.players')}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex gap-2">
@@ -33,7 +42,7 @@ export function SetupScreen({ onStart }: { onStart: (names: string[]) => void })
                 onClick={() => setCount(value)}
               >
                 {value}
-                <span className="sr-only"> player{value > 1 ? 's' : ''}</span>
+                <span className="sr-only"> {t('setup.playerCount', { count: value })}</span>
               </Button>
             ))}
           </div>
@@ -41,9 +50,12 @@ export function SetupScreen({ onStart }: { onStart: (names: string[]) => void })
           <div className="flex flex-col gap-2">
             {names.slice(0, count).map((name, index) => (
               <label key={index} className="flex flex-col gap-1 text-xs font-semibold">
-                <span className="text-muted-foreground">Player {index + 1}</span>
+                <span className="text-muted-foreground">
+                  {t('setup.playerLabel', { number: index + 1 })}
+                </span>
                 <input
                   value={name}
+                  placeholder={defaultName(index)}
                   maxLength={16}
                   onChange={(event) => {
                     const next = [...names]
@@ -61,23 +73,23 @@ export function SetupScreen({ onStart }: { onStart: (names: string[]) => void })
 
           {count === 1 && (
             <p className="rounded-md bg-accent p-2 text-xs text-accent-foreground">
-              Solo game: your adults eat 3 food each and the Forest only grows 2 wood per round.
+              {t('setup.soloNote')}
             </p>
           )}
 
           <Button
             size="lg"
             onClick={() =>
-              onStart(names.slice(0, count).map((name, i) => name.trim() || DEFAULT_NAMES[i]))
+              onStart(names.slice(0, count).map((name, i) => name.trim() || defaultName(i)))
             }
           >
-            Start game
+            {t('setup.start')}
           </Button>
         </CardContent>
       </Card>
 
       <p className="text-center text-xs text-muted-foreground">
-        Works offline. Your game is saved in this browser.
+        {t('app.offlineNote')}
       </p>
     </div>
   )

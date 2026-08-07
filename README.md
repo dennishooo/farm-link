@@ -15,6 +15,7 @@ saves your game to `localStorage`.
 | UI | React 19 + TypeScript 6 |
 | Styling | Tailwind CSS 4 (oklch tokens, light + dark) |
 | State | Zustand 5 with `persist` |
+| i18n | i18next + react-i18next (English, 繁體中文) |
 | Tests | Vitest 4 + Testing Library |
 
 The project mirrors the conventions of the Broadway client: `cn()` for class merging, `@/` path
@@ -63,6 +64,24 @@ legacy/        The original single-file v2.8 prototype, kept for reference
 
 The engine is deliberately independent of React, so the rules can be tested without rendering
 anything — see `src/game/*.test.ts`.
+
+## Languages
+
+The interface ships in English and Traditional Chinese (繁體中文), switchable from the header on
+both the setup screen and the board. The choice is detected from the browser on first visit and then
+remembered in `localStorage`.
+
+Because the game log has to re-render in whichever language is active, log entries and error
+messages are stored as translation keys plus their values rather than as finished sentences — see
+`src/lib/i18n/format.ts`. Switching language mid-game therefore retranslates the entire history,
+including the goods and action-space names interpolated into it.
+
+Card titles and rules text remain in English: they come from the community card database, which has
+no Chinese translation. Everything the app itself writes is translated.
+
+Translations live in `src/lib/i18n/en.ts` and `src/lib/i18n/zh-HK.ts`. Tests assert that both files
+declare identical key paths and identical placeholders, so a key added to one and forgotten in the
+other fails CI rather than silently falling back.
 
 ## Cards
 

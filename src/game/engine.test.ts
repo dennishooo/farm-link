@@ -94,7 +94,7 @@ describe('worker placement', () => {
     const state = game()
     takeAction(state, 'forest')
     const result = takeAction(state, 'forest')
-    expect(result).toEqual({ ok: false, reason: 'That action space is not available.' })
+    expect(result).toMatchObject({ ok: false, reason: 'spaceUnavailable' })
   })
 
   it('refuses an empty accumulation space without consuming a worker', () => {
@@ -201,7 +201,7 @@ describe('plowing and sowing', () => {
     const result = takeAction(state, 'grain-utilization', {
       sow: [{ spaceIndex: 0, crop: 'grain' }],
     })
-    expect(result).toEqual({ ok: false, reason: 'Not enough grain to sow.' })
+    expect(result).toMatchObject({ ok: false, reason: 'notEnoughGrain' })
   })
 })
 
@@ -264,7 +264,7 @@ describe('fences', () => {
     const player = state.players[0]
     player.wood = 10
     const result = buildFences(state, player, [horizontalEdge(0, 0)])
-    expect(result).toEqual({ ok: false, reason: 'Fences must form a fully enclosed pasture.' })
+    expect(result).toMatchObject({ ok: false, reason: 'fenceMustEnclose' })
     expect(player.wood).toBe(10)
   })
 
@@ -286,7 +286,7 @@ describe('fences', () => {
     player.wood = 20
     // Space 5 is a starting room.
     const result = buildFences(state, player, fenceRect(1, 0, 1, 0))
-    expect(result).toEqual({ ok: false, reason: 'You cannot fence in your house.' })
+    expect(result).toMatchObject({ ok: false, reason: 'cannotFenceHouse' })
   })
 
   it('cannot exceed the 15-fence supply', () => {

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ActionBoard } from '@/components/action-board'
 import { ActionDialog } from '@/components/action-dialog'
 import { CardPicker } from '@/components/card-picker'
@@ -6,6 +7,8 @@ import { actionModeFor } from '@/lib/actions'
 import { PlayerPanel } from '@/components/player-panel'
 import { SetupScreen } from '@/components/setup-screen'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { LanguageSwitcher } from '@/components/language-switcher'
+import { formatError, formatLogEntry } from '@/lib/i18n/format'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { currentPlayer, workersLeft, type ActionPayload } from '@/game/engine'
@@ -15,6 +18,7 @@ import { useGameStore } from '@/stores/game'
 import type { ActionSpaceId } from '@/game/types'
 
 export default function App() {
+  const { t } = useTranslation()
   const game = useGameStore((state) => state.game)
   const error = useGameStore((state) => state.error)
   const startGame = useGameStore((state) => state.startGame)
@@ -50,22 +54,27 @@ export default function App() {
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-xs font-bold text-primary">
-            Round {game.round} of {game.maxRounds}
-            {HARVEST_ROUNDS.includes(game.round) && ' · harvest this round'}
+            {t('game.round', { round: game.round, total: game.maxRounds })}
+            {HARVEST_ROUNDS.includes(game.round) && ` · ${t('game.harvestThisRound')}`}
           </p>
           <h1 className="text-2xl font-black tracking-tight">
-            {isFinished ? 'Final scores' : isHarvest ? 'Harvest' : `${active.name}'s turn`}
+            {isFinished
+              ? t('game.finalScores')
+              : isHarvest
+                ? t('game.harvest')
+                : t('game.turn', { name: active.name })}
           </h1>
         </div>
         <div className="flex gap-2">
+          <LanguageSwitcher />
           <ThemeToggle />
           {!isFinished && !isHarvest && (
             <Button variant="outline" size="sm" onClick={skipWorker}>
-              Pass worker
+              {t('game.passWorker')}
             </Button>
           )}
           <Button variant="destructive" size="sm" onClick={abandon}>
-            New game
+            {t('game.newGame')}
           </Button>
         </div>
       </header>
@@ -75,21 +84,18 @@ export default function App() {
           role="alert"
           className="rounded-md border border-destructive bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive"
         >
-          {error}
+          {formatError(error, t)}
         </p>
       )}
 
       {isHarvest && (
         <Card>
           <CardHeader>
-            <CardTitle>Harvest time</CardTitle>
+            <CardTitle>{t('harvestPanel.title')}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <p className="text-sm text-muted-foreground">
-              Fields give one crop each, then every person eats (2 food, newborns 1), then animals
-              breed. Grain and vegetables in your supply count as 1 food each if you fall short.
-            </p>
-            <Button onClick={resolveHarvest}>Resolve harvest</Button>
+            <p className="text-sm text-muted-foreground">{t('harvestPanel.description')}</p>
+            <Button onClick={resolveHarvest}>{t('harvestPanel.resolve')}</Button>
           </CardContent>
         </Card>
       )}
@@ -97,7 +103,7 @@ export default function App() {
       {isFinished && (
         <Card>
           <CardHeader>
-            <CardTitle>Results</CardTitle>
+            <CardTitle>{t('game.results')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ol className="flex flex-col gap-1">
@@ -109,7 +115,7 @@ export default function App() {
                   <span className="font-semibold">
                     {rank}. {player.name}
                   </span>
-                  <span className="font-bold">{score.total} pts</span>
+                  <span className="font-bold">{t('game.points', { count: score.total })}</span>
                 </li>
               ))}
             </ol>
@@ -119,7 +125,7 @@ export default function App() {
 
       <div className="grid gap-3 lg:grid-cols-[1fr_1fr]">
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-bold text-muted-foreground">Farms</h2>
+          <h2 className="text-sm font-bold text-muted-foreground">{t('game.farms')}</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
             {game.players.map((player, index) => (
               <PlayerPanel
@@ -134,19 +140,21 @@ export default function App() {
 
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-bold text-muted-foreground">
-            Action board
-            {!isFinished && !isHarvest && ` · ${workersLeft(active)} worker(s) left`}
+            {t('game.actionBoard')}
+            {!isFinished &&
+              !isHarvest &&
+              ` · ${t('game.workersLeft', { count: workersLeft(active) })}`}
           </h2>
           <ActionBoard game={game} onChoose={choose} disabled={isFinished || isHarvest} />
         </section>
       </div>
 
       <details className="rounded-lg border border-border bg-card p-3">
-        <summary className="cursor-pointer text-sm font-bold">Game log</summary>
+        <summary className="cursor-pointer text-sm font-bold">{t('game.gameLog')}</summary>
         <ol className="mt-2 flex flex-col-reverse gap-1 text-xs text-muted-foreground">
           {game.log.slice(-40).map((entry, index) => (
             <li key={index}>
-              <span className="font-semibold">R{entry.round}</span> · {entry.message}
+              <span className="font-semibold">R{entry.round}</span> · {formatLogEntry(entry, t)}
             </li>
           ))}
         </ol>
