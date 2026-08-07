@@ -12,6 +12,7 @@ import {
   type ActionPayload,
 } from '@/game/engine'
 import type { ActionSpaceId, GameState } from '@/game/types'
+import type { Payable } from '@/game/cards/types'
 
 /** An illegal action, as a translation key plus its interpolation values. */
 export type GameError = {
@@ -28,7 +29,7 @@ type GameStore = {
   play: (spaceId: ActionSpaceId, payload?: ActionPayload) => void
   resolveHarvest: () => void
   skipWorker: () => void
-  convert: (playerIndex: number, cardId: string, units: number) => void
+  convert: (playerIndex: number, cardId: string, units: number, good?: Payable) => void
   moveAnimals: (playerIndex: number, fromKey: string, toKey: string, count: number) => void
   clearError: () => void
   abandon: () => void
@@ -85,12 +86,12 @@ export const useGameStore = create<GameStore>()(
       },
 
       /** Exchange goods for food using a played card, at any time. */
-      convert: (playerIndex, cardId, units) => {
+      convert: (playerIndex, cardId, units, good) => {
         const current = get().game
         if (!current) return
 
         const next = draft(current)
-        const result = convertGoods(next, playerIndex, cardId, units)
+        const result = convertGoods(next, playerIndex, cardId, units, good)
         if (!result.ok) {
           set({ error: { key: result.reason, values: result.values } })
           return

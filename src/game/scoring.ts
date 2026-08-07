@@ -70,6 +70,23 @@ function countUnit(player: Player, per: string): number {
       return player.boar
     case 'cattle':
       return player.cattle
+    // Building resources left in supply, which the craft buildings score on.
+    case 'wood':
+      return player.wood
+    case 'clay':
+      return player.clay
+    case 'reed':
+      return player.reed
+    case 'stone':
+      return player.stone
+    case 'food':
+      return player.food
+    case 'person':
+      return player.people
+    case 'improvement':
+      return player.played.filter((id) => cardById(id)?.type !== 'occupation').length
+    case 'occupation':
+      return player.played.filter((id) => cardById(id)?.type === 'occupation').length
     default:
       return 0
   }

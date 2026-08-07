@@ -24,6 +24,7 @@ import {
   takeAction,
 } from '../engine'
 import { cardPoints } from '../scoring'
+import { houseAnimals } from '../farm'
 import type { Card } from './types'
 
 const deterministic = () => 0.42
@@ -366,6 +367,57 @@ describe('conversions', () => {
     convertGoods(state, 0, oven.id, 5)
     expect(player.grain).toBe(9)
     expect(player.food).toBe(foodBefore + 5)
+  })
+
+  it('uses the rate for the good the player picked, not the first listed', () => {
+    // Regression: Cooking Hearth lists a rate per animal type. Without the
+    // good, every button used the first rate (vegetable) and silently failed.
+    const state = createGame({ names: ['Ann'], random: deterministic })
+    const player = state.players[0]
+    player.played.push('major-cooking-hearth')
+    player.fences = ['h:0:0', 'h:1:0', 'v:0:0', 'v:0:1']
+    houseAnimals(player, 'sheep', 2)
+    const foodBefore = player.food
+
+    expect(convertGoods(state, 0, 'major-cooking-hearth', 1, 'sheep')).toEqual({ ok: true })
+    expect(player.sheep).toBe(1)
+    expect(player.food).toBe(foodBefore + 2)
+  })
+
+  it('takes cooked animals out of their housing', () => {
+    const state = createGame({ names: ['Ann'], random: deterministic })
+    const player = state.players[0]
+    player.played.push('major-cooking-hearth')
+    player.fences = ['h:0:0', 'h:1:0', 'v:0:0', 'v:0:1']
+    houseAnimals(player, 'sheep', 2)
+
+    convertGoods(state, 0, 'major-cooking-hearth', 1, 'sheep')
+    const housed = player.animalPlacement.reduce((sum, entry) => sum + entry.count, 0)
+    expect(housed).toBe(player.sheep)
+  })
+
+  it('refuses a good the card does not convert', () => {
+    const state = createGame({ names: ['Ann'], random: deterministic })
+    state.players[0].played.push('major-clay-oven')
+    state.players[0].stone = 5
+    expect(convertGoods(state, 0, 'major-clay-oven', 1, 'stone')).toMatchObject({
+      ok: false,
+      reason: 'noSuchConversion',
+    })
+  })
+
+  it('scores only the highest tier reached', () => {
+    const state = createGame({ names: ['Ann'], random: deterministic })
+    const player = state.players[0]
+    player.played = ['major-joinery']
+    const joinery = cardById('major-joinery')!
+
+    player.wood = 2 // below the first threshold of 3
+    expect(cardPoints(player)).toBe(joinery.points)
+    player.wood = 5 // second tier
+    expect(cardPoints(player)).toBe(joinery.points + 2)
+    player.wood = 20 // capped at the top tier
+    expect(cardPoints(player)).toBe(joinery.points + 3)
   })
 
   it('refuses a card the player has not played', () => {

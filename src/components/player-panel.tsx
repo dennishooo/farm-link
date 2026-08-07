@@ -9,6 +9,7 @@ import { localiseCard } from '@/lib/i18n/format'
 import { ConvertPanel } from '@/components/convert-panel'
 import { AnimalPanel } from '@/components/animal-panel'
 import type { Player } from '@/game/types'
+import type { Payable } from '@/game/cards/types'
 
 const GOODS: { key: keyof Player; icon: string }[] = [
   { key: 'wood', icon: '🪵' },
@@ -28,7 +29,7 @@ type PlayerPanelProps = {
   playerIndex: number
   isCurrent: boolean
   showScore?: boolean
-  onConvert?: (playerIndex: number, cardId: string, units: number) => void
+  onConvert?: (playerIndex: number, cardId: string, units: number, good: Payable) => void
   onMoveAnimals?: (playerIndex: number, fromKey: string, toKey: string, count: number) => void
 }
 

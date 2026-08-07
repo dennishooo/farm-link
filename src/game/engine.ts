@@ -515,12 +515,20 @@ export function convertGoods(
   playerIndex: number,
   cardId: string,
   units: number,
+  /**
+   * Which good to exchange. Cards like Cooking Hearth offer a rate per animal
+   * type, so without this the first listed rate would always be used and every
+   * other button on the card would silently fail.
+   */
+  good?: Payable,
 ): ActionResult {
   const player = state.players[playerIndex]
   const card = cardById(cardId)
   if (!card || !player.played.includes(cardId)) return fail('noSuchConversion')
 
-  const effect = card.effects.find((entry) => entry.kind === 'convert')
+  const effect = card.effects.find(
+    (entry) => entry.kind === 'convert' && (good === undefined || entry.from === good),
+  )
   if (effect?.kind !== 'convert') return fail('noSuchConversion')
 
   const amount = Math.min(units, effect.limit ?? units)

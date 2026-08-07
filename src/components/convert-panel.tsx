@@ -3,11 +3,12 @@ import { Button } from '@/components/ui/button'
 import { availableConversions, cardById } from '@/game/cards'
 import { localiseCard } from '@/lib/i18n/format'
 import type { Player } from '@/game/types'
+import type { Payable } from '@/game/cards/types'
 
 type ConvertPanelProps = {
   player: Player
   playerIndex: number
-  onConvert: (playerIndex: number, cardId: string, units: number) => void
+  onConvert: (playerIndex: number, cardId: string, units: number, good: Payable) => void
 }
 
 /**
@@ -36,7 +37,7 @@ export function ConvertPanel({ player, playerIndex, onConvert }: ConvertPanelPro
                 size="sm"
                 variant="outline"
                 disabled={!affordable}
-                onClick={() => onConvert(playerIndex, conversion.cardId, 1)}
+                onClick={() => onConvert(playerIndex, conversion.cardId, 1, conversion.from)}
                 title={localised.title}
                 className="h-7 text-[11px]"
               >
