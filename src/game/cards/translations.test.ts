@@ -70,10 +70,20 @@ describe('localiseCard', () => {
   })
 
   it('falls back to English and flags an untranslated card', () => {
-    const untranslated = CARDS.find((entry) => !cardTranslation(entry.id))!
-    const result = localiseCard(untranslated, 'zh-HK')
-    expect(result.title).toBe(untranslated.title)
+    // Every shipped card is translated, so this uses a synthetic id to keep
+    // the fallback path covered for any card added later.
+    const result = localiseCard(
+      { id: 'minor-not-yet-translated', title: 'Untranslated', text: 'English text' },
+      'zh-HK',
+    )
+    expect(result.title).toBe('Untranslated')
+    expect(result.text).toBe('English text')
     expect(result.translated).toBe(false)
+  })
+
+  it('has a translation for every card in the deck', () => {
+    const missing = CARDS.filter((card) => !cardTranslation(card.id))
+    expect(missing.map((card) => card.id)).toEqual([])
   })
 
   it('treats any zh variant as Chinese', () => {

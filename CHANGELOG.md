@@ -9,6 +9,16 @@ are looking at.
 
 ## [Unreleased]
 
+## [4.0.0] — 2026-08-07
+
+### Added
+
+- **Every card is now in Traditional Chinese.** All 337 — 181 occupations, 146 minor improvements
+  and 10 majors — are hand-translated, so nothing falls back to English any more. A test fails the
+  build if a card is ever added without a translation.
+- A test that rejects stray English words inside the Chinese strings, allowing only proper nouns
+  and version numbers. It caught three slips while the remaining cards were being translated.
+
 ## [3.5.0] — 2026-08-07
 
 ### Added
@@ -111,7 +121,8 @@ Revised Edition rulebook.
 
 [#1]: https://github.com/dennishooo/farm-link/issues/1
 [#2]: https://github.com/dennishooo/farm-link/issues/2
-[Unreleased]: https://github.com/dennishooo/farm-link/compare/v3.5.0...HEAD
+[Unreleased]: https://github.com/dennishooo/farm-link/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/dennishooo/farm-link/compare/v3.5.0...v4.0.0
 [3.5.0]: https://github.com/dennishooo/farm-link/compare/v3.4.0...v3.5.0
 [3.4.0]: https://github.com/dennishooo/farm-link/compare/v3.3.0...v3.4.0
 [3.3.0]: https://github.com/dennishooo/farm-link/compare/v3.2.0...v3.3.0

@@ -131,9 +131,11 @@ bun run cards:build
 
 Chinese card text lives in `src/game/cards/translations.ts`, hand-written rather than generated —
 card rules are the text players read most closely, and a machine translation that subtly changes a
-rule is worse than showing English. Every card whose effect the engine enforces is translated, and a
-test fails the build if that stops being true. Cards without a translation fall back to English and
-say so in the picker.
+rule is worse than showing English. **All 337 cards are translated.**
+
+Two tests keep it that way: one fails if a card lacks a translation, the other rejects stray English
+words inside the Chinese strings. The English fallback and its "translation pending" label remain
+for any card added later.
 
 ## What is implemented
 
