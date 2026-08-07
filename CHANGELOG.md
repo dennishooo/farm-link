@@ -9,9 +9,21 @@ are looking at.
 
 ## [Unreleased]
 
+## [3.5.0] — 2026-08-07
+
 ### Added
 
-- Version number and build date in the app footer, linking to this changelog.
+- Traditional Chinese for 75 more minor improvements, taking card coverage to 145 of 337. The rest
+  still fall back to English and say so in the picker.
+
+## [3.4.0] — 2026-08-07
+
+### Added
+
+- Version number and build date in the app footer, linking to this changelog. The version is
+  injected from `package.json` at build time, so it always matches the running bundle — the service
+  worker updates in the background, which makes "latest" ambiguous when reporting a problem.
+- This changelog, reconstructed from the commit history, and `vX.Y.Z` release tags.
 
 ## [3.3.0] — 2026-08-07
 
@@ -99,7 +111,9 @@ Revised Edition rulebook.
 
 [#1]: https://github.com/dennishooo/farm-link/issues/1
 [#2]: https://github.com/dennishooo/farm-link/issues/2
-[Unreleased]: https://github.com/dennishooo/farm-link/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/dennishooo/farm-link/compare/v3.5.0...HEAD
+[3.5.0]: https://github.com/dennishooo/farm-link/compare/v3.4.0...v3.5.0
+[3.4.0]: https://github.com/dennishooo/farm-link/compare/v3.3.0...v3.4.0
 [3.3.0]: https://github.com/dennishooo/farm-link/compare/v3.2.0...v3.3.0
 [3.2.0]: https://github.com/dennishooo/farm-link/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/dennishooo/farm-link/compare/v3.0.0...v3.1.0
