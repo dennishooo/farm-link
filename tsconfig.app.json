@@ -21,7 +21,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    // `node` is needed by tests that read source files off disk.
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node"],
     "paths": {
       "@/*": ["./src/*"]
     }

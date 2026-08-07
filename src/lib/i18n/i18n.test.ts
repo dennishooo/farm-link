@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 import i18n, { SUPPORTED_LANGUAGES } from './index'
 import en from './en'
@@ -70,6 +71,31 @@ describe('translation bundles', () => {
   })
 })
 
+describe('engine keys', () => {
+  it('has a translation for every key the engine logs or fails with', async () => {
+    // Vitest runs from the project root, so these paths are stable.
+    const engine = await readFile('src/game/engine.ts', 'utf-8')
+    const store = await readFile('src/stores/game.ts', 'utf-8')
+    const source = engine + store
+
+    const logKeys = [...source.matchAll(/logMessage\(\s*\w+,\s*'([\w-]+)'/g)].map((m) => m[1])
+    const passKey = [...source.matchAll(/key:\s*'([\w-]+)'/g)].map((m) => m[1])
+    const errorKeys = [...source.matchAll(/fail\('([\w-]+)'/g)].map((m) => m[1])
+
+    expect(logKeys.length).toBeGreaterThan(10)
+    expect(errorKeys.length).toBeGreaterThan(20)
+
+    for (const key of [...logKeys, ...passKey]) {
+      expect(Object.keys(en.log), `log.${key}`).toContain(key)
+      expect(Object.keys(zhHK.log), `log.${key}`).toContain(key)
+    }
+    for (const key of errorKeys) {
+      expect(Object.keys(en.errors), `errors.${key}`).toContain(key)
+      expect(Object.keys(zhHK.errors), `errors.${key}`).toContain(key)
+    }
+  })
+})
+
 describe('language resolution', () => {
   it('actually resolves zh-HK rather than falling back to English', async () => {
     // Regression: nonExplicitSupportedLngs narrowed zh-HK to zh, which was not
@@ -94,13 +120,13 @@ describe('language resolution', () => {
 describe('formatting game text', () => {
   it('renders a log entry in English', async () => {
     await i18n.changeLanguage('en')
-    const text = formatLogEntry({ round: 1, key: 'plow', values: { name: 'Ann' } }, i18n.getFixedT(null))
+    const text = formatLogEntry({ round: 1, key: 'plow', values: { name: 'Ann' } }, i18n.getFixedT(null, 'translation'))
     expect(text).toBe('Ann plows a field.')
   })
 
   it('renders the same entry in Traditional Chinese', async () => {
     await i18n.changeLanguage('zh-HK')
-    const text = formatLogEntry({ round: 1, key: 'plow', values: { name: 'Ann' } }, i18n.getFixedT(null))
+    const text = formatLogEntry({ round: 1, key: 'plow', values: { name: 'Ann' } }, i18n.getFixedT(null, 'translation'))
     expect(text).toContain('開墾')
     expect(text).toContain('Ann')
   })
@@ -109,7 +135,7 @@ describe('formatting game text', () => {
     await i18n.changeLanguage('zh-HK')
     const text = formatLogEntry(
       { round: 1, key: 'takeGoods', values: { name: 'Ann', amount: 3, good: 'wood' } },
-      i18n.getFixedT(null),
+      i18n.getFixedT(null, 'translation'),
     )
     expect(text).toContain('木材')
     expect(text).not.toContain('wood')
@@ -117,26 +143,26 @@ describe('formatting game text', () => {
 
   it('translates action space ids inside log values', async () => {
     await i18n.changeLanguage('zh-HK')
-    const text = formatLogEntry({ round: 1, key: 'spaceRevealed', values: { space: 'forest' } }, i18n.getFixedT(null))
+    const text = formatLogEntry({ round: 1, key: 'spaceRevealed', values: { space: 'forest' } }, i18n.getFixedT(null, 'translation'))
     expect(text).toContain('森林')
   })
 
   it('never translates a player name that collides with a goods key', async () => {
     await i18n.changeLanguage('zh-HK')
-    const text = formatLogEntry({ round: 1, key: 'plow', values: { name: 'wood' } }, i18n.getFixedT(null))
+    const text = formatLogEntry({ round: 1, key: 'plow', values: { name: 'wood' } }, i18n.getFixedT(null, 'translation'))
     expect(text).toContain('wood')
     expect(text).not.toContain('木材')
   })
 
   it('renders an error with its interpolated values', async () => {
     await i18n.changeLanguage('en')
-    const text = formatError({ key: 'stablesRemaining', values: { count: 2 } }, i18n.getFixedT(null))
+    const text = formatError({ key: 'stablesRemaining', values: { count: 2 } }, i18n.getFixedT(null, 'translation'))
     expect(text).toBe('You only have 2 stable(s) left.')
   })
 
   it('translates the material inside an error', async () => {
     await i18n.changeLanguage('zh-HK')
-    const text = formatError({ key: 'renovationCost', values: { count: 2, material: 'clay' } }, i18n.getFixedT(null))
+    const text = formatError({ key: 'renovationCost', values: { count: 2, material: 'clay' } }, i18n.getFixedT(null, 'translation'))
     expect(text).toContain('黏土')
   })
 })

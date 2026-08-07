@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next'
+import en from './en'
 import type { LogEntry } from '@/game/types'
 import type { GameError } from '@/stores/game'
 
@@ -25,16 +26,35 @@ function localiseValues(
 
   const result: Record<string, string | number> = {}
   for (const [key, value] of Object.entries(values)) {
-    const mapper = TRANSLATED_VALUES[key]
+    const mapper = Object.hasOwn(TRANSLATED_VALUES, key) ? TRANSLATED_VALUES[key] : undefined
     result[key] = mapper && typeof value === 'string' ? mapper(value, t) : value
   }
   return result
 }
 
+/**
+ * The engine names its keys as plain strings, so the lookup is built at
+ * runtime. `LogKey`/`ErrorKey` still constrain it to the keys that exist in
+ * the bundles, so a typo in the engine is a type error rather than a raw key
+ * rendered on screen.
+ */
+export type LogKey = keyof typeof en.log
+export type ErrorKey = keyof typeof en.errors
+
+/**
+ * Per-key placeholder types cannot be checked when the key is only known at
+ * runtime, so the lookup itself goes through an untyped call. The key unions
+ * above still document and constrain what the engine may emit, and the tests
+ * assert that every key the engine uses exists in both bundles.
+ */
+type LooseT = (key: string, values: Record<string, string | number>) => string
+
 export function formatLogEntry(entry: LogEntry, t: TFunction): string {
-  return t(`log.${entry.key}`, localiseValues(entry.values, t)) as string
+  const translate = t as unknown as LooseT
+  return translate(`log.${entry.key satisfies string}`, localiseValues(entry.values, t))
 }
 
 export function formatError(error: GameError, t: TFunction): string {
-  return t(`errors.${error.key}`, localiseValues(error.values, t)) as string
+  const translate = t as unknown as LooseT
+  return translate(`errors.${error.key satisfies string}`, localiseValues(error.values, t))
 }
