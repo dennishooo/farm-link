@@ -44,7 +44,7 @@ export function AdjustPanel({ player, playerIndex, onAdjust }: AdjustPanelProps)
 
   return (
     <details className="border-t border-border pt-2">
-      <summary className="cursor-pointer text-[11px] font-bold text-muted-foreground">
+      <summary className="eyebrow cursor-pointer text-[10px] text-muted-foreground">
         {t('cards.adjust')}
       </summary>
 

@@ -80,7 +80,8 @@ export function ActionBoard({ game, onChoose, disabled = false }: ActionBoardPro
                   <span
                     className={cn(
                       'flex shrink-0 items-center gap-1 rounded-full bg-accent px-2 py-0.5',
-                      'text-xs font-bold text-accent-foreground shadow-[var(--shadow-tile)]',
+                      'text-xs font-bold text-accent-foreground',
+                      'shadow-[var(--shadow-tile)] ring-1 ring-highlight/30',
                     )}
                   >
                     <GoodIcon

@@ -8,73 +8,90 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { AppFooter } from '@/components/app-footer'
 
 /**
- * The title card. It is drawn from the same tokens as the board — the same
- * pasture green, the same clay roof, the same fence timber — so the setup
- * screen and the game look like one piece of work, and it recolours itself in
- * dark mode for free. Inline SVG rather than an image: nothing to fetch, and
- * it stays sharp on a phone, which matters for an app that has to cold-start
- * with no connection.
+ * The title badge: an oval roundel with a stippled ground and the farm inside
+ * it, which is the shape Cloud Mountain builds its whole identity out of.
+ *
+ * Drawn from the same tokens as the board — the same pasture green, the same
+ * clay roof, the same fence timber — so the setup screen and the game look like
+ * one piece of work, and it recolours itself in dark mode for free. Inline SVG
+ * rather than an image: nothing to fetch, and it stays sharp on a phone, which
+ * matters for an app that has to cold-start with no connection.
  */
-function FarmVignette() {
+function FarmRoundel() {
   return (
-    <div className="overflow-hidden rounded-xl border border-border shadow-[var(--shadow-panel)]">
-      <svg viewBox="0 0 400 130" role="presentation" aria-hidden className="block h-auto w-full">
-        <defs>
-          <linearGradient id="farm-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-accent)" />
-            <stop offset="100%" stopColor="var(--color-card)" />
-          </linearGradient>
-        </defs>
+    <svg
+      viewBox="0 0 200 240"
+      role="presentation"
+      aria-hidden
+      className="h-44 w-auto drop-shadow-[0_8px_16px_var(--shade)]"
+    >
+      <defs>
+        <clipPath id="roundel-clip">
+          <ellipse cx="100" cy="120" rx="92" ry="112" />
+        </clipPath>
+        {/* The stipple, as an actual pattern so the dots stay round and even
+            however the badge is scaled. */}
+        <pattern id="roundel-stipple" width="9" height="9" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="1.35" fill="var(--color-primary)" opacity="0.5" />
+        </pattern>
+      </defs>
 
-        <rect width="400" height="130" fill="url(#farm-sky)" />
-        <circle cx="332" cy="32" r="15" fill="var(--grain)" opacity="0.9" />
+      <g clipPath="url(#roundel-clip)">
+        <rect width="200" height="240" fill="var(--color-card)" />
+        <rect width="200" height="240" fill="url(#roundel-stipple)" />
 
-        {/* Two ridges of pasture, the far one hazier than the near one. */}
-        <path d="M0 84 Q70 60 140 78 T280 72 T400 82 V130 H0Z" fill="var(--pasture)" opacity="0.5" />
-        <path d="M0 100 Q100 78 200 96 T400 96 V130 H0Z" fill="var(--pasture)" />
+        {/* Sun, hills, and the stipple stopping where the land begins. */}
+        <circle cx="150" cy="58" r="20" fill="var(--grain)" />
+        <path d="M-10 150 Q50 120 100 142 T210 138 V250 H-10Z" fill="var(--pasture)" opacity="0.65" />
+        <path d="M-10 172 Q60 148 120 168 T210 166 V250 H-10Z" fill="var(--pasture)" />
 
-        {/* A ploughed strip running to the bottom corner, drawn as furrows
-            rather than a block of colour. */}
-        <path d="M262 118 Q330 110 400 112 V130 H262Z" fill="var(--field)" opacity="0.9" />
-        <g stroke="var(--color-card)" strokeOpacity="0.3" strokeWidth="1.4">
-          <path d="M266 123 Q332 116 400 118" fill="none" />
-          <path d="M272 128 Q336 122 400 124" fill="none" />
+        {/* A ploughed strip along the bottom, drawn as furrows. */}
+        <path d="M-10 206 Q70 196 210 202 V250 H-10Z" fill="var(--field)" />
+        <g stroke="var(--color-card)" strokeOpacity="0.3" strokeWidth="2" fill="none">
+          <path d="M-10 216 Q70 206 210 212" />
+          <path d="M-10 228 Q70 219 210 224" />
         </g>
 
         {/* The farmhouse: timber walls, a clay roof, a lit window. */}
-        <rect x="64" y="86" width="48" height="30" rx="2" fill="var(--wood)" />
-        <path d="M58 88 L88 64 L118 88Z" fill="var(--clay)" />
-        <rect x="72" y="95" width="13" height="12" rx="1" fill="var(--grain)" />
-        <rect x="94" y="99" width="13" height="17" rx="1" fill="var(--cattle)" opacity="0.8" />
+        <rect x="52" y="150" width="52" height="34" rx="2" fill="var(--wood)" />
+        <path d="M44 152 L78 124 L112 152Z" fill="var(--clay)" />
+        <rect x="60" y="160" width="14" height="13" rx="1" fill="var(--grain)" />
+        <rect x="84" y="164" width="14" height="20" rx="1" fill="var(--cattle)" opacity="0.8" />
 
-        {/* An orchard tree, and fencing running along the pasture. */}
-        <rect x="166" y="92" width="5" height="24" rx="2" fill="var(--wood)" />
+        {/* An orchard tree and a run of fencing. */}
+        <rect x="128" y="158" width="5" height="26" rx="2.5" fill="var(--wood)" />
         <g fill="var(--color-primary)">
-          <circle cx="168.5" cy="86" r="13" opacity="0.9" />
-          <circle cx="160" cy="92" r="9" opacity="0.75" />
-          <circle cx="177" cy="92" r="9" opacity="0.75" />
+          <circle cx="130.5" cy="150" r="14" opacity="0.9" />
+          <circle cx="121" cy="157" r="9" opacity="0.75" />
+          <circle cx="140" cy="157" r="9" opacity="0.75" />
         </g>
         <g fill="var(--wood)">
-          <rect x="200" y="98" width="4" height="20" rx="1" />
-          <rect x="226" y="98" width="4" height="20" rx="1" />
-          <rect x="252" y="98" width="4" height="20" rx="1" />
-          <rect x="200" y="102" width="56" height="3" rx="1.5" opacity="0.9" />
-          <rect x="200" y="110" width="56" height="3" rx="1.5" opacity="0.9" />
+          <rect x="150" y="176" width="4" height="20" rx="1" />
+          <rect x="174" y="176" width="4" height="20" rx="1" />
+          <rect x="150" y="180" width="34" height="3" rx="1.5" opacity="0.9" />
+          <rect x="150" y="188" width="34" height="3" rx="1.5" opacity="0.9" />
         </g>
 
-        {/* Two sheep in the near pasture, drawn the same way at two sizes. */}
+        {/* A sheep in the near pasture. */}
         <g fill="var(--sheep)">
-          <rect x="20" y="115" width="3.5" height="8" rx="1.75" />
-          <rect x="31" y="115" width="3.5" height="8" rx="1.75" />
-          <ellipse cx="27" cy="112" rx="12" ry="8" />
-          <circle cx="38" cy="107" r="5.5" opacity="0.7" />
-          <rect x="124" y="120" width="2.5" height="6" rx="1.25" />
-          <rect x="132" y="120" width="2.5" height="6" rx="1.25" />
-          <ellipse cx="129" cy="118" rx="9" ry="6" />
-          <circle cx="137" cy="114" r="4" opacity="0.7" />
+          <rect x="26" y="192" width="3.5" height="8" rx="1.75" />
+          <rect x="37" y="192" width="3.5" height="8" rx="1.75" />
+          <ellipse cx="33" cy="189" rx="12" ry="8" />
+          <circle cx="44" cy="184" r="5.5" opacity="0.7" />
         </g>
-      </svg>
-    </div>
+      </g>
+
+      {/* The keyline last, so it sits over everything it contains. */}
+      <ellipse
+        cx="100"
+        cy="120"
+        rx="92"
+        ry="112"
+        fill="none"
+        stroke="var(--color-primary)"
+        strokeWidth="4"
+      />
+    </svg>
   )
 }
 
@@ -87,20 +104,20 @@ export function SetupScreen({ onStart }: { onStart: (names: string[]) => void })
   const defaultName = (index: number) => t('setup.defaultName', { number: index + 1 })
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center gap-4 p-4">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-bold text-primary">{t('app.subtitle')}</p>
-          <h1 className="text-4xl font-black tracking-tight">{t('app.title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t('app.tagline')}</p>
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <LanguageSwitcher />
-          <ThemeToggle />
-        </div>
-      </header>
+    <div className="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center gap-4 p-4">
+      {/* Centred like the reference lockups: badge, then the name stacked
+          under it, with the controls kept out of the composition. */}
+      <div className="absolute top-4 right-4 flex gap-2">
+        <LanguageSwitcher />
+        <ThemeToggle />
+      </div>
 
-      <FarmVignette />
+      <header className="flex flex-col items-center gap-2 text-center">
+        <FarmRoundel />
+        <p className="eyebrow text-highlight">{t('app.subtitle')}</p>
+        <h1 className="display text-5xl">{t('app.title')}</h1>
+        <p className="max-w-xs text-sm text-muted-foreground">{t('app.tagline')}</p>
+      </header>
 
       <Card>
         <CardHeader>

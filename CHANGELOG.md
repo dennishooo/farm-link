@@ -11,6 +11,18 @@ are looking at.
 
 ### Changed
 
+- **Restyled to the Cloud Mountain / farmbank references.** The palette is now bone cream, deep
+  forest green and terracotta — three colours doing the work, with the material palette pulled into
+  the same family rather than sitting beside it. Dark mode follows farmbank's warm brown ground
+  instead of a green-black one, and carries the same cream, so the two themes read as one product.
+  Labels are set in the references' heavy tracked uppercase, which cost nothing here: Geist is
+  already variable, so no second font enters a bundle that has to work offline.
+- **The board sits on a ground now.** Cream panels on a cream page left the farmyard with nothing
+  to sit against, which is the one thing both references never do — each puts light pieces on a
+  deep saturated field. The farmyard and the header share a stippled deep ground, so the spaces
+  read as pieces laid on a board rather than panels cut out of the panel behind them. The stipple
+  is Cloud Mountain's, and the setup screen's illustration became the oval badge that identity is
+  built out of.
 - **Drew the board instead of colouring it in.** Every farmyard space now renders as its material —
   soil with furrows, pasture with tufts of grass, courses of clay or stone for a house, timber
   bracing over the grass for a stable — so a field reads as a field before its label is read. The

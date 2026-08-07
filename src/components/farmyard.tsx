@@ -67,9 +67,10 @@ export function Farmyard({
 
   return (
     <div className={cn('w-full', className)}>
-      {/* The frame is the ground the farm sits on: the gaps between spaces read
-          as bare earth paths rather than as the page showing through. */}
-      <div className="tile-fallow rounded-lg p-1 shadow-[inset_0_1px_3px_var(--shade)]">
+      {/* The frame is the ground the farm sits on. Deep and stippled, so the
+          spaces read as pieces laid on a board rather than as panels cut out
+          of the panel behind them. */}
+      <div className="board-ground rounded-xl p-1.5 shadow-[inset_0_2px_6px_var(--shade-strong)]">
         <div
           className="relative grid"
           style={{

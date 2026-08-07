@@ -59,7 +59,7 @@ export function AnimalPanel({ player, playerIndex, onMove }: AnimalPanelProps) {
 
   return (
     <div className="flex flex-col gap-1.5 border-t border-border pt-2">
-      <p className="text-[11px] font-bold text-muted-foreground">
+      <p className="eyebrow text-[10px] text-muted-foreground">
         {source ? t('animals.chooseTarget') : t('animals.title')}
       </p>
       <ul className="flex flex-wrap gap-1.5">

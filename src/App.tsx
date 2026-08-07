@@ -40,7 +40,7 @@ function RoundTrack({ round, total }: { round: number; total: number }) {
             className={cn(
               'h-1.5 rounded-full transition-colors',
               isHarvest ? 'w-3.5' : 'w-1.5',
-              isCurrent && 'bg-primary ring-2 ring-primary/30',
+              isCurrent && 'bg-highlight ring-2 ring-highlight/30',
               !isCurrent && isPast && 'bg-primary/45',
               !isCurrent && !isPast && (isHarvest ? 'bg-grain' : 'bg-border'),
             )}
@@ -92,13 +92,13 @@ export default function App() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 p-3">
-      <header className="surface-panel sticky top-0 z-30 -mx-3 flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2 backdrop-blur">
+      <header className="board-ground sticky top-0 z-30 -mx-3 flex flex-wrap items-center justify-between gap-2 rounded-b-xl px-3 py-2.5 shadow-[var(--shadow-panel)]">
         <div>
-          <p className="flex items-center gap-2 text-xs font-bold text-primary">
+          <p className="eyebrow flex items-center gap-2 text-highlight">
             {t('game.round', { round: game.round, total: game.maxRounds })}
             {HARVEST_ROUNDS.includes(game.round) && ` · ${t('game.harvestThisRound')}`}
           </p>
-          <h1 className="text-2xl font-black tracking-tight">
+          <h1 className="display text-2xl">
             {isFinished
               ? t('game.finalScores')
               : isHarvest
@@ -173,7 +173,7 @@ export default function App() {
                     'flex items-center justify-between gap-2 rounded-md border-b border-border px-2 py-1.5 text-sm last:border-0',
                     // The winner is the one thing this screen exists to say.
                     rank === 1 &&
-                      'border-b-0 bg-grain/25 font-bold shadow-[var(--shadow-tile)] ring-1 ring-grain/50',
+                      'border-b-0 bg-grain/25 font-bold shadow-[var(--shadow-tile)] ring-1 ring-grain/60',
                   )}
                 >
                   <span className="font-semibold">
@@ -191,7 +191,7 @@ export default function App() {
 
       <div className="grid gap-3 lg:grid-cols-[1fr_1fr]">
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-bold text-muted-foreground">{t('game.farms')}</h2>
+          <h2 className="eyebrow text-muted-foreground">{t('game.farms')}</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
             {game.players.map((player, index) => (
               <PlayerPanel
@@ -209,7 +209,7 @@ export default function App() {
         </section>
 
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-bold text-muted-foreground">
+          <h2 className="eyebrow text-muted-foreground">
             {t('game.actionBoard')}
             {!isFinished &&
               !isHarvest &&
@@ -220,11 +220,11 @@ export default function App() {
       </div>
 
       <details className="surface-panel rounded-xl border border-border p-3">
-        <summary className="cursor-pointer text-sm font-bold">{t('game.gameLog')}</summary>
+        <summary className="eyebrow cursor-pointer">{t('game.gameLog')}</summary>
         <ol className="mt-2 flex flex-col-reverse gap-1 text-xs text-muted-foreground">
           {game.log.slice(-40).map((entry, index) => (
             <li key={index} className="flex gap-1.5">
-              <span className="shrink-0 rounded-sm bg-muted px-1 font-semibold tabular-nums">
+              <span className="shrink-0 rounded-full bg-muted px-1.5 font-semibold tabular-nums">
                 R{entry.round}
               </span>
               <span>{formatLogEntry(entry, t)}</span>
