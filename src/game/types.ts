@@ -72,6 +72,11 @@ export type Player = {
   hand: { occupations: string[]; minors: string[] }
   /** Card ids played face up in front of this player. */
   played: string[]
+  /**
+   * Goods a played card placed on future round spaces, collected at the start
+   * of the matching round.
+   */
+  roundGoods: { round: number; good: string; amount: number }[]
 }
 
 export type AnimalPlacement = {

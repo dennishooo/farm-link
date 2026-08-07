@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import {
   advanceTurn,
   completeHarvest,
+  convertGoods,
   createGame,
   STATE_VERSION,
   takeAction,
@@ -26,6 +27,7 @@ type GameStore = {
   play: (spaceId: ActionSpaceId, payload?: ActionPayload) => void
   resolveHarvest: () => void
   skipWorker: () => void
+  convert: (playerIndex: number, cardId: string, units: number) => void
   clearError: () => void
   abandon: () => void
 }
@@ -77,6 +79,20 @@ export const useGameStore = create<GameStore>()(
         player.peoplePlaced += 1
         next.log.push({ round: next.round, key: 'pass', values: { name: player.name } })
         advanceTurn(next)
+        set({ game: next, error: null })
+      },
+
+      /** Exchange goods for food using a played card, at any time. */
+      convert: (playerIndex, cardId, units) => {
+        const current = get().game
+        if (!current) return
+
+        const next = draft(current)
+        const result = convertGoods(next, playerIndex, cardId, units)
+        if (!result.ok) {
+          set({ error: { key: result.reason, values: result.values } })
+          return
+        }
         set({ game: next, error: null })
       },
 

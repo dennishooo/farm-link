@@ -117,6 +117,9 @@ export default {
     typeMinor: '小進步',
     typeMajor: '主要進步',
     pointsShort: '{{count}} 分',
+    translationPending: '中文翻譯尚未完成，暫顯示英文',
+    exchanges: '換取食物',
+    exchange: '1 {{from}} → {{count}} 食物',
   },
 
   score: {
@@ -210,6 +213,8 @@ export default {
     breed: '{{name}} 的動物繁殖：{{types}}。',
     harvestComplete: '收成完畢。',
     pass: '{{name}} 略過。',
+    roundGoods: '{{name}} 從卡牌獲得 {{goods}}。',
+    convert: '{{name}} 使用 {{cardId}} 將 {{amount}} {{good}} 轉換成 {{count}} 食物。',
   },
 
   errors: {
@@ -250,5 +255,7 @@ export default {
     choosePlowOrSow: '請選擇要開墾的田地或要播種的作物。',
     chooseFieldToSow: '請至少選擇一塊要播種的田地。',
     cannotTakeAllAnimals: '空間不足，無法容納所有動物。',
+    noSuchConversion: '你沒有可以進行該轉換的卡牌。',
+    notEnoughToConvert: '數量不足，無法轉換。',
   },
 } as const

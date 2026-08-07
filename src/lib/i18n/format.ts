@@ -1,5 +1,8 @@
 import type { TFunction } from 'i18next'
 import en from './en'
+import { cardById } from '@/game/cards'
+import { cardTranslation } from '@/game/cards/translations'
+import type { Card } from '@/game/cards/types'
 import type { LogEntry } from '@/game/types'
 import type { GameError } from '@/stores/game'
 
@@ -10,6 +13,8 @@ import type { GameError } from '@/stores/game'
  */
 const TRANSLATED_VALUES: Record<string, (value: string, t: TFunction) => string> = {
   space: (value, t) => t(`spaces.${value}.name`, value),
+  // A card id resolves to the localised title, falling back to English.
+  cardId: (value) => cardTranslation(value)?.title ?? cardById(value)?.title ?? value,
   good: (value, t) => t(`goods.${value}`, value),
   house: (value, t) => t(`house.${value}`, value),
   resource: (value, t) => t(`goods.${value}`, value),
@@ -57,4 +62,25 @@ export function formatLogEntry(entry: LogEntry, t: TFunction): string {
 export function formatError(error: GameError, t: TFunction): string {
   const translate = t as unknown as LooseT
   return translate(`errors.${error.key satisfies string}`, localiseValues(error.values, t))
+}
+
+/**
+ * A card's title and rules text in the active language.
+ *
+ * Cards without a hand-written Chinese translation fall back to English and
+ * report `translated: false`, so the UI can say the translation is pending
+ * rather than quietly showing English as if it were intentional.
+ */
+export function localiseCard(
+  card: Pick<Card, 'id' | 'title' | 'text'>,
+  language: string,
+): { title: string; text: string; translated: boolean } {
+  if (!language.startsWith('zh')) {
+    return { title: card.title, text: card.text, translated: true }
+  }
+
+  const translation = cardTranslation(card.id)
+  if (!translation) return { title: card.title, text: card.text, translated: false }
+
+  return { title: translation.title, text: translation.text, translated: true }
 }

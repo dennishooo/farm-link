@@ -124,12 +124,23 @@ export function parseEffects(text: string): CardEffect[] {
   const effects: CardEffect[] = []
   const clean = text.replace(/\s+/g, ' ').trim()
 
+  // Tiered wording ("1/3/6/9 rounds … 1/2/3/4 Wood") needs judgement the
+  // engine does not have, and reading it as a flat amount overpays badly.
+  const tiered = /\d\s*\/\s*\d/.test(clean)
+
   // "When you play this card, take 1 Grain." / "you immediately get 2 Wood"
-  const immediate = clean.match(
-    /(?:when you play this card,?\s*(?:you\s*)?(?:immediately\s*)?(?:take|get|receive)|you immediately (?:get|receive|take))\s+([^.]+)/i,
-  )
+  const immediate = tiered
+    ? null
+    : clean.match(
+        /(?:when you play this card,?\s*(?:you\s*)?(?:immediately\s*)?(?:take|get|receive)|you immediately (?:get|receive|take))\s+([^.]+)/i,
+      )
   if (immediate) {
-    const goods = collectGoods(immediate[1])
+    // A gain the player chooses between ("either 1 Stone or 1 Reed") or that
+    // scales with the game state ("For each Round that has not yet begun…")
+    // is not a fixed payout. Test the whole card, since the scaling clause can
+    // sit before the phrase that matched.
+    const conditional = /\beither\b|\bfor each\b|\bper\b/i.test(clean)
+    const goods = conditional ? {} : collectGoods(immediate[1])
     if (Object.keys(goods).length > 0) effects.push({ kind: 'gain', goods })
   }
 
@@ -138,16 +149,15 @@ export function parseEffects(text: string): CardEffect[] {
     /(?:whenever|each time) you use the ["“]?([A-Za-z' -]+?)["”]?\s+action space,?\s*you (?:receive|get|take)\s+([^.]+)/i,
   )
   if (onAction) {
-    const goods = collectGoods(onAction[2])
+    // "1 Food or 1 Reed" is a choice; "From Round 8, 2 additional Food" changes
+    // mid-game. Neither is a fixed bonus the engine can just hand over.
+    const choice = /\bor\b|\bfrom round\b|\binstead\b/i.test(clean)
+    const goods = choice ? {} : collectGoods(onAction[2])
     const spaceId = actionSpaceId(onAction[1])
     if (spaceId && Object.keys(goods).length > 0) {
       effects.push({ kind: 'onAction', spaceId, goods })
     }
   }
-
-  // Tiered bonuses ("1/3/5 points for 5/6/7 …") are deliberately left to the
-  // players — only flat and simple per-unit bonuses are enforced here.
-  const tiered = /\d\s*\/\s*\d/.test(clean)
 
   // "At the end of the game, you receive 1 Bonus point for each room in your Stone house."
   if (!tiered) {
@@ -155,18 +165,175 @@ export function parseEffects(text: string): CardEffect[] {
       /(?:at the end of the game|during scoring),?\s*you (?:receive|get)\s+(\d+)\s+bonus points?\s+for each\s+([A-Za-z ]+)/i,
     )
     if (perUnit) {
-      const per = scoringUnit(perUnit[2])
+      // "…on this card", "…except the 1st, 4th", "…that you play after this
+      // one" all count something the engine does not track.
+      const stateful = /on this card|except|after this one|at least|but could/i.test(clean)
+      const per = stateful ? null : scoringUnit(perUnit[2])
       if (per) effects.push({ kind: 'pointsPer', per, points: Number(perUnit[1]), each: 1 })
     }
 
     // "At the end of the game, you receive 2 Bonus points." — a flat award.
-    const flat = clean.match(
-      /(?:at the end of the game|during scoring),?\s*you (?:receive|get)\s+(\d+)\s+bonus points?\s*\./i,
-    )
+    const conditionalFlat = /if |place \d|on this card|still on the card/i.test(clean)
+    const flat = conditionalFlat
+      ? null
+      : clean.match(
+          /(?:at the end of the game|during scoring),?\s*you (?:receive|get)\s+(\d+)\s+bonus points?\s*\./i,
+        )
     if (flat) effects.push({ kind: 'points', points: Number(flat[1]) })
   }
 
+  const drip = parseRoundDrip(clean)
+  if (drip) effects.push(drip)
+
+  const convert = parseConvert(clean)
+  if (convert) effects.push(convert)
+
+  const discount = parseDiscount(clean)
+  if (discount) effects.push(discount)
+
   return effects
+}
+
+/** Rounds still to come after `from`, up to the end of the game. */
+const LAST_ROUND = 14
+
+/**
+ * "Place 1 Food on each of the next 3 Round spaces."
+ * "Place 2 Food on each remaining even-numbered Round space."
+ * "Place 1 Clay on each of the spaces for rounds 6 to 14."
+ *
+ * Parsed relative to round 1, since cards are almost always played early and
+ * the engine clamps to rounds that have not happened yet when the card is
+ * actually played.
+ */
+export function parseRoundDrip(text: string): Extract<CardEffect, { kind: 'roundDrip' }> | null {
+  // Conditional drips ("Once you live in a Clay hut, place …") only start when
+  // the condition is met, which the engine cannot yet track. Leave them manual
+  // rather than paying out immediately and overpaying the player.
+  if (/^\s*(once|when|whenever|if|after)\b/i.test(text)) return null
+
+  const head = text.match(/place (\d+) ([A-Za-z]+) on each/i)
+  if (!head) return null
+
+  const good = normaliseGood(head[2])
+  if (!good) return null
+  const amount = Number(head[1])
+
+  const explicitRange = text.match(/rounds? (\d+)\s*(?:to|-|–)\s*(\d+)/i)
+  if (explicitRange) {
+    const start = Number(explicitRange[1])
+    const end = Math.min(Number(explicitRange[2]), LAST_ROUND)
+    return { kind: 'roundDrip', good, amount, rounds: range(start, end) }
+  }
+
+  const nextN = text.match(/next (\d+) round/i)
+  if (nextN) {
+    const count = Number(nextN[1])
+    return { kind: 'roundDrip', good, amount, rounds: range(1, count) }
+  }
+
+  if (/even-numbered round/i.test(text)) {
+    return {
+      kind: 'roundDrip',
+      good,
+      amount,
+      rounds: range(1, LAST_ROUND).filter((round) => round % 2 === 0),
+    }
+  }
+
+  if (/odd-numbered round/i.test(text)) {
+    return {
+      kind: 'roundDrip',
+      good,
+      amount,
+      rounds: range(1, LAST_ROUND).filter((round) => round % 2 === 1),
+    }
+  }
+
+  if (/each remaining round space/i.test(text)) {
+    return { kind: 'roundDrip', good, amount, rounds: range(1, LAST_ROUND) }
+  }
+
+  return null
+}
+
+function range(start: number, end: number): number[] {
+  const result: number[] = []
+  for (let value = start; value <= end; value++) result.push(value)
+  return result
+}
+
+/**
+ * "you may convert up to 1 Reed to 3 Food" / "convert 1 Grain into 5 Food".
+ * Only single-source conversions with a fixed rate are enforced; the
+ * multi-line rate tables on Cooking Hearth and friends are left manual.
+ */
+export function parseConvert(text: string): Extract<CardEffect, { kind: 'convert' }> | null {
+  // A rate table lists several goods; those need a richer model than this.
+  // The arrow form ("At most 1 time Grain -> 5 Food") is a single rate even
+  // when other numbers appear, so it is checked before the table heuristic.
+  const arrowForm = /(?:→|->)/.test(text)
+  const tableLike = !arrowForm && (text.match(/\b\d+ Food\b/gi) ?? []).length > 1
+  if (tableLike) return null
+
+  // Tiered scoring text alongside a conversion ("1/2/3 Bonus points for
+  // 2/4/5 Wood") means the card does more than the engine would apply.
+  if (/\d\s*\/\s*\d/.test(text)) return null
+
+  // Prose form: "convert up to 2 Grain into 5 Food each".
+  const prose = text.match(/convert (?:up to )?(\d+) ([A-Za-z]+) (?:in)?to (\d+) food(\s+each)?/i)
+  if (prose) {
+    const from = normaliseGood(prose[2])
+    if (!from || from === 'food') return null
+
+    const count = Number(prose[1])
+    const food = Number(prose[3])
+    if (count <= 0) return null
+
+    // "up to 2 Grain into 5 Food each" pays 5 per grain, not 5 in total.
+    const rate = prose[4] ? food : food / count
+    return { kind: 'convert', from, to: 'food', rate, limit: count }
+  }
+
+  // Arrow form used by the ovens: "At most 1 time Grain → 5 Food".
+  const arrow = text.match(
+    /(?:at most|up to) (\d+) times?\s+([A-Za-z]+)\s*(?:→|->)\s*(\d+) food/i,
+  )
+  if (arrow) {
+    const from = normaliseGood(arrow[2])
+    if (!from || from === 'food') return null
+
+    // "N times" is how many separate exchanges are allowed, each at the
+    // printed rate — not a total to divide.
+    return {
+      kind: 'convert',
+      from,
+      to: 'food',
+      rate: Number(arrow[3]),
+      limit: Number(arrow[1]),
+    }
+  }
+
+  return null
+}
+
+/**
+ * "All Improvements, Rooms and Renovations cost 1 Stone less."
+ * "Every improvement, room, and renovation costs you 1 stone less."
+ */
+export function parseDiscount(text: string): Extract<CardEffect, { kind: 'discount' }> | null {
+  const match = text.match(/costs? (?:you )?(\d+) ([A-Za-z]+) less/i)
+  if (!match) return null
+
+  const good = normaliseGood(match[2])
+  if (!good) return null
+
+  const mentionsRoom = /room|extension|extend/i.test(text)
+  const mentionsRenovation = /renovat/i.test(text)
+  const applies =
+    mentionsRoom && mentionsRenovation ? 'both' : mentionsRenovation ? 'renovation' : 'room'
+
+  return { kind: 'discount', good, amount: Number(match[1]), applies }
 }
 
 /** Map a scored noun onto something the engine can count. */
@@ -180,6 +347,13 @@ function scoringUnit(phrase: string): Extract<CardEffect, { kind: 'pointsPer' }>
   if (/^sheep\b/.test(key)) return 'sheep'
   if (/^(wild )?boar\b/.test(key)) return 'boar'
   if (/^cattle\b/.test(key)) return 'cattle'
+  if (/^(people|person|family member)/.test(key)) return 'person'
+  if (/^improvements?\b/.test(key)) return 'improvement'
+  if (/^occupations?\b/.test(key)) return 'occupation'
+  if (/^wood\b/.test(key)) return 'wood'
+  if (/^clay\b/.test(key)) return 'clay'
+  if (/^reed\b/.test(key)) return 'reed'
+  if (/^stone\b/.test(key)) return 'stone'
   return null
 }
 

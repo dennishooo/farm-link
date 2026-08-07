@@ -25,6 +25,7 @@ export default function App() {
   const play = useGameStore((state) => state.play)
   const resolveHarvest = useGameStore((state) => state.resolveHarvest)
   const skipWorker = useGameStore((state) => state.skipWorker)
+  const convert = useGameStore((state) => state.convert)
   const clearError = useGameStore((state) => state.clearError)
   const abandon = useGameStore((state) => state.abandon)
 
@@ -131,8 +132,10 @@ export default function App() {
               <PlayerPanel
                 key={player.id}
                 player={player}
+                playerIndex={index}
                 isCurrent={!isFinished && index === game.currentPlayerIndex}
                 showScore={isFinished}
+                onConvert={convert}
               />
             ))}
           </div>

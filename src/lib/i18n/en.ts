@@ -114,6 +114,9 @@ export default {
     typeMinor: 'Minor',
     typeMajor: 'Major',
     pointsShort: '{{count}} pt',
+    translationPending: 'Chinese translation pending — showing English',
+    exchanges: 'Exchange for food',
+    exchange: '1 {{from}} → {{count}} food',
   },
 
   score: {
@@ -226,6 +229,8 @@ export default {
     breed: "{{name}}'s animals breed: {{types}}.",
     harvestComplete: 'Harvest complete.',
     pass: '{{name}} passes.',
+    roundGoods: '{{name}} collects {{goods}} from their cards.',
+    convert: '{{name}} converts {{amount}} {{good}} into {{count}} food using {{cardId}}.',
   },
 
   errors: {
@@ -266,5 +271,7 @@ export default {
     choosePlowOrSow: 'Choose a field to plow or crops to sow.',
     chooseFieldToSow: 'Choose at least one field to sow.',
     cannotTakeAllAnimals: 'Not enough space for all those animals.',
+    noSuchConversion: 'You have no card that makes that exchange.',
+    notEnoughToConvert: 'You do not have enough to convert.',
   },
 } as const

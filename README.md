@@ -85,17 +85,37 @@ other fails CI rather than silently falling back.
 
 ## Cards
 
-All 394 base-game cards ship with the app — 202 occupations, 184 minor improvements, and 8 major
-improvements. Hands of 7 occupations and 7 minor improvements are dealt at setup; majors are a
-shared pool. Costs, victory points, and player-count restrictions are enforced, and the Lessons
-spaces charge the correct occupation cost for the player count.
+The deck is the classic **Base** set as labelled on the source card list — 337 cards: 181
+occupations, 146 minor improvements, and all 10 major improvements. (The two ovens are pulled back
+in by name; the source database misfiles them under an expansion.) Revised Edition additions are
+excluded so the deck matches one printed set.
 
-Card effects fall into two groups. Where the printed text maps cleanly onto a mechanic — an
-immediate gain, a bonus whenever a given action space is used, a flat or per-unit scoring bonus —
-the engine applies it automatically. The rest are dealt, played, and scored for their printed
-points, but their ongoing text is left to the players; those cards say so in the picker and the game
-log repeats the text when one is played. Enforcing the remainder would mean guessing at conditional
-and tiered wording, which would quietly distort scores.
+Hands of 7 occupations and 7 minor improvements are dealt at setup; majors are a shared pool. Costs,
+victory points, and player-count restrictions are all enforced, and the Lessons spaces charge the
+correct occupation cost for the player count.
+
+### Which effects actually work
+
+46 cards have effects the engine applies for you:
+
+| Effect | Example |
+| --- | --- |
+| Immediate gain on play | Lumber — take 3 wood |
+| Bonus on an action space | Clay Pit — +3 clay whenever you use Day Laborer |
+| Goods on future round spaces | Wood Collector — 1 wood at the start of each of the next 5 rounds |
+| Exchange goods for food | Clay Oven — 1 grain becomes 5 food, any time |
+| Build and renovation discounts | Stonecutter — every room and renovation costs 1 stone less |
+| Scoring bonuses | Mansion — 2 extra points per stone room |
+
+Exchanges appear as buttons under your farm, since they are anytime actions in Agricola rather than
+worker placements.
+
+The remaining cards are dealt, played, and scored for their printed points, but their ongoing text
+is left to the players — clearly marked in the picker and repeated in the log. The parser
+deliberately refuses anything it cannot read exactly: tiered wording ("1/3/6/9 rounds → 1/2/3/4
+wood"), player choices ("either 1 stone or 1 reed"), conditions ("once you live in a clay hut"), and
+effects that count things the engine does not track. Guessing at those would quietly corrupt scores,
+which is worse than asking players to apply them.
 
 Card data is generated from the [agricolacards.com](https://www.agricolacards.com/list) community
 database into `src/game/cards/data.ts` and committed, so the app needs no network at runtime:
@@ -104,9 +124,13 @@ database into `src/game/cards/data.ts` and committed, so the app needs no networ
 bun run cards:build
 ```
 
-Note that the source database cannot identify the exact 120-card Revised Edition deck — it splits
-base-game cards between "Base" and "Base (Revised)" and carries no RE card codes. This build
-therefore uses the whole base-game pool rather than the precise RE subset.
+### Card translations
+
+Chinese card text lives in `src/game/cards/translations.ts`, hand-written rather than generated —
+card rules are the text players read most closely, and a machine translation that subtly changes a
+rule is worse than showing English. Every card whose effect the engine enforces is translated, and a
+test fails the build if that stops being true. Cards without a translation fall back to English and
+say so in the picker.
 
 ## What is implemented
 

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { affordableOptions, cardById, canAfford } from '@/game/cards'
 import { occupationCost } from '@/game/engine'
 import { cn } from '@/lib/utils'
+import { localiseCard } from '@/lib/i18n/format'
 import type { Card } from '@/game/cards/types'
 import type { ActionSpaceId, GameState, Player } from '@/game/types'
 
@@ -16,7 +17,7 @@ type CardPickerProps = {
 }
 
 export function CardPicker({ spaceId, game, player, onConfirm, onCancel }: CardPickerProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   /** Format a cost option as "3 wood + 1 reed", or "free". */
   const describeCost = (option: Record<string, number | undefined>): string => {
@@ -76,6 +77,8 @@ export function CardPicker({ spaceId, game, player, onConfirm, onCancel }: CardP
             const isSelected = card.id === selectedId
             const affordable = playable(card)
 
+            const localised = localiseCard(card, i18n.language)
+
             return (
               <li key={card.id}>
                 <button
@@ -91,7 +94,7 @@ export function CardPicker({ spaceId, game, player, onConfirm, onCancel }: CardP
                   )}
                 >
                   <span className="flex items-baseline justify-between gap-2">
-                    <span className="font-bold">{card.title}</span>
+                    <span className="font-bold">{localised.title}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">
                       {card.type === 'major'
                         ? t('cards.typeMajor')
@@ -107,7 +110,12 @@ export function CardPicker({ spaceId, game, player, onConfirm, onCancel }: CardP
                       {card.cost.map(describeCost).join(`  ${t('cards.or')}  `)}
                     </span>
                   )}
-                  <span className="mt-1 block text-xs text-muted-foreground">{card.text}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{localised.text}</span>
+                  {!localised.translated && (
+                    <span className="mt-1 block text-[11px] text-muted-foreground italic">
+                      {t('cards.translationPending')}
+                    </span>
+                  )}
                   {!card.enforced && (
                     <span className="mt-1 block text-[11px] font-semibold text-primary">
                       {t('cards.manualEffect')}
