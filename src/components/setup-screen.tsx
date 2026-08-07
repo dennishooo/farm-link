@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { AppFooter } from '@/components/app-footer'
 
 export function SetupScreen({ onStart }: { onStart: (names: string[]) => void }) {
   const { t } = useTranslation()
@@ -91,6 +92,7 @@ export function SetupScreen({ onStart }: { onStart: (names: string[]) => void })
       <p className="text-center text-xs text-muted-foreground">
         {t('app.offlineNote')}
       </p>
+      <AppFooter />
     </div>
   )
 }
