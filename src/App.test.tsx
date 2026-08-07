@@ -14,14 +14,14 @@ import type { GameState } from '@/game/types'
 
 function reset() {
   localStorage.clear()
-  useGameStore.setState({ game: null, error: null, history: [] })
+  useGameStore.setState({ game: null, error: null, history: [], future: [] })
 }
 
 /** Put a deterministic game into the store, optionally tweaked first. */
 function loadGame(mutate?: (game: GameState) => void) {
   const game = createGame({ names: ['Ann', 'Bo'], random: () => 0.42 })
   mutate?.(game)
-  useGameStore.setState({ game, error: null, history: [] })
+  useGameStore.setState({ game, error: null, history: [], future: [] })
   return game
 }
 

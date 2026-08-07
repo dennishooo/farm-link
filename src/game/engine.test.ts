@@ -8,6 +8,8 @@ import {
   buildFences,
   completeHarvest,
   createGame,
+  getDeckOrder,
+  revealForRound,
   currentPlayer,
   feedFamily,
   findSpace,
@@ -738,5 +740,45 @@ describe('breeding reports why it did not happen', () => {
 
     expect(player.sheep).toBe(3)
     expect(state.log.at(-1)?.key).toBe('breed')
+  })
+})
+
+describe('the stage-card deck', () => {
+  it('keeps its shuffled order when the state is copied', () => {
+    // The store structured-clones the state on every move, so an order held
+    // outside the state — in a WeakMap keyed by the state object — was lost on
+    // the first move of the game and silently rebuilt in canonical order.
+    // Every game from round 2 on then revealed the same cards in the same
+    // sequence, which is most of what a stage shuffle is for.
+    const state = createGame({ names: ['A', 'B'], random: () => 0.42 })
+    const shuffled = getDeckOrder(state)
+
+    expect(getDeckOrder(structuredClone(state))).toEqual(shuffled)
+  })
+
+  it('reveals one card per round in that order', () => {
+    const state = createGame({ names: ['A', 'B'], random: () => 0.42 })
+    const deck = [...getDeckOrder(state)]
+
+    for (let round = 2; round <= 5; round++) {
+      const copy = structuredClone({ ...state, round })
+      revealForRound(copy)
+      expect(copy.revealed[copy.revealed.length - 1]).toBe(deck[round - 1])
+    }
+  })
+
+  it('falls back to canonical order for a game saved without one', () => {
+    // Saves written before the order was part of the state still have to be
+    // playable: keep what was already revealed, then carry on in stage order.
+    const state = createGame({ names: ['A', 'B'], random: () => 0.42 })
+    const legacy = structuredClone(state)
+    delete legacy.deck
+
+    const rebuilt = getDeckOrder(legacy)
+
+    expect(rebuilt.slice(0, state.revealed.length)).toEqual(state.revealed)
+    expect(rebuilt).toHaveLength(
+      STAGE_ACTION_SPACES.filter((space) => (space.minPlayers ?? 1) <= 2).length,
+    )
   })
 })

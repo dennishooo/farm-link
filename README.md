@@ -148,7 +148,7 @@ for any card added later.
 - Family growth with and without rooms, capped at five people
 - All three harvest phases: field, feeding (with begging markers), and breeding
 - Moving animals between pastures, stables and the house at any time
-- Taking back the last ten moves, each revert written into the game log
+- Taking back the last ten moves, and putting them back, each written into the game log
 - Exact Revised Edition scoring, including the -1 penalties and category caps
 
 ## Not yet implemented

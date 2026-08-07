@@ -113,6 +113,10 @@ export function PlayerPanel({
                 title={t(`goods.${key}` as 'goods.wood')}
               >
                 <GoodIcon good={key} className={cn('size-3.5', tint)} />
+                {/* The name was only in `title`, which no touch screen ever
+                    shows — the same hover-only trap the card rules text fell
+                    into. The icon is decoration; this is the actual label. */}
+                <span className="sr-only">{t(`goods.${key}` as 'goods.wood')}: </span>
                 <span className="tabular-nums">{count}</span>
               </li>
             )

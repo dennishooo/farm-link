@@ -31,6 +31,7 @@ export default {
     workersLeft_other: '{{count}} workers left',
     passWorker: 'Pass worker',
     undo: 'Undo',
+    redo: 'Redo',
     newGame: 'New game',
     gameLog: 'Game log',
     results: 'Results',
@@ -52,6 +53,8 @@ export default {
 
   farm: {
     space: 'Space {{number}}: {{contents}}',
+    spaceWithAnimals_one: 'Space {{number}}: {{contents}}, {{count}} {{good}}',
+    spaceWithAnimals_other: 'Space {{number}}: {{contents}}, {{count}} {{good}}',
     empty: 'empty',
     room: 'Room',
     field: 'Field',
@@ -276,6 +279,11 @@ export default {
     undoHarvest: 'The harvest is taken back.',
     undoCard: '{{name}} takes back the effect of {{cardId}}.',
     undoAnimals: '{{name}} takes back moving animals.',
+    redo: '{{name}} puts their move on {{space}} back.',
+    redoPass: '{{name}} passes that worker after all.',
+    redoHarvest: 'The harvest is resolved again.',
+    redoCard: '{{name}} applies {{cardId}} again.',
+    redoAnimals: '{{name}} moves those animals again.',
   },
 
   errors: {

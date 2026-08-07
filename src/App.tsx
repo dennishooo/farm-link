@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Undo2 } from 'lucide-react'
+import { Redo2, Undo2 } from 'lucide-react'
 import { ActionBoard } from '@/components/action-board'
 import { ActionDialog } from '@/components/action-dialog'
 import { CardPicker } from '@/components/card-picker'
@@ -64,6 +64,8 @@ export default function App() {
   const moveAnimals = useGameStore((state) => state.moveAnimals)
   const undo = useGameStore((state) => state.undo)
   const canUndo = useGameStore((state) => state.history.length > 0)
+  const redo = useGameStore((state) => state.redo)
+  const canRedo = useGameStore((state) => state.future.length > 0)
   const clearError = useGameStore((state) => state.clearError)
   const abandon = useGameStore((state) => state.abandon)
 
@@ -117,6 +119,12 @@ export default function App() {
             <Button variant="outline" size="sm" onClick={undo}>
               <Undo2 className="size-4" />
               {t('game.undo')}
+            </Button>
+          )}
+          {canRedo && (
+            <Button variant="outline" size="sm" onClick={redo}>
+              <Redo2 className="size-4" />
+              {t('game.redo')}
             </Button>
           )}
           {!isFinished && !isHarvest && (

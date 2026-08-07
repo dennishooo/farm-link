@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PlayerPanel } from './player-panel'
-import { renderInChinese, renderUI, testPlayer } from './test-utils'
+import { fenceRect, renderInChinese, renderUI, testPlayer } from './test-utils'
+import { houseAnimals } from '@/game/farm'
 import type { Player } from '@/game/types'
 
 function panel(player: Player, props: Record<string, unknown> = {}) {
@@ -135,5 +136,36 @@ describe('turn marker', () => {
   it('leaves other players unmarked', async () => {
     await panel(testPlayer())
     expect(screen.queryByText('To act')).not.toBeInTheDocument()
+  })
+})
+
+describe('labels for anyone not looking at the icons', () => {
+  it('names each resource pile, not only in a hover tooltip', async () => {
+    // Same trap as the card rules text in issue #3: a `title` is the whole
+    // label, and a touch screen never shows one. The icon carries the meaning
+    // visually; this is what everything else has to read.
+    const player = testPlayer()
+    player.wood = 5
+    await panel(player)
+
+    expect(screen.getByTitle('Wood')).toHaveTextContent('Wood: 5')
+  })
+
+  it('names an empty pile too', async () => {
+    await panel(testPlayer())
+    expect(screen.getByTitle('Cattle')).toHaveTextContent('Cattle: 0')
+  })
+
+  it('says what is grazing in a pasture', async () => {
+    // The herd is drawn as a glyph and a number, and a tile's own label
+    // overrides anything inside it, so the animals have to be named there.
+    const player = testPlayer()
+    player.fences = fenceRect(0, 3, 0, 4)
+    houseAnimals(player, 'sheep', 2)
+    await panel(player)
+
+    expect(screen.getByRole('button', { name: 'Space 4: empty, 2 Sheep' })).toBeInTheDocument()
+    // The pasture's other space is not a second herd.
+    expect(screen.getByRole('button', { name: 'Space 5: empty' })).toBeInTheDocument()
   })
 })

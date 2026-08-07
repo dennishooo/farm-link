@@ -123,6 +123,14 @@ export type GameState = {
   occupied: Record<ActionSpaceId, string>
   /** Action spaces revealed so far, in reveal order. */
   revealed: ActionSpaceId[]
+  /**
+   * The stage cards in the order this game will reveal them, shuffled once at
+   * setup. Part of the state because the store copies the state on every move
+   * and the order has to survive the copy — and a reload.
+   *
+   * Optional only for games saved before it was stored; those rebuild it.
+   */
+  deck?: ActionSpaceId[]
   /** Major improvement card ids still available to build. */
   majorsAvailable: string[]
   log: LogEntry[]

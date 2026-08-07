@@ -41,6 +41,13 @@ are looking at.
   per row, which at tile size stopped reading as soil and started reading as decking; dark mode had
   no hairline between a dark tile and the dark gap beside it, so a farmyard collapsed into one
   shape.
+- **Split the card database into its own bundle chunk.** The deck and its translations are ~200 KB
+  of generated data that changes only when the deck is regenerated, while the app around it changes
+  every release. Keeping them apart means a release invalidates the app chunk alone, so a returning
+  player's service worker re-downloads ~118 KB gzipped instead of ~150 KB and keeps the cards it
+  already has. It does not defer the download — the cards are a static dependency of the engine, and
+  the app precaches everything by design; deferring them would need a loading gate that would cost
+  more on every reload than it saved on first visit.
 - **Split `engine.ts`** (1050 lines) into `result.ts` (the shared outcome type), `state.ts` (setup,
   round progression, harvest) and `actions.ts` (worker placement and the action handlers).
   `engine.ts` remains as a barrel, so every import site is untouched and the public surface is
@@ -57,7 +64,9 @@ are looking at.
   point rather than a side effect. The last ten moves are kept, and they persist with the save, so
   undo survives a reload like everything else in this app. Actions the engine refused are not
   remembered — there is nothing to take back from a move that never happened.
-
+- **Redo**, for the undo that went one step too far. It gets its own line in the log for the same
+  reason the revert does, so a taken-back-and-put-back move reads as the round trip it was. Making
+  a different move drops what was taken back, as undo stacks normally do.
 - **Component and integration tests** — 144 of them, covering every component and the App shell.
   There were none before, and the components are where nearly every bug this project has shipped
   actually lived: the tooltip that never appeared on touch, Cultivation refusing to sow, Farm
@@ -70,6 +79,22 @@ are looking at.
 
 ### Fixed
 
+- **The stage-card shuffle was thrown away on the first move of every game.** The reveal order was
+  held in a `WeakMap` keyed by the state object, but the store structured-clones the state on every
+  move — so move one produced an object the map had never seen, and the order was rebuilt in
+  canonical stage order. The rebuild was written for reloads and ran on move one instead, which
+  meant every game revealed the same cards in the same sequence from round 2 on. The order is now
+  part of the state, so it survives a copy, a reload and an undo. Games saved without one still
+  rebuild it, so nothing in progress breaks.
+- **The resource chips said what they were only in a `title` tooltip** — the same hover-only trap
+  the card rules text fell into in v4.2.0, and one this pass made easier to hit by replacing the
+  emoji with icons. Each chip now carries its own label. The animals in a pasture had the same
+  problem and no fix available inside the tile, since a tile's own label overrides anything within
+  it, so the herd is named in the label itself: "Space 4: empty, 2 Sheep".
+- **Fence rails sat slightly off the edges they mark.** They were positioned as a fraction of the
+  grid, which stops being the boundary once the grid has a gutter — the tracks are narrower than an
+  even share by the gaps between them, so every rail after the first drifted, by up to two pixels at
+  the right-hand edge. The gutter is now part of the arithmetic; measured drift is zero.
 - `type-check` ran `tsc --noEmit` against a root config with `"files": []`, so it checked nothing.
   Type errors in test files only surfaced later, during the build. It now runs `tsc -b`, matching
   what the build does.

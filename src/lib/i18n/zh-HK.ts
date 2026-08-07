@@ -35,6 +35,7 @@ export default {
     workersLeft_other: '剩餘 {{count}} 名工人',
     passWorker: '略過工人',
     undo: '收回',
+    redo: '重做',
     newGame: '新遊戲',
     gameLog: '遊戲紀錄',
     results: '結算',
@@ -56,6 +57,8 @@ export default {
 
   farm: {
     space: '格 {{number}}：{{contents}}',
+    spaceWithAnimals_one: '格 {{number}}：{{contents}}，{{count}} 隻{{good}}',
+    spaceWithAnimals_other: '格 {{number}}：{{contents}}，{{count}} 隻{{good}}',
     empty: '空地',
     room: '房間',
     field: '田地',
@@ -257,6 +260,11 @@ export default {
     undoHarvest: '收成已收回。',
     undoCard: '{{name}} 收回 {{cardId}} 的效果。',
     undoAnimals: '{{name}} 收回移動動物的操作。',
+    redo: '{{name}} 重做在{{space}}的行動。',
+    redoPass: '{{name}} 重新略過該工人。',
+    redoHarvest: '重新結算收成。',
+    redoCard: '{{name}} 重新套用 {{cardId}} 的效果。',
+    redoAnimals: '{{name}} 重新移動動物。',
   },
 
   errors: {
