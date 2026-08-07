@@ -103,6 +103,14 @@ export default {
     },
   },
 
+  animals: {
+    title: 'Move animals',
+    chooseTarget: 'Choose where to move them',
+    house: 'House',
+    pastureAt: 'Pasture {{spaces}}',
+    emptySlot: 'empty · holds {{capacity}}',
+  },
+
   cards: {
     playOccupation: 'Play an occupation',
     buildImprovement: 'Build an improvement',
@@ -232,6 +240,7 @@ export default {
     breed: "{{name}}'s animals breed: {{types}}.",
     harvestComplete: 'Harvest complete.',
     pass: '{{name}} passes.',
+    moveAnimals: '{{name}} moves {{count}} animal(s) around their farm.',
     roundGoods: '{{name}} collects {{goods}} from their cards.',
     convert: '{{name}} converts {{amount}} {{good}} into {{count}} food using {{cardId}}.',
   },
@@ -274,6 +283,10 @@ export default {
     choosePlowOrSow: 'Choose a field to plow or crops to sow.',
     chooseFieldToSow: 'Choose at least one field to sow.',
     cannotTakeAllAnimals: 'Not enough space for all those animals.',
+    invalidMove: 'That is not a valid place to move animals.',
+    notEnoughAnimals: 'There are not that many animals there.',
+    slotTypeMismatch: 'A pasture can only hold one type of animal.',
+    slotFull: 'There is not enough room there.',
     noSuchConversion: 'You have no card that makes that exchange.',
     notEnoughToConvert: 'You do not have enough to convert.',
   },

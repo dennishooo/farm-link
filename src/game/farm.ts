@@ -110,6 +110,97 @@ export function capacityFor(player: Player, type: AnimalType): number {
   return capacity
 }
 
+/** One place animals can live, with its identity, capacity, and occupant. */
+export type HousingSlot = {
+  /** Placement key: a pasture's space list, `stable:<index>`, or `pet`. */
+  key: string
+  kind: 'pasture' | 'stable' | 'pet'
+  capacity: number
+  /** Spaces this slot covers, for highlighting on the board. */
+  spaces: number[]
+  type: AnimalType | null
+  count: number
+}
+
+/**
+ * Every place this farm can house animals, in board order. Used by the UI to
+ * let players move animals around, which the rulebook allows at any time.
+ */
+export function housingSlots(player: Player): HousingSlot[] {
+  const placements = new Map(player.animalPlacement.map((p) => [p.key, p]))
+  const occupant = (key: string) => {
+    const placement = placements.get(key)
+    return {
+      type: placement && placement.count > 0 ? placement.type : null,
+      count: placement?.count ?? 0,
+    }
+  }
+
+  return [
+    ...pastureInfo(player).map((pasture) => ({
+      key: pasture.key,
+      kind: 'pasture' as const,
+      capacity: pasture.capacity,
+      spaces: pasture.spaces,
+      ...occupant(pasture.key),
+    })),
+    ...unfencedStables(player).map((index) => ({
+      key: `stable:${index}`,
+      kind: 'stable' as const,
+      capacity: UNFENCED_STABLE_CAPACITY,
+      spaces: [index],
+      ...occupant(`stable:${index}`),
+    })),
+    {
+      key: 'pet',
+      kind: 'pet' as const,
+      capacity: PET_CAPACITY,
+      spaces: [],
+      ...occupant('pet'),
+    },
+  ]
+}
+
+export type MoveResult = { ok: true } | { ok: false; reason: string }
+
+/**
+ * Move animals between housing slots. Animals are the only thing on the farm
+ * players may rearrange at any time, and doing so can free space that a greedy
+ * automatic placement would otherwise waste.
+ */
+export function moveAnimals(
+  player: Player,
+  fromKey: string,
+  toKey: string,
+  count: number,
+): MoveResult {
+  if (fromKey === toKey || count <= 0) return { ok: false, reason: 'invalidMove' }
+
+  const slots = new Map(housingSlots(player).map((slot) => [slot.key, slot]))
+  const from = slots.get(fromKey)
+  const to = slots.get(toKey)
+  if (!from || !to) return { ok: false, reason: 'invalidMove' }
+
+  if (!from.type || from.count < count) return { ok: false, reason: 'notEnoughAnimals' }
+  // A pasture holds a single type, so a differently-occupied target is closed.
+  if (to.type && to.type !== from.type) return { ok: false, reason: 'slotTypeMismatch' }
+  if (to.count + count > to.capacity) return { ok: false, reason: 'slotFull' }
+
+  const placements = new Map(player.animalPlacement.map((p) => [p.key, { ...p }]))
+  const source = placements.get(fromKey)!
+  source.count -= count
+  placements.set(fromKey, source)
+
+  const target = placements.get(toKey) ?? { key: toKey, type: from.type, count: 0 }
+  target.type = from.type
+  target.count += count
+  placements.set(toKey, target)
+
+  player.animalPlacement = [...placements.values()].filter((p) => p.count > 0)
+  syncAnimalTotals(player)
+  return { ok: true }
+}
+
 /**
  * Distribute `count` animals of `type` across available housing, greedily
  * filling the largest matching space first. Returns how many could not be
@@ -145,6 +236,9 @@ export function houseAnimals(player: Player, type: AnimalType, count: number): n
   }
 
   player.animalPlacement = [...placements.values()].filter((p) => p.count > 0)
+  // Keep the counters in step with the placements, which are the source of
+  // truth. Callers used to have to remember this separately.
+  syncAnimalTotals(player)
   return remaining
 }
 

@@ -142,13 +142,14 @@ say so in the picker.
 - Rooms and fields with adjacency rules; renovation from wood to clay to stone
 - Family growth with and without rooms, capped at five people
 - All three harvest phases: field, feeding (with begging markers), and breeding
+- Moving animals between pastures, stables and the house at any time
 - Exact Revised Edition scoring, including the -1 penalties and category caps
 
 ## Not yet implemented
 
-- Bread baking, which depends on major improvement effects the engine does not yet apply
 - The ongoing text of cards outside the enforced patterns described above
 - Travelling minor improvements that pass to the player on your left
+- The multi-good conversion tables on Fireplace and Cooking Hearth (the ovens do work)
 
 ## Deployment
 

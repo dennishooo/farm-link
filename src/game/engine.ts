@@ -5,7 +5,14 @@
  */
 
 import { edgesOfSpace, findPastures, pastureBoundaryEdges, SPACE_COUNT } from './geometry'
-import { canPlace, countKind, houseAnimals, pastureInfo, syncAnimalTotals } from './farm'
+import {
+  canPlace,
+  countKind,
+  houseAnimals,
+  moveAnimals,
+  pastureInfo,
+  syncAnimalTotals,
+} from './farm'
 import {
   actionBonuses,
   affordableOptions,
@@ -476,6 +483,26 @@ export function collectRoundGoods(state: GameState): void {
     }
     logMessage(state, 'roundGoods', { name: player.name, goods: gained.join(', ') })
   }
+}
+
+/**
+ * Move animals between pastures, stables, and the house pet slot. Animals are
+ * the only components a player may rearrange at any time, and doing so can
+ * free capacity that automatic placement wasted.
+ */
+export function rearrangeAnimals(
+  state: GameState,
+  playerIndex: number,
+  fromKey: string,
+  toKey: string,
+  count: number,
+): ActionResult {
+  const player = state.players[playerIndex]
+  const result = moveAnimals(player, fromKey, toKey, count)
+  if (!result.ok) return fail(result.reason)
+
+  logMessage(state, 'moveAnimals', { name: player.name, count })
+  return ok
 }
 
 /**

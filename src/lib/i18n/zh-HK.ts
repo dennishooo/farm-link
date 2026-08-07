@@ -106,6 +106,14 @@ export default {
     },
   },
 
+  animals: {
+    title: '移動動物',
+    chooseTarget: '選擇要移到哪裡',
+    house: '住家',
+    pastureAt: '牧場 {{spaces}}',
+    emptySlot: '空 · 可容納 {{capacity}}',
+  },
+
   cards: {
     playOccupation: '打出職業卡',
     buildImprovement: '建造進步卡',
@@ -216,6 +224,7 @@ export default {
     breed: '{{name}} 的動物繁殖：{{types}}。',
     harvestComplete: '收成完畢。',
     pass: '{{name}} 略過。',
+    moveAnimals: '{{name}} 在農場內移動了 {{count}} 隻動物。',
     roundGoods: '{{name}} 從卡牌獲得 {{goods}}。',
     convert: '{{name}} 使用 {{cardId}} 將 {{amount}} {{good}} 轉換成 {{count}} 食物。',
   },
@@ -258,6 +267,10 @@ export default {
     choosePlowOrSow: '請選擇要開墾的田地或要播種的作物。',
     chooseFieldToSow: '請至少選擇一塊要播種的田地。',
     cannotTakeAllAnimals: '空間不足，無法容納所有動物。',
+    invalidMove: '無法移動到該位置。',
+    notEnoughAnimals: '該處沒有這麼多動物。',
+    slotTypeMismatch: '一個牧場只能容納同一種動物。',
+    slotFull: '該處空間不足。',
     noSuchConversion: '你沒有可以進行該轉換的卡牌。',
     notEnoughToConvert: '數量不足，無法轉換。',
   },
