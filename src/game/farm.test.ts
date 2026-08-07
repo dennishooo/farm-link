@@ -163,3 +163,38 @@ describe('moveAnimals', () => {
     expect(before).toBeGreaterThan(0)
   })
 })
+
+describe('capacityFor counts only free space', () => {
+  function withPasture() {
+    const p = player()
+    // One 2-space pasture, capacity 4.
+    p.fences = ['h:0:3', 'h:1:3', 'h:0:4', 'h:1:4', 'v:0:3', 'v:0:5']
+    return p
+  }
+
+  it('reports nothing left in a pasture that is already full', () => {
+    // It used to return the pasture's whole capacity regardless of occupants,
+    // so a full farm looked like it had room and animals silently wandered off.
+    const p = withPasture()
+    houseAnimals(p, 'sheep', 4)
+    houseAnimals(p, 'boar', 1) // takes the pet slot
+
+    expect(capacityFor(p, 'sheep')).toBe(0)
+  })
+
+  it('reports the remaining space in a partly filled pasture', () => {
+    const p = withPasture()
+    houseAnimals(p, 'sheep', 3)
+
+    // 1 space left in the pasture, plus the empty pet slot.
+    expect(capacityFor(p, 'sheep')).toBe(2)
+  })
+
+  it('ignores a pasture holding a different animal', () => {
+    const p = withPasture()
+    houseAnimals(p, 'sheep', 1)
+
+    // The pasture is sheep-only now; a cow can only use the pet slot.
+    expect(capacityFor(p, 'cattle')).toBe(1)
+  })
+})

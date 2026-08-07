@@ -9,6 +9,46 @@ are looking at.
 
 ## [Unreleased]
 
+## [4.2.0] — 2026-08-08
+
+Fixes for the nine issues reported after v4.1.0. Two were rules-data errors checked against the
+Revised Edition appendix; the rest were things the interface never told the player.
+
+### Fixed
+
+- **Cultivation could not sow** ([#6]). The dialog only offered empty spaces to plow, so the "and/or
+  sow" half of the action was unreachable. Fields are now selectable in the same dialog.
+- **Two action space cards appeared in the wrong stage** ([#5]). Cultivation is stage 5 and Western
+  Quarry stage 2; they were swapped, so Cultivation arrived in round 5 instead of round 12 and the
+  second stone quarry only appeared at the endgame. A test now checks every card against the
+  appendix.
+- **`capacityFor` ignored animals already housed**, reporting a full pasture's entire capacity as
+  free. Anything relying on it to decide whether animals would fit was wrong whenever a pasture was
+  occupied.
+- **Card text was unreadable on a phone** ([#3], [#4]). Rules text lived in a `title` tooltip, which
+  never appears on touch. Played cards are now tappable and show their text, marked when the engine
+  does not apply the effect for you.
+- **Animals could wander off with no warning** ([#9]). Taking animals you cannot house loses them
+  (rulebook p.7), but nothing said so beforehand. Animal spaces now warn how many would be lost.
+- **Breeding failed silently** ([#8]). A pair with nowhere to put a newborn does not breed, which
+  looked like a bug. The harvest log now says it happened and why.
+- **Farm Expansion looked unresponsive** ([#10]). Cost was only checked after choosing a space, so
+  an unaffordable build read as the board ignoring you. Options are disabled up front with the
+  reason shown.
+- Animal names in the breeding log rendered as raw English ids in both languages.
+
+### Added
+
+- **Grove, Hollow and Resource Market** ([#5]) — three action spaces the appendix lists for 3+
+  players that were missing entirely, leaving larger games short of wood, clay and stone.
+- **Live scoring** ([#7]). Each farm shows its running total, with the full breakdown a tap away.
+
+### Notes
+
+Harvest yields were reported as too low ([#11]), but "take exactly 1 crop from each of your fields"
+is the printed rule (rulebook p.8) and matches what the engine does. Four sown fields give 4 crops,
+not 4 per field. No change made.
+
 ## [4.1.0] — 2026-08-07
 
 ### Added
@@ -27,6 +67,8 @@ are looking at.
 - Card names in the game log always came from the Chinese translation table, so an English game
   showed Chinese card names ("Player 1 takes 2 Wood for 學者"). This affected every log line naming
   a card, including the existing exchange entries. A regression test now covers both languages.
+
+## [4.0.0] — 2026-08-07
 
 ### Added
 
@@ -136,9 +178,20 @@ Revised Edition rulebook.
 - The prototype's save-code import was broken in every case: a local HTML-escaping helper shadowed
   the global `escape` used to decode it.
 
+[#3]: https://github.com/dennishooo/farm-link/issues/3
+[#4]: https://github.com/dennishooo/farm-link/issues/4
+[#5]: https://github.com/dennishooo/farm-link/issues/5
+[#6]: https://github.com/dennishooo/farm-link/issues/6
+[#7]: https://github.com/dennishooo/farm-link/issues/7
+[#8]: https://github.com/dennishooo/farm-link/issues/8
+[#9]: https://github.com/dennishooo/farm-link/issues/9
+[#10]: https://github.com/dennishooo/farm-link/issues/10
+[#11]: https://github.com/dennishooo/farm-link/issues/11
 [#1]: https://github.com/dennishooo/farm-link/issues/1
 [#2]: https://github.com/dennishooo/farm-link/issues/2
-[Unreleased]: https://github.com/dennishooo/farm-link/compare/v4.0.0...HEAD
+[Unreleased]: https://github.com/dennishooo/farm-link/compare/v4.2.0...HEAD
+[4.2.0]: https://github.com/dennishooo/farm-link/compare/v4.1.0...v4.2.0
+[4.1.0]: https://github.com/dennishooo/farm-link/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/dennishooo/farm-link/compare/v3.5.0...v4.0.0
 [3.5.0]: https://github.com/dennishooo/farm-link/compare/v3.4.0...v3.5.0
 [3.4.0]: https://github.com/dennishooo/farm-link/compare/v3.3.0...v3.4.0

@@ -232,6 +232,31 @@ export const BASE_ACTION_SPACES: ActionSpace[] = [
     accumulates: { good: 'food', amount: 1 },
     description: 'Take all accumulated food.',
   },
+  // Three spaces the appendix lists for 3+ players only. Without them a 3- or
+  // 4-player board was short of wood, clay and stone all game.
+  {
+    id: 'grove',
+    name: 'Grove',
+    stage: 0,
+    minPlayers: 3,
+    accumulates: { good: 'wood', amount: 2 },
+    description: 'Take all accumulated wood.',
+  },
+  {
+    id: 'hollow',
+    name: 'Hollow',
+    stage: 0,
+    minPlayers: 3,
+    accumulates: { good: 'clay', amount: 1 },
+    description: 'Take all accumulated clay.',
+  },
+  {
+    id: 'resource-market',
+    name: 'Resource Market',
+    stage: 0,
+    minPlayers: 3,
+    description: 'Take 1 reed or 1 stone, plus 1 food.',
+  },
 ]
 
 /**
@@ -279,10 +304,11 @@ export const STAGE_ACTION_SPACES: ActionSpace[] = [
 
   // Stage 2 — three cards for rounds 5-7.
   {
-    id: 'sow-and-bake',
-    name: 'Cultivation',
+    id: 'west-quarry',
+    name: 'Western Quarry',
     stage: 2,
-    description: 'Plow 1 field and/or sow.',
+    accumulates: { good: 'stone', amount: 1 },
+    description: 'Take all accumulated stone.',
   },
   {
     id: 'wish-for-children',
@@ -330,11 +356,10 @@ export const STAGE_ACTION_SPACES: ActionSpace[] = [
 
   // Stage 5 — two cards for rounds 12-13.
   {
-    id: 'west-quarry',
-    name: 'Western Quarry',
+    id: 'sow-and-bake',
+    name: 'Cultivation',
     stage: 5,
-    accumulates: { good: 'stone', amount: 1 },
-    description: 'Take all accumulated stone.',
+    description: 'Plow 1 field and/or sow.',
   },
   {
     id: 'urgent-wish-for-children',

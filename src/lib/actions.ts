@@ -12,6 +12,7 @@ export type ActionMode =
   | 'expansion'
   | 'cultivate'
   | 'card'
+  | 'resource'
 
 export function actionModeFor(spaceId: ActionSpaceId): ActionMode {
   switch (spaceId) {
@@ -29,6 +30,8 @@ export function actionModeFor(spaceId: ActionSpaceId): ActionMode {
       return 'sow'
     case 'sow-and-bake':
       return 'cultivate'
+    case 'resource-market':
+      return 'resource'
     default:
       return 'none'
   }
@@ -36,4 +39,31 @@ export function actionModeFor(spaceId: ActionSpaceId): ActionMode {
 
 export function spaceName(id: ActionSpaceId): string {
   return findSpace(id)?.name ?? id
+}
+
+/**
+ * Which farm spaces a mode lets the player choose.
+ *
+ * Cultivation is the interesting case: it is "plow a field and/or sow", so both
+ * an empty space to plow and an existing field to sow must be selectable in one
+ * dialog. Offering only the plow targets left the sow half unreachable.
+ */
+export function selectableFor(
+  mode: ActionMode,
+  targets: { plow: number[]; room: number[]; stable: number[]; sow: number[] },
+): number[] {
+  switch (mode) {
+    case 'plow':
+      return targets.plow
+    case 'cultivate':
+      return [...new Set([...targets.plow, ...targets.sow])]
+    case 'room':
+      return targets.room
+    case 'stable':
+      return targets.stable
+    case 'sow':
+      return targets.sow
+    default:
+      return []
+  }
 }

@@ -83,29 +83,34 @@ export function totalAnimals(player: Player): number {
 }
 
 /**
- * How many animals of `type` the farm can hold, given what is already housed.
- * Each pasture holds a single type, so a pasture already holding another type
+ * How many *more* animals of `type` the farm can take, counting only free
+ * space. Each pasture holds a single type, so one already holding another type
  * contributes nothing. The house pet slot takes any one animal.
+ *
+ * The occupants have to be subtracted: returning the full capacity of a pasture
+ * that is already full reported room that did not exist, and callers used it to
+ * decide whether animals would wander off.
  */
 export function capacityFor(player: Player, type: AnimalType): number {
   const placements = new Map(player.animalPlacement.map((p) => [p.key, p]))
   let capacity = 0
 
+  const free = (key: string, total: number) => {
+    const occupant = placements.get(key)
+    if (!occupant || occupant.count === 0) return total
+    if (occupant.type !== type) return 0
+    return Math.max(0, total - occupant.count)
+  }
+
   for (const pasture of pastureInfo(player)) {
-    const occupant = placements.get(pasture.key)
-    if (!occupant || occupant.count === 0) capacity += pasture.capacity
-    else if (occupant.type === type) capacity += pasture.capacity
+    capacity += free(pasture.key, pasture.capacity)
   }
 
   for (const index of unfencedStables(player)) {
-    const occupant = placements.get(`stable:${index}`)
-    if (!occupant || occupant.count === 0 || occupant.type === type) {
-      capacity += UNFENCED_STABLE_CAPACITY
-    }
+    capacity += free(`stable:${index}`, UNFENCED_STABLE_CAPACITY)
   }
 
-  const pet = placements.get('pet')
-  if (!pet || pet.count === 0 || pet.type === type) capacity += PET_CAPACITY
+  capacity += free('pet', PET_CAPACITY)
 
   return capacity
 }
