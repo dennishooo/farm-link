@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  accumulationRate,
   advanceTurn,
   breedAnimals,
   buildFences,
@@ -7,6 +8,7 @@ import {
   createGame,
   currentPlayer,
   feedFamily,
+  findSpace,
   foodRequiredFor,
   isSpaceAvailable,
   takeAction,
@@ -79,6 +81,28 @@ describe('setup', () => {
 
   it('puts only 2 wood on the Forest in a solo game', () => {
     expect(game(['Solo']).accumulated['forest']).toBe(2)
+  })
+
+  it('reports the per-round rate the engine actually pays', () => {
+    // Issue #1: the board shows this rate, so it must come from one source.
+    const forest = findSpace('forest')!
+    expect(accumulationRate(forest, 2)).toBe(3)
+    expect(accumulationRate(forest, 1)).toBe(2)
+    expect(accumulationRate(findSpace('clay-pit')!, 2)).toBe(1)
+    // Non-accumulating spaces have no rate.
+    expect(accumulationRate(findSpace('farmland')!, 2)).toBe(0)
+  })
+
+  it('matches the rate against a second round of replenishment', () => {
+    const state = game()
+    const rate = accumulationRate(findSpace('clay-pit')!, 2)
+    const before = state.accumulated['clay-pit']
+    takeAction(state, 'forest')
+    takeAction(state, 'reed-bank')
+    takeAction(state, 'fishing')
+    takeAction(state, 'grain-seeds')
+    expect(state.round).toBe(2)
+    expect(state.accumulated['clay-pit']).toBe(before + rate)
   })
 })
 
@@ -287,6 +311,42 @@ describe('fences', () => {
     // Space 5 is a starting room.
     const result = buildFences(state, player, fenceRect(1, 0, 1, 0))
     expect(result).toMatchObject({ ok: false, reason: 'cannotFenceHouse' })
+  })
+
+  it('rejects a dangling fence bundled with a legal pasture', () => {
+    // Issue #2: a valid enclosure plus stray segments passed validation, so
+    // players paid wood for fences that enclosed nothing.
+    const state = game()
+    const player = state.players[0]
+    player.wood = 30
+    const dangling = verticalEdge(1, 3)
+
+    const result = buildFences(state, player, [...fenceRect(0, 2, 0, 2), dangling])
+    expect(result).toMatchObject({ ok: false, reason: 'fenceMustEnclose' })
+    expect(player.fences).toEqual([])
+    expect(player.wood).toBe(30)
+  })
+
+  it('accepts the same pasture once the dangling fence is dropped', () => {
+    const state = game()
+    const player = state.players[0]
+    player.wood = 30
+
+    expect(buildFences(state, player, fenceRect(0, 2, 0, 2)).ok).toBe(true)
+    expect(pastureInfo(player)).toHaveLength(1)
+    expect(player.wood).toBe(26)
+  })
+
+  it('still allows a fence shared between two adjacent pastures', () => {
+    const state = game()
+    const player = state.players[0]
+    player.wood = 30
+    buildFences(state, player, fenceRect(0, 0, 0, 0))
+
+    // The second pasture reuses the shared edge and adds three new ones.
+    const result = buildFences(state, player, fenceRect(0, 1, 0, 1))
+    expect(result.ok).toBe(true)
+    expect(pastureInfo(player)).toHaveLength(2)
   })
 
   it('cannot exceed the 15-fence supply', () => {

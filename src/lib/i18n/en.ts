@@ -33,6 +33,7 @@ export default {
     results: 'Results',
     points: '{{count}} pts',
     takenBy: 'Taken by {{name}}',
+    perRound: '+{{amount}} {{good}} each round',
     workersRemaining: '{{count}} left',
     toAct: 'To act',
   },
@@ -89,6 +90,8 @@ export default {
     buildStables: 'Build stables ({{cost}} wood each, {{remaining}} left)',
     fenceCost: '{{count}} fence(s) · {{wood}} wood · you have {{have}}',
     sowHint: 'Space {{number}}: {{crop}} — tap again to change',
+    fenceDangling: '{{count}} fence(s) enclose nothing — remove them or close the pasture',
+    fencePastures: 'Encloses {{count}} pasture(s)',
     instructions: {
       plow: 'Choose an empty space to plow. Fields must touch your existing fields.',
       room: 'Choose spaces for new rooms. Rooms must touch your house.',

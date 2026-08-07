@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Farmyard } from '@/components/farmyard'
 import { Button } from '@/components/ui/button'
-import { allEdges } from '@/game/geometry'
+import { allEdges, findPastures, pastureBoundaryEdges } from '@/game/geometry'
 import { legalPlacements } from '@/game/farm'
 import { ROOM_COST, STABLE_COST_WOOD, FENCE_COST_WOOD } from '@/game/rules'
 import type { ActionPayload } from '@/game/engine'
@@ -39,6 +39,17 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
     () => allEdges().filter((edge) => !player.fences.includes(edge)),
     [player.fences],
   )
+
+  // Live feedback while staging: which of the chosen fences would enclose
+  // nothing, and how many pastures the result would have.
+  const { danglingFences, stagedPastures } = useMemo(() => {
+    const proposed = [...player.fences, ...fences]
+    const boundary = pastureBoundaryEdges(proposed)
+    return {
+      danglingFences: fences.filter((edge) => !boundary.has(edge)),
+      stagedPastures: findPastures(proposed).length,
+    }
+  }, [player.fences, fences])
 
   function toggle<T>(list: T[], value: T): T[] {
     return list.includes(value) ? list.filter((item) => item !== value) : [...list, value]
@@ -110,7 +121,7 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
 
   const canConfirm =
     mode === 'fence'
-      ? fences.length > 0
+      ? fences.length > 0 && danglingFences.length === 0
       : mode === 'sow'
         ? sowPlan.length > 0
         : mode === 'cultivate'
@@ -177,13 +188,25 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
             )}
 
             {mode === 'fence' && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                {t('dialog.fenceCost', {
-                  count: fences.length,
-                  wood: fences.length * FENCE_COST_WOOD,
-                  have: player.wood,
-                })}
-              </p>
+              <>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t('dialog.fenceCost', {
+                    count: fences.length,
+                    wood: fences.length * FENCE_COST_WOOD,
+                    have: player.wood,
+                  })}
+                </p>
+                {fences.length > 0 && danglingFences.length > 0 && (
+                  <p className="mt-1 text-xs font-semibold text-destructive">
+                    {t('dialog.fenceDangling', { count: danglingFences.length })}
+                  </p>
+                )}
+                {fences.length > 0 && danglingFences.length === 0 && (
+                  <p className="mt-1 text-xs font-semibold text-primary">
+                    {t('dialog.fencePastures', { count: stagedPastures })}
+                  </p>
+                )}
+              </>
             )}
           </>
         )}

@@ -148,3 +148,25 @@ export function fencedSpaces(fences: Iterable<FenceEdge>): Set<number> {
   }
   return result
 }
+
+/**
+ * Fence edges that actually border a pasture.
+ *
+ * A fence that touches no enclosed region is decorative — the rulebook only
+ * allows fences that help form a fully enclosed pasture, so this is what
+ * distinguishes a real boundary from a dangling segment.
+ */
+export function pastureBoundaryEdges(fences: Iterable<FenceEdge>): Set<FenceEdge> {
+  const fenceSet = new Set(fences)
+  const boundary = new Set<FenceEdge>()
+
+  for (const pasture of findPastures(fenceSet)) {
+    for (const index of pasture.spaces) {
+      for (const edge of Object.values(edgesOfSpace(index))) {
+        if (fenceSet.has(edge)) boundary.add(edge)
+      }
+    }
+  }
+
+  return boundary
+}

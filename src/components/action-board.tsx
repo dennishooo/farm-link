@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { allSpacesFor } from '@/game/engine'
+import { accumulationRate, allSpacesFor } from '@/game/engine'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ActionSpaceId, GameState } from '@/game/types'
@@ -58,6 +58,14 @@ export function ActionBoard({ game, onChoose, disabled = false }: ActionBoardPro
               <span className="text-xs font-normal text-muted-foreground">
                 {t(`spaces.${space.id}.description`, space.description)}
               </span>
+              {space.accumulates && (
+                <span className="text-xs font-normal text-muted-foreground">
+                  {t('game.perRound', {
+                    amount: accumulationRate(space, game.players.length),
+                    good: t(`goods.${space.accumulates.good}` as 'goods.wood'),
+                  })}
+                </span>
+              )}
               {occupant && (
                 <span className="text-xs font-semibold text-destructive">
                   {t('game.takenBy', { name: occupant.name })}
