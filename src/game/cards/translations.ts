@@ -272,6 +272,54 @@ export const CARD_TRANSLATIONS: Record<string, CardTranslation> = {
     title: '木屋建造者',
     text: '遊戲結束時，你的木屋每個房間得 1 分。',
   },
+
+  // ---- Cooking improvements with multi-good conversion tables. ----
+  'minor-cooking-hearth': {
+    title: '爐灶',
+    text: '任何時候可將物品換成食物：蔬菜 3 食物、綿羊 2 食物、野豬 3 食物、牛 4 食物。進行「烤麵包」行動時，可將穀物換 3 食物。',
+  },
+  'minor-simple-fireplace': {
+    title: '簡易壁爐',
+    text: '任何時候可將物品換成食物：蔬菜 2 食物、綿羊 1 食物、野豬 2 食物、牛 3 食物。進行「烤麵包」行動時，可將穀物換 2 食物。',
+  },
+  'minor-brewery': {
+    title: '釀酒廠',
+    text: '在收成的餵食階段，可用釀酒廠將最多 1 穀物轉換成 3 食物。',
+  },
+  "minor-brewer-s-copper": {
+    title: '釀酒銅鍋',
+    text: '每次收成的餵食階段，可用釀酒銅鍋將最多 1 穀物轉換成 2 食物。',
+  },
+  'minor-schnaps-distillery': {
+    title: '烈酒蒸餾廠',
+    text: '在收成的餵食階段，可用烈酒蒸餾廠將最多 1 蔬菜轉換成 5 食物。',
+  },
+  'minor-sawmill': {
+    title: '鋸木廠',
+    text: '每次收成時，最多可將 1 木材轉換成 3 食物。遊戲結束時，2／4／5 木材可得 1／2／3 分。',
+  },
+  'occupation-corn-profiteer': {
+    title: '穀物投機商',
+    text: '任何時候可將 1 穀物轉換成 3 食物。其他玩家可付你 2 食物買下該穀物來阻止；若多人出價，由你選擇對象。',
+  },
+
+  // ---- Food placed on future round spaces. ----
+  'minor-chicken-coop': {
+    title: '雞舍',
+    text: '在接下來 8 個剩餘的回合格上各放 1 食物。這些回合開始時，你獲得該食物。',
+  },
+  'minor-goose-pond': {
+    title: '鵝池',
+    text: '在接下來 4 個剩餘的回合格上各放 1 食物。這些回合開始時，你獲得該食物。',
+  },
+  'minor-swan-lake': {
+    title: '天鵝湖',
+    text: '在接下來 5 個剩餘的回合格上各放 1 食物。這些回合開始時，你獲得該食物。',
+  },
+  'minor-village-well': {
+    title: '村井',
+    text: '在接下來 3 個剩餘的回合格上各放 1 食物。這些回合開始時，你獲得該食物。',
+  },
 }
 
 /** The Chinese text for a card, or null when it has not been translated yet. */

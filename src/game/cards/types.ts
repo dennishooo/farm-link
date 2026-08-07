@@ -50,6 +50,11 @@ export type CardEffect =
    * per single unit of `from`. `limit` caps uses per harvest when present.
    */
   | { kind: 'convert'; from: Payable; to: 'food'; rate: number; limit?: number }
+  /**
+   * Tiered bonus points: the highest threshold whose quantity the player
+   * reaches is awarded. `tiers` is ordered ascending by `min`.
+   */
+  | { kind: 'pointsTiered'; per: Countable; tiers: { min: number; points: number }[] }
   /** A standing discount when building or renovating. */
   | { kind: 'discount'; good: Payable; amount: number; applies: 'room' | 'renovation' | 'both' }
 

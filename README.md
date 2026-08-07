@@ -4,7 +4,7 @@ An offline-playable implementation of the **Agricola (Revised Edition)** base ga
 pass-and-play on a single device.
 
 Fourteen rounds, six harvests, real fence geometry, and the exact scoring tables from the official
-rulebook. No server, no network calls — once the page has loaded it runs entirely in the browser and
+rulebook. No server, no network calls: it installs as a PWA, cold-starts with no connection, and
 saves your game to `localStorage`.
 
 ## Stack
@@ -16,6 +16,7 @@ saves your game to `localStorage`.
 | Styling | Tailwind CSS 4 (oklch tokens, light + dark) |
 | State | Zustand 5 with `persist` |
 | i18n | i18next + react-i18next (English, 繁體中文) |
+| Offline | vite-plugin-pwa (Workbox precache, installable) |
 | Tests | Vitest 4 + Testing Library |
 
 The project mirrors the conventions of the Broadway client: `cn()` for class merging, `@/` path
@@ -96,7 +97,7 @@ correct occupation cost for the player count.
 
 ### Which effects actually work
 
-46 cards have effects the engine applies for you:
+66 cards have effects the engine applies for you, including all ten major improvements:
 
 | Effect | Example |
 | --- | --- |
@@ -106,6 +107,8 @@ correct occupation cost for the player count.
 | Exchange goods for food | Clay Oven — 1 grain becomes 5 food, any time |
 | Build and renovation discounts | Stonecutter — every room and renovation costs 1 stone less |
 | Scoring bonuses | Mansion — 2 extra points per stone room |
+| Multi-good cooking tables | Cooking Hearth — vegetable 3, sheep 2, boar 3, cattle 4 |
+| Tiered scoring | Joinery — 3/5/7 wood scores 1/2/3 points |
 
 Exchanges appear as buttons under your farm, since they are anytime actions in Agricola rather than
 worker placements.
@@ -148,8 +151,19 @@ say so in the picker.
 ## Not yet implemented
 
 - The ongoing text of cards outside the enforced patterns described above
-- Travelling minor improvements that pass to the player on your left
-- The multi-good conversion tables on Fireplace and Cooking Hearth (the ovens do work)
+- Inter-player card effects (e.g. Corn Profiteer, where another player may buy your grain)
+
+Travelling improvements — the cards that pass to the player on your left — are marked in the
+printed game with a left-arrow icon that the source card database does not carry, and no card in
+this 337-card deck has the passing text. There is nothing to implement for the base deck.
+
+## Offline and installing
+
+The build registers a service worker that precaches every asset, so after one visit the app opens
+with no network at all — verified by killing the server, clearing storage, and cold-loading a new
+game. On phones it can be added to the home screen and runs standalone.
+
+Updates are picked up automatically on the next load (`registerType: 'autoUpdate'`).
 
 ## Deployment
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   makeCardId,
+  parseConvert,
+  parseTieredPoints,
   parseCardType,
   parseCost,
   parseEffects,
@@ -159,6 +161,79 @@ describe('parseEffects', () => {
 
   it('returns nothing for text it cannot map', () => {
     expect(parseEffects('Something entirely unparseable happens here.')).toEqual([])
+  })
+})
+
+describe('parseConvert', () => {
+  it('reads a multi-good conversion table', () => {
+    const rates = parseConvert(
+      'At any time: Vegetable → 2 Food; Sheep → 2 Food; Wild boar → 2 Food; Cattle → 3 Food',
+    )
+    expect(rates).toEqual([
+      { kind: 'convert', from: 'vegetable', to: 'food', rate: 2 },
+      { kind: 'convert', from: 'sheep', to: 'food', rate: 2 },
+      { kind: 'convert', from: 'boar', to: 'food', rate: 2 },
+      { kind: 'convert', from: 'cattle', to: 'food', rate: 3 },
+    ])
+  })
+
+  it('reads a colon-separated table', () => {
+    const rates = parseConvert('Vegetables: 3 Food Sheep: 2 Food Cattle: 4 Food')
+    expect(rates.map((r) => [r.from, r.rate])).toEqual([
+      ['vegetable', 3],
+      ['sheep', 2],
+      ['cattle', 4],
+    ])
+  })
+
+  it('keeps the use limit from "convert at most 1 Wood to 2 Food"', () => {
+    expect(parseConvert('you can use the Joinery to convert at most 1 Wood to 2 Food.')).toEqual([
+      { kind: 'convert', from: 'wood', to: 'food', rate: 2, limit: 1 },
+    ])
+  })
+
+  it('never lists the same good twice', () => {
+    const rates = parseConvert('Sheep → 2 Food; Sheep: 2 Food')
+    expect(rates).toHaveLength(1)
+  })
+
+  it('returns nothing when no conversion is described', () => {
+    expect(parseConvert('Plow one field.')).toEqual([])
+  })
+})
+
+describe('parseTieredPoints', () => {
+  it('reads the arrow form', () => {
+    expect(parseTieredPoints('Scoring: 3/5/7 Wood → 1/2/3 bonus points')).toEqual({
+      kind: 'pointsTiered',
+      per: 'wood',
+      tiers: [
+        { min: 3, points: 1 },
+        { min: 5, points: 2 },
+        { min: 7, points: 3 },
+      ],
+    })
+  })
+
+  it('reads the points-first prose form', () => {
+    expect(
+      parseTieredPoints('At the end of the game, you receive 1/2/3 Bonus points for 2/4/5 Reed.'),
+    ).toMatchObject({
+      per: 'reed',
+      tiers: [
+        { min: 2, points: 1 },
+        { min: 4, points: 2 },
+        { min: 5, points: 3 },
+      ],
+    })
+  })
+
+  it('rejects mismatched tier lengths', () => {
+    expect(parseTieredPoints('3/5/7 Wood → 1/2 bonus points')).toBeNull()
+  })
+
+  it('returns null when there is no tiered scoring', () => {
+    expect(parseTieredPoints('You receive 2 bonus points.')).toBeNull()
   })
 })
 

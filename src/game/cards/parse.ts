@@ -185,8 +185,10 @@ export function parseEffects(text: string): CardEffect[] {
   const drip = parseRoundDrip(clean)
   if (drip) effects.push(drip)
 
-  const convert = parseConvert(clean)
-  if (convert) effects.push(convert)
+  effects.push(...parseConvert(clean))
+
+  const tiered_points = parseTieredPoints(clean)
+  if (tiered_points) effects.push(tiered_points)
 
   const discount = parseDiscount(clean)
   if (discount) effects.push(discount)
@@ -212,7 +214,8 @@ export function parseRoundDrip(text: string): Extract<CardEffect, { kind: 'round
   // rather than paying out immediately and overpaying the player.
   if (/^\s*(once|when|whenever|if|after)\b/i.test(text)) return null
 
-  const head = text.match(/place (\d+) ([A-Za-z]+) on each/i)
+  // "Place 1 Food on each of the next 3…" and "Place 1 Food each on the next 5…"
+  const head = text.match(/place (\d+) ([A-Za-z]+)(?: each)? on (?:each|the next)/i)
   if (!head) return null
 
   const good = normaliseGood(head[2])
@@ -226,7 +229,7 @@ export function parseRoundDrip(text: string): Extract<CardEffect, { kind: 'round
     return { kind: 'roundDrip', good, amount, rounds: range(start, end) }
   }
 
-  const nextN = text.match(/next (\d+) round/i)
+  const nextN = text.match(/next (\d+) (?:remaining )?round/i)
   if (nextN) {
     const count = Number(nextN[1])
     return { kind: 'roundDrip', good, amount, rounds: range(1, count) }
@@ -268,53 +271,108 @@ function range(start: number, end: number): number[] {
  * Only single-source conversions with a fixed rate are enforced; the
  * multi-line rate tables on Cooking Hearth and friends are left manual.
  */
-export function parseConvert(text: string): Extract<CardEffect, { kind: 'convert' }> | null {
-  // A rate table lists several goods; those need a richer model than this.
-  // The arrow form ("At most 1 time Grain -> 5 Food") is a single rate even
-  // when other numbers appear, so it is checked before the table heuristic.
-  const arrowForm = /(?:→|->)/.test(text)
-  const tableLike = !arrowForm && (text.match(/\b\d+ Food\b/gi) ?? []).length > 1
-  if (tableLike) return null
-
-  // Tiered scoring text alongside a conversion ("1/2/3 Bonus points for
-  // 2/4/5 Wood") means the card does more than the engine would apply.
-  if (/\d\s*\/\s*\d/.test(text)) return null
+export function parseConvert(text: string): Extract<CardEffect, { kind: 'convert' }>[] {
+  const results: Extract<CardEffect, { kind: 'convert' }>[] = []
+  const seen = new Set<Payable>()
+  const add = (entry: Extract<CardEffect, { kind: 'convert' }>) => {
+    if (seen.has(entry.from)) return
+    seen.add(entry.from)
+    results.push(entry)
+  }
 
   // Prose form: "convert up to 2 Grain into 5 Food each".
   const prose = text.match(/convert (?:up to )?(\d+) ([A-Za-z]+) (?:in)?to (\d+) food(\s+each)?/i)
   if (prose) {
     const from = normaliseGood(prose[2])
-    if (!from || from === 'food') return null
-
     const count = Number(prose[1])
     const food = Number(prose[3])
-    if (count <= 0) return null
-
-    // "up to 2 Grain into 5 Food each" pays 5 per grain, not 5 in total.
-    const rate = prose[4] ? food : food / count
-    return { kind: 'convert', from, to: 'food', rate, limit: count }
-  }
-
-  // Arrow form used by the ovens: "At most 1 time Grain → 5 Food".
-  const arrow = text.match(
-    /(?:at most|up to) (\d+) times?\s+([A-Za-z]+)\s*(?:→|->)\s*(\d+) food/i,
-  )
-  if (arrow) {
-    const from = normaliseGood(arrow[2])
-    if (!from || from === 'food') return null
-
-    // "N times" is how many separate exchanges are allowed, each at the
-    // printed rate — not a total to divide.
-    return {
-      kind: 'convert',
-      from,
-      to: 'food',
-      rate: Number(arrow[3]),
-      limit: Number(arrow[1]),
+    if (from && from !== 'food' && count > 0) {
+      // "up to 2 Grain into 5 Food each" pays 5 per grain, not 5 in total.
+      add({ kind: 'convert', from, to: 'food', rate: prose[4] ? food : food / count, limit: count })
     }
   }
 
-  return null
+  // Prose with a use limit: "convert at most 1 Wood to 2 Food".
+  const limited = text.match(/convert (?:at most|up to) (\d+) ([A-Za-z]+) (?:in)?to (\d+) food/i)
+  if (limited) {
+    const from = normaliseGood(limited[2])
+    if (from && from !== 'food') {
+      add({
+        kind: 'convert',
+        from,
+        to: 'food',
+        rate: Number(limited[3]),
+        limit: Number(limited[1]),
+      })
+    }
+  }
+
+  // Arrow form with a use limit: "At most 1 time Wood → 2 Food".
+  for (const match of text.matchAll(
+    /(?:at most|up to) (\d+) times?\s+([A-Za-z ]+?)\s*(?:→|->)\s*(\d+) food/gi,
+  )) {
+    const from = normaliseGood(match[2])
+    // "N times" is how many separate exchanges are allowed, each at the
+    // printed rate — not a total to divide.
+    if (from && from !== 'food') {
+      add({ kind: 'convert', from, to: 'food', rate: Number(match[3]), limit: Number(match[1]) })
+    }
+  }
+
+  // Bare arrow table: "Vegetable → 2 Food; Sheep → 2 Food; Cattle → 3 Food".
+  for (const match of text.matchAll(/([A-Za-z ]+?)\s*(?:→|->)\s*(\d+) food/gi)) {
+    const from = normaliseGood(match[1].split(/[;.,]/).pop() ?? '')
+    if (from && from !== 'food') {
+      add({ kind: 'convert', from, to: 'food', rate: Number(match[2]) })
+    }
+  }
+
+  // Colon table: "Vegetables: 3 Food Sheep: 2 Food Wild boar: 3 Food".
+  for (const match of text.matchAll(/([A-Za-z ]+?):\s*(\d+) food/gi)) {
+    const from = normaliseGood(match[1].split(/[;.,]/).pop() ?? '')
+    if (from && from !== 'food') {
+      add({ kind: 'convert', from, to: 'food', rate: Number(match[2]) })
+    }
+  }
+
+  return results
+}
+
+/**
+ * Tiered scoring: "Scoring: 3/5/7 Wood → 1/2/3 bonus points".
+ * The highest threshold the player reaches is what scores.
+ */
+export function parseTieredPoints(
+  text: string,
+): Extract<CardEffect, { kind: 'pointsTiered' }> | null {
+  // Quantity-first: "3/5/7 Wood → 1/2/3 bonus points".
+  const arrowForm = text.match(
+    /((?:\d+\s*\/\s*)+\d+)\s+([A-Za-z]+)\s*(?:→|->)\s*((?:\d+\s*\/\s*)+\d+)\s*(?:bonus )?points?/i,
+  )
+  // Points-first: "you receive 1/2/3 Bonus points for 3/5/7 Wood".
+  const proseForm = text.match(
+    /((?:\d+\s*\/\s*)+\d+)\s*(?:bonus )?points? for\s+((?:\d+\s*\/\s*)+\d+)\s+([A-Za-z]+)/i,
+  )
+
+  const raw = arrowForm
+    ? { quantities: arrowForm[1], points: arrowForm[3], good: arrowForm[2] }
+    : proseForm
+      ? { quantities: proseForm[2], points: proseForm[1], good: proseForm[3] }
+      : null
+  if (!raw) return null
+
+  const per = normaliseGood(raw.good)
+  if (!per) return null
+
+  const quantities = raw.quantities.split('/').map((value) => Number(value.trim()))
+  const points = raw.points.split('/').map((value) => Number(value.trim()))
+  if (quantities.length !== points.length) return null
+
+  return {
+    kind: 'pointsTiered',
+    per,
+    tiers: quantities.map((min, index) => ({ min, points: points[index] })),
+  }
 }
 
 /**
