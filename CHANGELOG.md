@@ -9,6 +9,14 @@ are looking at.
 
 ## [Unreleased]
 
+### Changed
+
+- **Split `engine.ts`** (1050 lines) into `result.ts` (the shared outcome type), `state.ts` (setup,
+  round progression, harvest) and `actions.ts` (worker placement and the action handlers).
+  `engine.ts` remains as a barrel, so every import site is untouched and the public surface is
+  byte-for-byte identical. Setup, rounds and harvest stayed together deliberately: they form a
+  cycle, and separating them would only turn it into a circular import.
+
 ### Added
 
 - **Component and integration tests** — 144 of them, covering every component and the App shell.
@@ -28,6 +36,9 @@ are looking at.
   what the build does.
 - jsdom has no `matchMedia`, so any test mounting the theme toggle died before asserting anything.
   The shared test setup now provides it.
+- The engine-key translation test read `engine.ts` alone, so when that became a barrel it silently
+  scanned nothing. It now reads every module in `src/game`, and its match for directly-pushed log
+  entries is anchored on the push so it cannot pick up unrelated `key:` fields.
 
 ## [4.2.0] — 2026-08-08
 

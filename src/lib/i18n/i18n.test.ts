@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 import i18n, { SUPPORTED_LANGUAGES } from './index'
 import en from './en'
@@ -74,13 +74,24 @@ describe('translation bundles', () => {
 
 describe('engine keys', () => {
   it('has a translation for every key the engine logs or fails with', async () => {
-    // Vitest runs from the project root, so these paths are stable.
-    const engine = await readFile('src/game/engine.ts', 'utf-8')
-    const store = await readFile('src/stores/game.ts', 'utf-8')
-    const source = engine + store
+    // Read every game module rather than named files: this once pointed at
+    // engine.ts alone, and when that became a barrel the scan silently found
+    // nothing. Vitest runs from the project root, so these paths are stable.
+    const gameDir = 'src/game'
+    const gameFiles = (await readdir(gameDir))
+      .filter((name) => name.endsWith('.ts') && !name.endsWith('.test.ts'))
+      .map((name) => `${gameDir}/${name}`)
+
+    const sources = await Promise.all(
+      [...gameFiles, 'src/stores/game.ts'].map((path) => readFile(path, 'utf-8')),
+    )
+    const source = sources.join('\n')
 
     const logKeys = [...source.matchAll(/logMessage\(\s*\w+,\s*'([\w-]+)'/g)].map((m) => m[1])
-    const passKey = [...source.matchAll(/key:\s*'([\w-]+)'/g)].map((m) => m[1])
+    // Log entries pushed directly rather than through logMessage. Anchored on
+    // the surrounding push so it cannot pick up unrelated `key:` fields, such
+    // as the housing-slot keys in farm.ts.
+    const passKey = [...source.matchAll(/log\.push\(\{[^}]*?key:\s*'([\w-]+)'/g)].map((m) => m[1])
     const errorKeys = [...source.matchAll(/fail\('([\w-]+)'/g)].map((m) => m[1])
 
     expect(logKeys.length).toBeGreaterThan(10)
