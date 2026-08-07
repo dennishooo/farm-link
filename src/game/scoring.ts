@@ -40,6 +40,11 @@ export function cardPoints(player: Player): number {
       if (effect.kind === 'points') total += effect.points
       else if (effect.kind === 'pointsPer') {
         total += Math.floor(countUnit(player, effect.per) / effect.each) * effect.points
+      } else if (effect.kind === 'pointsTiered') {
+        // Only the highest threshold the player reaches scores.
+        const quantity = countUnit(player, effect.per)
+        const reached = effect.tiers.filter((tier) => quantity >= tier.min)
+        if (reached.length > 0) total += reached[reached.length - 1].points
       }
     }
   }

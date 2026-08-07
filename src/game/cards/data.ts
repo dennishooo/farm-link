@@ -4,7 +4,7 @@
  *
  * Source: agricolacards.com community database, base-game decks only.
  * 337 cards — 181 occupations, 146 minor
- * improvements, 10 major improvements. 46 have effects the
+ * improvements, 10 major improvements. 66 have effects the
  * engine applies automatically; the rest are dealt and scored, with their
  * ongoing text applied by the players.
  */
@@ -352,8 +352,16 @@ export const CARDS: Card[] = [
     "points": 2,
     "text": "During the Feeding phase of the Harvest, you can use the Brewery to convert at most 1 Grain to 3 Food. At the end of the game, you receive 1 Bonus point for your ninth Grain.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 3,
+        "limit": 1
+      }
+    ]
   },
   {
     "id": "occupation-bricklayer",
@@ -579,8 +587,24 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "Place 1 Food each on the next 8 remaining Round spaces. At the start of these rounds, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-chief",
@@ -883,8 +907,39 @@ export const CARDS: Card[] = [
     "points": 3,
     "text": "At any time, you may convert goods to Food as follows: Vegetables: 4 Food Sheep: 2 Food Wild boar: 3 Food Cattle: 4 Food Whenever you use the \"Bake bread\" action, you may convert: Grain: 3 Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "vegetable",
+        "to": "food",
+        "rate": 4
+      },
+      {
+        "kind": "convert",
+        "from": "sheep",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "boar",
+        "to": "food",
+        "rate": 3
+      },
+      {
+        "kind": "convert",
+        "from": "cattle",
+        "to": "food",
+        "rate": 4
+      },
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 3
+      }
+    ]
   },
   {
     "id": "minor-cooking-hearth",
@@ -894,8 +949,39 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "At any time, you may convert goods to Food as follows: Vegetables: 3 Food Sheep: 2 Food Wild boar: 3 Food Cattle: 4 Food Whenever you use the \"Bake bread: action, you may convert: Grain: 3 Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "vegetable",
+        "to": "food",
+        "rate": 3
+      },
+      {
+        "kind": "convert",
+        "from": "sheep",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "boar",
+        "to": "food",
+        "rate": 3
+      },
+      {
+        "kind": "convert",
+        "from": "cattle",
+        "to": "food",
+        "rate": 4
+      },
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 3
+      }
+    ]
   },
   {
     "id": "minor-copse",
@@ -920,8 +1006,16 @@ export const CARDS: Card[] = [
     "points": 0,
     "text": "You can convert 1 Grain to 3 Food at any time. Any other player can stop this by paying you 2 Food to buy the Grain for themself. If more than one player offers, you choose one of them.",
     "minPlayers": 4,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 3,
+        "limit": 1
+      }
+    ]
   },
   {
     "id": "minor-corn-sheaf",
@@ -1334,8 +1428,20 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "Place 1 Food each on the next 4 remaining Round spaces. At the start of these rounds, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    ]
   },
   {
     "id": "minor-grain-cart",
@@ -2523,8 +2629,34 @@ export const CARDS: Card[] = [
     "points": 3,
     "text": "Each Harvest, you may convert up to 1 Wood to 3 Food. At the end of the game, you receive 1/2/3 Bonus points for 2/4/5 Wood. (A repurchased Joinery does not give any additional Bonus points, but can be used to convert an additional 1 Wood each Harvest.)",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "wood",
+        "to": "food",
+        "rate": 3,
+        "limit": 1
+      },
+      {
+        "kind": "pointsTiered",
+        "per": "wood",
+        "tiers": [
+          {
+            "min": 2,
+            "points": 1
+          },
+          {
+            "min": 4,
+            "points": 2
+          },
+          {
+            "min": 5,
+            "points": 3
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-schnaps-distiller",
@@ -2558,8 +2690,16 @@ export const CARDS: Card[] = [
     "points": 2,
     "text": "During the Feeding phase of the Harvest, you can use the Schnaps Distillery to convert at most 1 Vegetable into 4 Food. At the end of the game, you receive 1 Bonus point each for your 5th and 6th Vegetables.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "vegetable",
+        "to": "food",
+        "rate": 4,
+        "limit": 1
+      }
+    ]
   },
   {
     "id": "occupation-scholar",
@@ -3063,8 +3203,21 @@ export const CARDS: Card[] = [
     "points": 2,
     "text": "Place 1 Food each on the next 5 remaining Round spaces. At the start of these rounds, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-swineherd",
@@ -3289,8 +3442,19 @@ export const CARDS: Card[] = [
     "points": 5,
     "text": "Place 1 Food each on the next 3 remaining Round spaces. At the start of these rounds, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3
+        ]
+      }
+    ]
   },
   {
     "id": "occupation-water-carrier",
@@ -3647,8 +3811,39 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "At any time, you may convert goods to Food as follows: Vegetables: 2 Food Sheep: 2 Food Wild boar: 2 Food Cattle: 3 Food Whenever you use the \"Bake bread\" action, you may convert: Grain: 2 Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "vegetable",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "sheep",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "boar",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "cattle",
+        "to": "food",
+        "rate": 3
+      },
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 2
+      }
+    ]
   },
   {
     "id": "major-fireplace-2",
@@ -3662,8 +3857,39 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "At any time, you may convert goods to Food as follows: Vegetables: 2 Food Sheep: 2 Food Wild boar: 2 Food Cattle: 3 Food Whenever you use the \"Bake bread\" action, you may convert: Grain: 2 Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "vegetable",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "sheep",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "boar",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "cattle",
+        "to": "food",
+        "rate": 3
+      },
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 2
+      }
+    ]
   },
   {
     "id": "major-cooking-hearth",
@@ -3677,8 +3903,39 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "At any time, you may convert goods to Food as follows: Vegetables: 3 Food Sheep: 2 Food Wild boar: 3 Food Cattle: 4 Food Whenever you use the \"Bake bread\" action, you may convert: Grain: 3 Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "vegetable",
+        "to": "food",
+        "rate": 3
+      },
+      {
+        "kind": "convert",
+        "from": "sheep",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "boar",
+        "to": "food",
+        "rate": 3
+      },
+      {
+        "kind": "convert",
+        "from": "cattle",
+        "to": "food",
+        "rate": 4
+      },
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 3
+      }
+    ]
   },
   {
     "id": "major-cooking-hearth-2",
@@ -3692,8 +3949,39 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "At any time, you may convert goods to Food as follows: Vegetables: 3 Food Sheep: 2 Food Wild boar: 3 Food Cattle: 4 Food Whenever you use the \"Bake bread\" action, you may convert: Grain: 3 Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "vegetable",
+        "to": "food",
+        "rate": 3
+      },
+      {
+        "kind": "convert",
+        "from": "sheep",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "boar",
+        "to": "food",
+        "rate": 3
+      },
+      {
+        "kind": "convert",
+        "from": "cattle",
+        "to": "food",
+        "rate": 4
+      },
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 3
+      }
+    ]
   },
   {
     "id": "major-joinery",
@@ -3708,8 +3996,34 @@ export const CARDS: Card[] = [
     "points": 2,
     "text": "In each Harvest, you can use the Joinery to convert at most 1 Wood to 2 Food. At the end of the game, you receive 1/2/3 Bonus points for 3/5/7 Wood.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "wood",
+        "to": "food",
+        "rate": 2,
+        "limit": 1
+      },
+      {
+        "kind": "pointsTiered",
+        "per": "wood",
+        "tiers": [
+          {
+            "min": 3,
+            "points": 1
+          },
+          {
+            "min": 5,
+            "points": 2
+          },
+          {
+            "min": 7,
+            "points": 3
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "major-pottery",
@@ -3724,8 +4038,34 @@ export const CARDS: Card[] = [
     "points": 2,
     "text": "In each Harvest, you can use the Pottery to convert at most 1 Clay to 2 Food. At the end of the game, you receive 1/2/3 Bonus points for 3/5/7 Clay.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "clay",
+        "to": "food",
+        "rate": 2,
+        "limit": 1
+      },
+      {
+        "kind": "pointsTiered",
+        "per": "clay",
+        "tiers": [
+          {
+            "min": 3,
+            "points": 1
+          },
+          {
+            "min": 5,
+            "points": 2
+          },
+          {
+            "min": 7,
+            "points": 3
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "major-basketmaker-s-workshop",
@@ -3740,8 +4080,34 @@ export const CARDS: Card[] = [
     "points": 2,
     "text": "In each Harvest, you can use the Basketmaker's Workshop to convert at most 1 Reed to 3 Food. At the end of the game, you receive 1/2/3 Bonus points for 2/4/5 Reed.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "reed",
+        "to": "food",
+        "rate": 3,
+        "limit": 1
+      },
+      {
+        "kind": "pointsTiered",
+        "per": "reed",
+        "tiers": [
+          {
+            "min": 2,
+            "points": 1
+          },
+          {
+            "min": 4,
+            "points": 2
+          },
+          {
+            "min": 5,
+            "points": 3
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "major-well",
@@ -3756,8 +4122,21 @@ export const CARDS: Card[] = [
     "points": 4,
     "text": "Place 1 Food each on the next 5 remaining Round spaces. At the start of these rounds, you receive the Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "roundDrip",
+        "good": "food",
+        "amount": 1,
+        "rounds": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    ]
   },
   {
     "id": "minor-field",
@@ -3900,8 +4279,39 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "At any time, you may convert goods to Food as follows: Vegetables: 2 Food Sheep: 1 Food Wild Boar: 2 Food Cattle: 3 Food Whenever you use the \"Bake bread\" action, you may convert: Grain: 2 Food.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "vegetable",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "sheep",
+        "to": "food",
+        "rate": 1
+      },
+      {
+        "kind": "convert",
+        "from": "boar",
+        "to": "food",
+        "rate": 2
+      },
+      {
+        "kind": "convert",
+        "from": "cattle",
+        "to": "food",
+        "rate": 3
+      },
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 2
+      }
+    ]
   },
   {
     "id": "minor-half-timbered-house",
@@ -4409,8 +4819,16 @@ export const CARDS: Card[] = [
     "points": 1,
     "text": "During the Feeding phase of each Harvest, you can use the Brewer's Copper to convert at most 1 Grain to 2 Food. At the end of the game, you receive 1 Bonus point if you have at least 7 Grain.",
     "minPlayers": 1,
-    "enforced": false,
-    "effects": []
+    "enforced": true,
+    "effects": [
+      {
+        "kind": "convert",
+        "from": "grain",
+        "to": "food",
+        "rate": 2,
+        "limit": 1
+      }
+    ]
   },
   {
     "id": "minor-bust",

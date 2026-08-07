@@ -242,6 +242,30 @@ export function houseAnimals(player: Player, type: AnimalType, count: number): n
   return remaining
 }
 
+/**
+ * Take animals off the farm, emptying the fullest slots first. Used when
+ * animals are cooked into food, which has to go through the placements or the
+ * counters and the board would disagree.
+ */
+export function removeAnimals(player: Player, type: AnimalType, count: number): number {
+  let remaining = count
+  const placements = player.animalPlacement
+    .map((placement) => ({ ...placement }))
+    .sort((a, b) => b.count - a.count)
+
+  for (const placement of placements) {
+    if (remaining <= 0) break
+    if (placement.type !== type) continue
+    const taken = Math.min(placement.count, remaining)
+    placement.count -= taken
+    remaining -= taken
+  }
+
+  player.animalPlacement = placements.filter((placement) => placement.count > 0)
+  syncAnimalTotals(player)
+  return remaining
+}
+
 /** Recount a player's animal totals from their placements. */
 export function syncAnimalTotals(player: Player): void {
   player.sheep = 0

@@ -11,6 +11,7 @@ import {
   houseAnimals,
   moveAnimals,
   pastureInfo,
+  removeAnimals,
   syncAnimalTotals,
 } from './farm'
 import {
@@ -526,7 +527,13 @@ export function convertGoods(
   if (amount <= 0 || player[effect.from] < amount) return fail('notEnoughToConvert')
 
   const food = Math.floor(amount * effect.rate)
-  player[effect.from] -= amount
+  if (effect.from === 'sheep' || effect.from === 'boar' || effect.from === 'cattle') {
+    // Animals live in housing placements, so removing them has to go through
+    // there or the counters and the farm would disagree.
+    removeAnimals(player, effect.from, amount)
+  } else {
+    player[effect.from] -= amount
+  }
   player.food += food
 
   // The good and the card id are passed raw so the renderer can translate
