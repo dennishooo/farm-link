@@ -4,6 +4,7 @@ import { ActionDialog } from '@/components/action-dialog'
 import { actionModeFor } from '@/lib/actions'
 import { PlayerPanel } from '@/components/player-panel'
 import { SetupScreen } from '@/components/setup-screen'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { currentPlayer, workersLeft, type ActionPayload } from '@/game/engine'
@@ -56,6 +57,7 @@ export default function App() {
           </h1>
         </div>
         <div className="flex gap-2">
+          <ThemeToggle />
           {!isFinished && !isHarvest && (
             <Button variant="outline" size="sm" onClick={skipWorker}>
               Pass worker
