@@ -146,3 +146,78 @@ describe('card adjustments through the store', () => {
     expect(state.game!.players[0].grain).toBe(0)
   })
 })
+
+describe('actions with no game in progress', () => {
+  beforeEach(reset)
+
+  it('ignore every call rather than throwing', () => {
+    // The UI only renders these once a game exists, but a stale callback or a
+    // rehydration race must not crash the app.
+    const store = useGameStore.getState()
+
+    expect(() => {
+      store.play('forest')
+      store.resolveHarvest()
+      store.skipWorker()
+      store.convert(0, 'major-clay-oven', 1, 'grain')
+      store.adjustForCard(0, 'major-clay-oven', 'wood', 1)
+      store.moveAnimals(0, 'pet', '3,4', 1)
+    }).not.toThrow()
+
+    expect(useGameStore.getState().game).toBeNull()
+    expect(useGameStore.getState().error).toBeNull()
+  })
+})
+
+describe('converting goods', () => {
+  beforeEach(reset)
+
+  it('turns a good into food through a played card', () => {
+    useGameStore.getState().startGame(['Ann', 'Bo'])
+    useGameStore.setState((state) => {
+      const game = structuredClone(state.game!)
+      game.players[0].played.push('major-clay-oven')
+      game.players[0].grain = 1
+      return { game }
+    })
+
+    useGameStore.getState().convert(0, 'major-clay-oven', 1, 'grain')
+
+    const player = useGameStore.getState().game!.players[0]
+    expect(player.grain).toBe(0)
+    expect(player.food).toBe(7) // 2 starting + 5 from the oven
+  })
+
+  it('reports a conversion the player cannot make', () => {
+    useGameStore.getState().startGame(['Ann', 'Bo'])
+    useGameStore.setState((state) => {
+      const game = structuredClone(state.game!)
+      game.players[0].played.push('major-clay-oven')
+      return { game }
+    })
+
+    useGameStore.getState().convert(0, 'major-clay-oven', 1, 'grain')
+
+    expect(useGameStore.getState().error?.key).toBe('notEnoughToConvert')
+  })
+
+  it('refuses a card the player has not played', () => {
+    useGameStore.getState().startGame(['Ann', 'Bo'])
+    useGameStore.getState().convert(0, 'major-clay-oven', 1, 'grain')
+
+    expect(useGameStore.getState().error?.key).toBe('noSuchConversion')
+  })
+})
+
+describe('resolving the harvest', () => {
+  beforeEach(reset)
+
+  it('does nothing outside the harvest phase', () => {
+    useGameStore.getState().startGame(['Ann', 'Bo'])
+    const before = useGameStore.getState().game
+
+    useGameStore.getState().resolveHarvest()
+
+    expect(useGameStore.getState().game).toBe(before)
+  })
+})

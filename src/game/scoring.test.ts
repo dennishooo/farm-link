@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createGame } from './engine'
-import { cropTotal, fencedStableCount, rankPlayers, scorePlayer, unusedSpaceCount } from './scoring'
+import { cardPoints, cropTotal, fencedStableCount, rankPlayers, scorePlayer, unusedSpaceCount } from './scoring'
 import { horizontalEdge, verticalEdge } from './geometry'
 import type { Player } from './types'
 
@@ -177,5 +177,59 @@ describe('rankPlayers', () => {
     expect(ranked[0].score.total).toBe(ranked[1].score.total)
     expect(ranked[0].rank).toBe(1)
     expect(ranked[1].rank).toBe(1)
+  })
+})
+
+describe('card scoring by unit', () => {
+  it('scores craft buildings on the resources still in supply', () => {
+    // Regression: countUnit had no case for building resources and always
+    // counted zero, so the craft buildings never scored their tiers at all.
+    const player = newPlayer()
+    player.played = ['major-joinery']
+    player.wood = 5
+
+    // Joinery is worth 2 points itself, plus 3/5/7 wood → 1/2/3 bonus points,
+    // awarding only the highest tier reached.
+    expect(cardPoints(player)).toBe(4)
+  })
+
+  it('awards nothing below the first threshold', () => {
+    const player = newPlayer()
+    player.played = ['major-joinery']
+    player.wood = 2
+
+    // Below 3 wood only the card's own 2 points count.
+    expect(cardPoints(player)).toBe(2)
+  })
+
+  it('scores pottery on clay and the basketmaker on reed', () => {
+    const potter = newPlayer()
+    potter.played = ['major-pottery']
+    potter.clay = 7
+    expect(cardPoints(potter)).toBeGreaterThan(0)
+
+    const weaver = newPlayer()
+    weaver.played = ['major-basketmaker-s-workshop']
+    weaver.reed = 7
+    expect(cardPoints(weaver)).toBeGreaterThan(0)
+  })
+
+  it('scores per room', () => {
+    const player = newPlayer()
+    player.played = ['minor-mansion']
+    const base = cardPoints(player)
+
+    player.farm[0] = { kind: 'room' }
+    expect(cardPoints(player)).toBeGreaterThan(base)
+  })
+
+  it('counts a card that is worth flat points', () => {
+    const player = newPlayer()
+    player.played = ['major-clay-oven']
+    expect(cardPoints(player)).toBe(2)
+  })
+
+  it('scores nothing for a player holding no cards', () => {
+    expect(cardPoints(newPlayer())).toBe(0)
   })
 })
