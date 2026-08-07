@@ -320,6 +320,108 @@ export const CARD_TRANSLATIONS: Record<string, CardTranslation> = {
     title: '村井',
     text: '在接下來 3 個剩餘的回合格上各放 1 食物。這些回合開始時，你獲得該食物。',
   },
+
+  // ---- Minor improvements, batch 1. ----
+  'minor-boar-breeding': {
+    title: '野豬繁殖',
+    text: '打出此卡時，獲得 1 野豬。',
+  },
+  'minor-field': {
+    title: '田地',
+    text: '打出此卡時，立即開墾 1 塊田地。',
+  },
+  'minor-building-material': {
+    title: '建築材料',
+    text: '打出此卡時，獲得 1 木材或 1 黏土。',
+  },
+  'minor-straw-thatched-roof': {
+    title: '茅草屋頂',
+    text: '你擴建或翻修房屋時不再需要蘆葦。',
+  },
+  'minor-helpful-neighbors': {
+    title: '熱心鄰居',
+    text: '打出此卡時，獲得 1 石頭或 1 蘆葦。',
+  },
+  'minor-drinking-trough': {
+    title: '飲水槽',
+    text: '每個牧場（無論是否有馬廄）可額外容納 2 隻動物。',
+  },
+  'minor-cattle-market': {
+    title: '牛隻市場',
+    text: '打出此卡時，將 1 綿羊退回供應區並取得 1 牛。',
+  },
+  'minor-bread-paddle': {
+    title: '麵包鏟',
+    text: '每當你打出職業卡時，也可以進行一次「烤麵包」行動。',
+  },
+  'minor-axe': {
+    title: '斧頭',
+    text: '每當你為木屋擴建房間時，只需支付 2 木材和 2 蘆葦。',
+  },
+  'minor-corn-scoop': {
+    title: '穀物勺',
+    text: '每當你使用「取得 1 穀物」行動時，額外獲得 1 穀物。',
+  },
+  'minor-windmill': {
+    title: '風車',
+    text: '任何時候都可以將穀物轉換成 2 食物（不需進行烤麵包）。',
+  },
+  'minor-millstone': {
+    title: '石磨',
+    text: '每當你將 1 個或以上的穀物烤成麵包時，額外獲得 2 食物。',
+  },
+  'minor-quarry': {
+    title: '採石場',
+    text: '每當你使用「打零工」行動時，額外獲得 3 石頭。',
+  },
+  'minor-grain-cart': {
+    title: '穀物推車',
+    text: '每當你使用「取得 1 穀物」行動格時，額外獲得 2 穀物。',
+  },
+  'minor-scarecrow': {
+    title: '稻草人',
+    text: '每當你播種時，可支付 1 木材，在一塊空田上種 2 穀物而非 1 個。',
+  },
+  'minor-raft': {
+    title: '木筏',
+    text: '每當你使用「釣魚」行動格時，額外獲得 1 食物或 1 蘆葦。',
+  },
+  'minor-bookshelf': {
+    title: '書架',
+    text: '每當你打出 1 張職業卡時，在支付費用前先獲得 3 食物。',
+  },
+  'minor-spindle': {
+    title: '紡錘',
+    text: '收成的田地階段，若你有 3／5 隻綿羊，額外獲得 1／2 食物。',
+  },
+  'minor-wood-cart': {
+    title: '木材推車',
+    text: '每當你派家庭成員取走行動格上的木材時，額外獲得 2 木材。',
+  },
+  'minor-potato-dibber': {
+    title: '點播器',
+    text: '每當你在田地播種蔬菜時，每塊播種的田地額外放 1 蔬菜。',
+  },
+  'minor-clay-roof': {
+    title: '黏土屋頂',
+    text: '擴建或翻修房屋時，你可用等量的黏土代替 1 或 2 蘆葦。',
+  },
+  'minor-clogs': {
+    title: '木屐',
+    text: '遊戲結束時，黏土屋得 1 分，石屋得 2 分。',
+  },
+  'minor-sleeping-corner': {
+    title: '睡覺角落',
+    text: '即使其他玩家已佔用「家庭成長」行動格，你仍可使用該格。',
+  },
+  'minor-dovecote': {
+    title: '鴿舍',
+    text: '在第 10 至 14 回合的回合格上各放 1 食物。這些回合開始時，你獲得該食物。',
+  },
+  'minor-family-portrait': {
+    title: '全家福',
+    text: '為每位家庭成員支付 2 食物，獲得 4 分。（記錄在計分紙上。）',
+  },
 }
 
 /** The Chinese text for a card, or null when it has not been translated yet. */
