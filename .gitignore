@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Official rulebook PDFs are copyright Lookout Games — kept locally as a
+# reference for implementing the rules, never redistributed.
+docs/rulebook/
