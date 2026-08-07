@@ -170,6 +170,36 @@ describe('formatting game text', () => {
     expect(text).not.toContain('Clay Oven')
   })
 
+  it('keeps card names in English when the app is in English', async () => {
+    // Regression: the card id was always resolved through the Chinese
+    // translation table, so English log lines showed Chinese card names.
+    await i18n.changeLanguage('en')
+    const text = formatLogEntry(
+      {
+        round: 1,
+        key: 'cardAdjustGain',
+        values: { name: 'Ann', amount: 2, good: 'wood', cardId: 'major-clay-oven' },
+      },
+      i18n.getFixedT(null, 'translation'),
+    )
+    expect(text).toContain('Clay Oven')
+    expect(text).not.toMatch(/[\u4e00-\u9fff]/)
+  })
+
+  it('renders a card adjustment in Traditional Chinese', async () => {
+    await i18n.changeLanguage('zh-HK')
+    const text = formatLogEntry(
+      {
+        round: 1,
+        key: 'cardAdjustSpend',
+        values: { name: 'Ann', amount: 1, good: 'food', cardId: 'major-clay-oven' },
+      },
+      i18n.getFixedT(null, 'translation'),
+    )
+    expect(text).toContain('黏土烤爐')
+    expect(text).not.toContain('Clay Oven')
+  })
+
   it('renders an error with its interpolated values', async () => {
     await i18n.changeLanguage('en')
     const text = formatError({ key: 'stablesRemaining', values: { count: 2 } }, i18n.getFixedT(null, 'translation'))

@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next'
+import i18n from './index'
 import en from './en'
 import { cardById } from '@/game/cards'
 import { cardTranslation } from '@/game/cards/translations'
@@ -7,14 +8,34 @@ import type { LogEntry } from '@/game/types'
 import type { GameError } from '@/stores/game'
 
 /**
+ * The language the app is currently rendering in.
+ *
+ * Read from the i18next instance rather than the bound `t`: `getFixedT(null)`
+ * binds no language, so its `lng`/`lngs` are empty and a card title taken from
+ * them would always come out English.
+ */
+function activeLanguage(): string {
+  return i18n.resolvedLanguage ?? i18n.language ?? 'en'
+}
+
+/** A card's title in the given language, falling back to its English title. */
+function cardTitleFor(id: string, language: string): string {
+  const english = cardById(id)?.title ?? id
+  if (!language.startsWith('zh')) return english
+  return cardTranslation(id)?.title ?? english
+}
+
+/**
  * Values the engine passes as raw ids and that must be translated on render.
  * `name` is deliberately absent: it always carries a player-chosen name, which
  * must never be run through the translator.
  */
 const TRANSLATED_VALUES: Record<string, (value: string, t: TFunction) => string> = {
   space: (value, t) => t(`spaces.${value}.name`, value),
-  // A card id resolves to the localised title, falling back to English.
-  cardId: (value) => cardTranslation(value)?.title ?? cardById(value)?.title ?? value,
+  // A card id resolves to the title in the active language. The language has to
+  // be checked: reaching for the Chinese title unconditionally put Chinese card
+  // names into English log lines.
+  cardId: (value) => cardTitleFor(value, activeLanguage()),
   good: (value, t) => t(`goods.${value}`, value),
   house: (value, t) => t(`house.${value}`, value),
   resource: (value, t) => t(`goods.${value}`, value),

@@ -8,8 +8,10 @@ import { cn } from '@/lib/utils'
 import { localiseCard } from '@/lib/i18n/format'
 import { ConvertPanel } from '@/components/convert-panel'
 import { AnimalPanel } from '@/components/animal-panel'
+import { AdjustPanel } from '@/components/adjust-panel'
 import type { Player } from '@/game/types'
 import type { Payable } from '@/game/cards/types'
+import type { AdjustableGood } from '@/game/engine'
 
 const GOODS: { key: keyof Player; icon: string }[] = [
   { key: 'wood', icon: '🪵' },
@@ -31,6 +33,12 @@ type PlayerPanelProps = {
   showScore?: boolean
   onConvert?: (playerIndex: number, cardId: string, units: number, good: Payable) => void
   onMoveAnimals?: (playerIndex: number, fromKey: string, toKey: string, count: number) => void
+  onAdjustForCard?: (
+    playerIndex: number,
+    cardId: string,
+    good: AdjustableGood,
+    delta: number,
+  ) => void
 }
 
 export function PlayerPanel({
@@ -40,6 +48,7 @@ export function PlayerPanel({
   showScore = false,
   onConvert,
   onMoveAnimals,
+  onAdjustForCard,
 }: PlayerPanelProps) {
   const { t, i18n } = useTranslation()
   const score = showScore ? scorePlayer(player) : null
@@ -124,6 +133,10 @@ export function PlayerPanel({
 
         {onConvert && !showScore && (
           <ConvertPanel player={player} playerIndex={playerIndex} onConvert={onConvert} />
+        )}
+
+        {onAdjustForCard && !showScore && (
+          <AdjustPanel player={player} playerIndex={playerIndex} onAdjust={onAdjustForCard} />
         )}
 
         {score && (

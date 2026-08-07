@@ -130,6 +130,14 @@ export default {
     translationPending: 'Chinese translation pending — showing English',
     exchanges: 'Exchange for food',
     exchange: '1 {{from}} → {{count}} food',
+    adjust: 'Apply a card effect',
+    adjustHint: 'For cards the app does not work out for you — agree the effect, then record it.',
+    adjustCard: 'Card',
+    adjustGood: 'Good',
+    adjustAmount: 'Amount',
+    adjustGain: 'Gain',
+    adjustSpend: 'Spend',
+    adjustNoCards: 'Play a card first and you can record its effect here.',
   },
 
   score: {
@@ -245,6 +253,8 @@ export default {
     moveAnimals: '{{name}} moves {{count}} animal(s) around their farm.',
     roundGoods: '{{name}} collects {{goods}} from their cards.',
     convert: '{{name}} converts {{amount}} {{good}} into {{count}} food using {{cardId}}.',
+    cardAdjustGain: '{{name}} takes {{amount}} {{good}} for {{cardId}}.',
+    cardAdjustSpend: '{{name}} pays {{amount}} {{good}} for {{cardId}}.',
   },
 
   errors: {
@@ -291,5 +301,9 @@ export default {
     slotFull: 'There is not enough room there.',
     noSuchConversion: 'You have no card that makes that exchange.',
     notEnoughToConvert: 'You do not have enough to convert.',
+    noSuchCardAdjustment: 'You have not played that card.',
+    adjustmentAmount: 'Choose an amount other than zero.',
+    adjustmentGood: 'That good cannot be adjusted here.',
+    notEnoughGoods: 'You only have {{count}} {{good}}.',
   },
 } as const

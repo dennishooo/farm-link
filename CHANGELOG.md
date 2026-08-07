@@ -9,7 +9,24 @@ are looking at.
 
 ## [Unreleased]
 
-## [4.0.0] — 2026-08-07
+## [4.1.0] — 2026-08-07
+
+### Added
+
+- **A way to actually play the 267 cards the engine does not enforce.** Those cards state their
+  effect in prose the parser deliberately refuses to interpret, so until now they could be read but
+  never acted on. Each farm has an "Apply a card effect" panel: pick one of your played cards, a
+  good, and an amount, then gain or spend it. The log names the card, so the history stays
+  auditable and reads correctly in both languages.
+- Animals are deliberately excluded from the panel — they live in housing placements with capacity
+  rules, and granting them there would leave the farm and the counters disagreeing. The animal
+  panel already handles them.
+
+### Fixed
+
+- Card names in the game log always came from the Chinese translation table, so an English game
+  showed Chinese card names ("Player 1 takes 2 Wood for 學者"). This affected every log line naming
+  a card, including the existing exchange entries. A regression test now covers both languages.
 
 ### Added
 
