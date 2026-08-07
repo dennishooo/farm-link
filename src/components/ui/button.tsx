@@ -6,11 +6,25 @@ type ButtonProps = ComponentProps<'button'> & {
   size?: 'sm' | 'md' | 'lg'
 }
 
+/**
+ * Solid variants are lit from above and press down on click, so a tap on a
+ * touch screen is acknowledged before the state change lands. Ghost stays flat
+ * — it is used inline in dense panels where a raised edge is just noise.
+ */
 const VARIANTS: Record<NonNullable<ButtonProps['variant']>, string> = {
-  default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-  outline: 'border border-border bg-card hover:bg-accent hover:text-accent-foreground',
+  default: cn(
+    'bg-primary text-primary-foreground hover:bg-primary/90',
+    'shadow-[var(--shadow-raised)] hover:shadow-[var(--shadow-panel)] active:shadow-[var(--shadow-tile)]',
+  ),
+  outline: cn(
+    'border border-border bg-card hover:bg-accent hover:text-accent-foreground',
+    'shadow-[var(--shadow-tile)] hover:border-primary/40 hover:shadow-[var(--shadow-raised)]',
+  ),
   ghost: 'hover:bg-accent hover:text-accent-foreground',
-  destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+  destructive: cn(
+    'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+    'shadow-[var(--shadow-raised)] hover:shadow-[var(--shadow-panel)] active:shadow-[var(--shadow-tile)]',
+  ),
 }
 
 const SIZES: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -30,9 +44,11 @@ export function Button({
     <button
       type={type}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors',
+        'inline-flex items-center justify-center gap-2 rounded-md font-semibold',
+        'transition-[color,background-color,border-color,box-shadow,transform] duration-150',
+        'active:translate-y-px',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-        'disabled:pointer-events-none disabled:opacity-45',
+        'disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none',
         VARIANTS[variant],
         SIZES[size],
         className,
