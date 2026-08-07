@@ -124,9 +124,14 @@ export type GameState = {
   harvest: { stage: HarvestStage; playerIndex: number } | null
 }
 
+/**
+ * Log entries store a translation key and its values rather than a finished
+ * sentence, so switching language re-renders the whole history correctly.
+ */
 export type LogEntry = {
   round: number
-  message: string
+  key: string
+  values?: Record<string, string | number>
 }
 
 export type ScoreBreakdown = {

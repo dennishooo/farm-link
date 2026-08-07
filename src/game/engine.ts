@@ -43,10 +43,20 @@ import type {
 } from './types'
 import type { Payable } from './cards/types'
 
-export type ActionResult = { ok: true } | { ok: false; reason: string }
+/**
+ * Failures carry a translation key under `errors.*` plus its values, so the UI
+ * renders them in the player's language rather than a baked-in English string.
+ */
+export type ActionResult =
+  | { ok: true }
+  | { ok: false; reason: string; values?: Record<string, string | number> }
 
 const ok: ActionResult = { ok: true }
-const fail = (reason: string): ActionResult => ({ ok: false, reason })
+const fail = (reason: string, values?: Record<string, string | number>): ActionResult => ({
+  ok: false,
+  reason,
+  values,
+})
 
 const COLORS: PlayerColor[] = ['green', 'blue', 'red', 'purple']
 
@@ -155,7 +165,7 @@ export function createGame({ names, random = Math.random }: NewGameOptions): Gam
   deckOrder.set(state, deck)
   revealForRound(state, deck)
   replenish(state, playerCount)
-  logMessage(state, `Round 1 begins. ${players[0].name} is the start player.`)
+  logMessage(state, 'gameStart', { name: players[0].name })
   return state
 }
 
@@ -189,7 +199,7 @@ function revealForRound(state: GameState, deck = getDeckOrder(state)): void {
   if (next && !state.revealed.includes(next)) {
     state.revealed.push(next)
     const space = findSpace(next)
-    if (space) logMessage(state, `New action space revealed: ${space.name}.`)
+    if (space) logMessage(state, 'spaceRevealed', { space: space.id })
   }
 }
 
@@ -206,8 +216,13 @@ function replenish(state: GameState, playerCount = state.players.length): void {
   }
 }
 
-export function logMessage(state: GameState, message: string): void {
-  state.log.push({ round: state.round, message })
+/** Record a log entry by translation key so it can render in any language. */
+export function logMessage(
+  state: GameState,
+  key: string,
+  values?: Record<string, string | number>,
+): void {
+  state.log.push({ round: state.round, key, values })
 }
 
 export function currentPlayer(state: GameState): Player {
@@ -244,7 +259,7 @@ export function advanceTurn(state: GameState): void {
 }
 
 function endWorkPhase(state: GameState): void {
-  logMessage(state, `Round ${state.round} work phase complete.`)
+  logMessage(state, 'workPhaseComplete', { round: state.round })
 
   if (HARVEST_ROUNDS.includes(state.round)) {
     state.phase = 'harvest'
@@ -260,7 +275,7 @@ export function beginNextRound(state: GameState): void {
   if (state.round >= state.maxRounds) {
     state.phase = 'finished'
     state.harvest = null
-    logMessage(state, 'The game is over. Time to score the farms.')
+    logMessage(state, 'gameOver')
     return
   }
 
@@ -282,7 +297,7 @@ export function beginNextRound(state: GameState): void {
   state.currentPlayerIndex = state.startPlayerIndex
   revealForRound(state)
   replenish(state)
-  logMessage(state, `Round ${state.round} begins.`)
+  logMessage(state, 'roundBegins', { round: state.round })
 }
 
 /* ------------------------------------------------------------------ *
@@ -304,7 +319,7 @@ export function runFieldPhase(state: GameState): void {
       }
     }
     if (harvested > 0) {
-      logMessage(state, `${player.name} harvests ${harvested} crop(s) from their fields.`)
+      logMessage(state, 'harvestCrops', { name: player.name, count: harvested })
     }
   }
   state.harvest = { stage: 'feeding', playerIndex: 0 }
@@ -337,9 +352,9 @@ export function feedFamily(state: GameState, playerIndex: number): void {
   if (paid < required) {
     const missing = required - paid
     player.beggingMarkers += missing
-    logMessage(state, `${player.name} cannot feed their family and begs for ${missing} food.`)
+    logMessage(state, 'beg', { name: player.name, count: missing })
   } else {
-    logMessage(state, `${player.name} feeds their family (${required} food).`)
+    logMessage(state, 'feed', { name: player.name, count: required })
   }
 }
 
@@ -362,7 +377,7 @@ export function breedAnimals(state: GameState, playerIndex: number): void {
 
   syncAnimalTotals(player)
   if (born.length > 0) {
-    logMessage(state, `${player.name}'s animals breed: ${born.join(', ')}.`)
+    logMessage(state, 'breed', { name: player.name, types: born.join(', ') })
   }
 }
 
@@ -374,7 +389,7 @@ export function completeHarvest(state: GameState): void {
   for (let index = 0; index < state.players.length; index++) {
     breedAnimals(state, index)
   }
-  logMessage(state, 'Harvest complete.')
+  logMessage(state, 'harvestComplete')
   beginNextRound(state)
 }
 
@@ -408,11 +423,11 @@ export function takeAction(
   spaceId: ActionSpaceId,
   payload: ActionPayload = {},
 ): ActionResult {
-  if (state.phase !== 'work') return fail('Not in the work phase.')
-  if (!isSpaceAvailable(state, spaceId)) return fail('That action space is not available.')
+  if (state.phase !== 'work') return fail('notWorkPhase')
+  if (!isSpaceAvailable(state, spaceId)) return fail('spaceUnavailable')
 
   const player = currentPlayer(state)
-  if (workersLeft(player) <= 0) return fail('You have no people left to place.')
+  if (workersLeft(player) <= 0) return fail('noWorkers')
 
   const result = applyAction(state, player, spaceId, payload)
   if (!result.ok) return result
@@ -443,7 +458,7 @@ function applyActionBonuses(state: GameState, player: Player, spaceId: ActionSpa
   }
 
   if (gained.length > 0) {
-    logMessage(state, `${player.name} gains ${gained.join(', ')} from their cards.`)
+    logMessage(state, 'cardBonus', { name: player.name, goods: gained.join(', ') })
   }
 }
 
@@ -454,7 +469,7 @@ function applyAction(
   payload: ActionPayload,
 ): ActionResult {
   const space = findSpace(spaceId)
-  if (!space) return fail('Unknown action space.')
+  if (!space) return fail('unknownSpace')
 
   // Accumulation spaces simply hand over everything sitting on them.
   if (space.accumulates) {
@@ -464,22 +479,22 @@ function applyAction(
   switch (spaceId) {
     case 'grain-seeds':
       player.grain += 1
-      logMessage(state, `${player.name} takes 1 grain.`)
+      logMessage(state, 'takeGoods', { name: player.name, amount: 1, good: 'grain' })
       return ok
 
     case 'vegetable-seeds':
       player.vegetable += 1
-      logMessage(state, `${player.name} takes 1 vegetable.`)
+      logMessage(state, 'takeGoods', { name: player.name, amount: 1, good: 'vegetable' })
       return ok
 
     case 'day-laborer':
       player.food += 2
-      logMessage(state, `${player.name} works as a day laborer for 2 food.`)
+      logMessage(state, 'takeGoods', { name: player.name, amount: 2, good: 'food' })
       return ok
 
     case 'meeting-place':
       state.pendingStartPlayer = state.players.indexOf(player)
-      logMessage(state, `${player.name} will be the start player next round.`)
+      logMessage(state, 'startPlayer', { name: player.name })
       return ok
 
     case 'farmland':
@@ -492,12 +507,12 @@ function applyAction(
         if (!plowed.ok) return plowed
       }
       if (payload.sow?.length) return sowFields(state, player, payload.sow)
-      if (payload.spaceIndex === undefined) return fail('Choose a field to plow or crops to sow.')
+      if (payload.spaceIndex === undefined) return fail('choosePlowOrSow')
       return ok
     }
 
     case 'grain-utilization': {
-      if (!payload.sow?.length) return fail('Choose at least one field to sow.')
+      if (!payload.sow?.length) return fail('chooseFieldToSow')
       return sowFields(state, player, payload.sow)
     }
 
@@ -532,7 +547,7 @@ function applyAction(
       return playImprovement(state, player, payload)
 
     default:
-      return fail('That action is not implemented.')
+      return fail('notImplemented')
   }
 }
 
@@ -543,36 +558,33 @@ function takeAccumulated(
   good: ActionSpace['accumulates'] extends undefined ? never : NonNullable<ActionSpace['accumulates']>['good'],
 ): ActionResult {
   const amount = state.accumulated[spaceId] ?? 0
-  if (amount <= 0) return fail('There is nothing on that space yet.')
+  if (amount <= 0) return fail('nothingAccumulated')
 
   if (good === 'sheep' || good === 'boar' || good === 'cattle') {
     const unhoused = houseAnimals(player, good, amount)
     syncAnimalTotals(player)
     state.accumulated[spaceId] = 0
     if (unhoused > 0) {
-      logMessage(
-        state,
-        `${player.name} takes ${amount} ${good} but ${unhoused} wander off for lack of space.`,
-      )
+      logMessage(state, 'takeAnimalsPartial', { name: player.name, amount, good, lost: unhoused })
     } else {
-      logMessage(state, `${player.name} takes ${amount} ${good}.`)
+      logMessage(state, 'takeGoods', { name: player.name, amount, good })
     }
     return ok
   }
 
   player[good] += amount
   state.accumulated[spaceId] = 0
-  logMessage(state, `${player.name} takes ${amount} ${good}.`)
+  logMessage(state, 'takeGoods', { name: player.name, amount, good })
   return ok
 }
 
 function plowField(state: GameState, player: Player, spaceIndex?: number): ActionResult {
-  if (spaceIndex === undefined) return fail('Choose a space to plow.')
+  if (spaceIndex === undefined) return fail('chooseSpaceToPlow')
   if (!canPlace(player.farm, spaceIndex, 'field')) {
-    return fail('Fields must be placed on an empty space adjacent to your other fields.')
+    return fail('fieldAdjacency')
   }
   player.farm[spaceIndex] = { kind: 'field' }
-  logMessage(state, `${player.name} plows a field.`)
+  logMessage(state, 'plow', { name: player.name })
   return ok
 }
 
@@ -584,24 +596,24 @@ function sowFields(
   const needed = { grain: 0, vegetable: 0 }
   for (const { spaceIndex, crop } of plan) {
     const space = player.farm[spaceIndex]
-    if (!space || space.kind !== 'field') return fail('You can only sow on your own fields.')
-    if (space.crop) return fail('That field is already sown.')
+    if (!space || space.kind !== 'field') return fail('sowOwnFields')
+    if (space.crop) return fail('fieldAlreadySown')
     needed[crop] += 1
   }
-  if (player.grain < needed.grain) return fail('Not enough grain to sow.')
-  if (player.vegetable < needed.vegetable) return fail('Not enough vegetables to sow.')
+  if (player.grain < needed.grain) return fail('notEnoughGrain')
+  if (player.vegetable < needed.vegetable) return fail('notEnoughVegetables')
 
   for (const { spaceIndex, crop } of plan) {
     player[crop] -= 1
     player.farm[spaceIndex] = { kind: 'field', crop, cropCount: SOWN_FIELD_YIELD[crop] }
   }
-  logMessage(state, `${player.name} sows ${plan.length} field(s).`)
+  logMessage(state, 'sow', { name: player.name, count: plan.length })
   return ok
 }
 
 function farmExpansion(state: GameState, player: Player, payload: ActionPayload): ActionResult {
   const targets = payload.spaceIndices ?? (payload.spaceIndex !== undefined ? [payload.spaceIndex] : [])
-  if (targets.length === 0) return fail('Choose where to build.')
+  if (targets.length === 0) return fail('chooseWhereToBuild')
 
   return payload.stables
     ? buildStables(state, player, targets)
@@ -614,14 +626,14 @@ function buildRooms(state: GameState, player: Player, targets: number[]): Action
   const totalReed = cost.reed * targets.length
 
   if (player[cost.resource] < totalMaterial || player.reed < totalReed) {
-    return fail(`Building ${targets.length} room(s) costs ${totalMaterial} ${cost.resource} and ${totalReed} reed.`)
+    return fail('roomCost', { count: targets.length, material: totalMaterial, resource: cost.resource, reed: totalReed })
   }
 
   // Validate placement incrementally so each new room may chain off the last.
   const draft = player.farm.map((space) => ({ ...space }))
   for (const index of targets) {
     if (!canPlace(draft, index, 'room')) {
-      return fail('Rooms must be built on empty spaces adjacent to your house.')
+      return fail('roomAdjacency')
     }
     draft[index] = { kind: 'room' }
   }
@@ -629,25 +641,25 @@ function buildRooms(state: GameState, player: Player, targets: number[]): Action
   player.farm = draft
   player[cost.resource] -= totalMaterial
   player.reed -= totalReed
-  logMessage(state, `${player.name} builds ${targets.length} ${player.house} room(s).`)
+  logMessage(state, 'buildRooms', { name: player.name, count: targets.length, house: player.house })
   return ok
 }
 
 function buildStables(state: GameState, player: Player, targets: number[]): ActionResult {
   if (targets.length > player.stablesRemaining) {
-    return fail(`You only have ${player.stablesRemaining} stable(s) left.`)
+    return fail('stablesRemaining', { count: player.stablesRemaining })
   }
   const cost = STABLE_COST_WOOD * targets.length
-  if (player.wood < cost) return fail(`Building ${targets.length} stable(s) costs ${cost} wood.`)
+  if (player.wood < cost) return fail('stableCost', { count: targets.length, cost })
 
   for (const index of targets) {
-    if (!canPlace(player.farm, index, 'stable')) return fail('Stables need an empty space.')
+    if (!canPlace(player.farm, index, 'stable')) return fail('stableNeedsSpace')
   }
 
   for (const index of targets) player.farm[index] = { kind: 'stable' }
   player.wood -= cost
   player.stablesRemaining -= targets.length
-  logMessage(state, `${player.name} builds ${targets.length} stable(s).`)
+  logMessage(state, 'buildStables', { name: player.name, count: targets.length })
   return ok
 }
 
@@ -657,13 +669,13 @@ function buildStables(state: GameState, player: Player, targets: number[]): Acti
  */
 export function buildFences(state: GameState, player: Player, edges: string[]): ActionResult {
   const additions = edges.filter((edge) => !player.fences.includes(edge))
-  if (additions.length === 0) return fail('Choose at least one new fence to build.')
+  if (additions.length === 0) return fail('chooseFence')
   if (additions.length > player.fencesRemaining) {
-    return fail(`You only have ${player.fencesRemaining} fence(s) left.`)
+    return fail('fencesRemaining', { count: player.fencesRemaining })
   }
 
   const cost = additions.length * FENCE_COST_WOOD
-  if (player.wood < cost) return fail(`Building ${additions.length} fence(s) costs ${cost} wood.`)
+  if (player.wood < cost) return fail('fenceCost', { count: additions.length, cost })
 
   const proposed = [...player.fences, ...additions]
   // Fences must always complete a new enclosure or subdivide an existing one,
@@ -672,38 +684,38 @@ export function buildFences(state: GameState, player: Player, edges: string[]): 
   const after = findPastures(proposed)
   const beforeKeys = new Set(before.map((pasture) => pasture.key))
   if (after.length === before.length && after.every((pasture) => beforeKeys.has(pasture.key))) {
-    return fail('Fences must form a fully enclosed pasture.')
+    return fail('fenceMustEnclose')
   }
 
   // A pasture may not enclose a room; fields inside are allowed by the rules
   // but would strand the crops, so we block rooms only.
   for (const pasture of after) {
     if (pasture.spaces.some((index) => player.farm[index].kind === 'room')) {
-      return fail('You cannot fence in your house.')
+      return fail('cannotFenceHouse')
     }
   }
 
   player.fences = proposed
   player.fencesRemaining -= additions.length
   player.wood -= cost
-  logMessage(state, `${player.name} builds ${additions.length} fence(s).`)
+  logMessage(state, 'buildFences', { name: player.name, count: additions.length })
   return ok
 }
 
 function renovate(state: GameState, player: Player): ActionResult {
-  if (player.house === 'stone') return fail('Your house is already stone.')
+  if (player.house === 'stone') return fail('alreadyStone')
   const target = RENOVATION_TARGET[player.house]
   const material = target === 'clay' ? 'clay' : 'stone'
   const rooms = countKind(player.farm, 'room')
 
   if (player[material] < rooms || player.reed < 1) {
-    return fail(`Renovating costs ${rooms} ${material} and 1 reed.`)
+    return fail('renovationCost', { count: rooms, material })
   }
 
   player[material] -= rooms
   player.reed -= 1
   player.house = target
-  logMessage(state, `${player.name} renovates to a ${target} house.`)
+  logMessage(state, 'renovate', { name: player.name, house: target })
   return ok
 }
 
@@ -729,26 +741,26 @@ function playOccupation(
   spaceId: ActionSpaceId,
   payload: ActionPayload,
 ): ActionResult {
-  if (!payload.cardId) return fail('Choose an occupation to play.')
+  if (!payload.cardId) return fail('chooseOccupation')
   if (!player.hand.occupations.includes(payload.cardId)) {
-    return fail('That occupation is not in your hand.')
+    return fail('occupationNotInHand')
   }
 
   const card = cardById(payload.cardId)
-  if (!card) return fail('Unknown card.')
+  if (!card) return fail('unknownCard')
 
   const played = player.played.filter((id) => cardById(id)?.type === 'occupation').length
   const cost = occupationCost(state.players.length, spaceId, played)
-  if (player.food < cost) return fail(`Playing this occupation costs ${cost} food.`)
+  if (player.food < cost) return fail('occupationCost', { count: cost })
 
   player.food -= cost
   player.hand.occupations = player.hand.occupations.filter((id) => id !== payload.cardId)
   player.played.push(card.id)
   applyImmediateEffects(player, card)
 
-  logMessage(state, `${player.name} plays the occupation ${card.title}.`)
+  logMessage(state, 'playOccupation', { name: player.name, card: card.title })
   if (!card.enforced) {
-    logMessage(state, `Apply ${card.title} yourselves: ${card.text}`)
+    logMessage(state, 'manualCard', { card: card.title, text: card.text })
   }
   return ok
 }
@@ -758,17 +770,17 @@ function playOccupation(
  * shared pool.
  */
 function playImprovement(state: GameState, player: Player, payload: ActionPayload): ActionResult {
-  if (!payload.cardId) return fail('Choose an improvement to play.')
+  if (!payload.cardId) return fail('chooseImprovement')
 
   const card = cardById(payload.cardId)
-  if (!card) return fail('Unknown card.')
+  if (!card) return fail('unknownCard')
 
   const fromHand = player.hand.minors.includes(card.id)
   const fromPool = state.majorsAvailable.includes(card.id)
-  if (!fromHand && !fromPool) return fail('That improvement is not available to you.')
+  if (!fromHand && !fromPool) return fail('improvementUnavailable')
 
   const options = affordableOptions(player, card)
-  if (options.length === 0) return fail(`You cannot afford ${card.title}.`)
+  if (options.length === 0) return fail('cannotAfford', { card: card.title })
 
   const chosen = options[payload.costOption ?? 0] ?? options[0]
   payOption(player, chosen)
@@ -779,9 +791,9 @@ function playImprovement(state: GameState, player: Player, payload: ActionPayloa
   player.played.push(card.id)
   applyImmediateEffects(player, card)
 
-  logMessage(state, `${player.name} builds ${card.title}.`)
+  logMessage(state, 'buildImprovement', { name: player.name, card: card.title })
   if (!card.enforced) {
-    logMessage(state, `Apply ${card.title} yourselves: ${card.text}`)
+    logMessage(state, 'manualCard', { card: card.title, text: card.text })
   }
   return ok
 }
@@ -791,14 +803,14 @@ function familyGrowth(
   player: Player,
   { requireRoom }: { requireRoom: boolean },
 ): ActionResult {
-  if (player.people >= MAX_PEOPLE) return fail('You already have five people.')
+  if (player.people >= MAX_PEOPLE) return fail('maxPeople')
   if (requireRoom && player.people >= countKind(player.farm, 'room')) {
-    return fail('You need an empty room to grow your family.')
+    return fail('needEmptyRoom')
   }
 
   player.people += 1
   player.newborns += 1
-  logMessage(state, `${player.name}'s family grows to ${player.people}.`)
+  logMessage(state, 'familyGrowth', { name: player.name, count: player.people })
   return ok
 }
 

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Farmyard } from '@/components/farmyard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cardById } from '@/game/cards'
@@ -6,17 +7,17 @@ import { scorePlayer } from '@/game/scoring'
 import { cn } from '@/lib/utils'
 import type { Player } from '@/game/types'
 
-const GOODS: { key: keyof Player; label: string; icon: string }[] = [
-  { key: 'wood', label: 'Wood', icon: '🪵' },
-  { key: 'clay', label: 'Clay', icon: '🧱' },
-  { key: 'reed', label: 'Reed', icon: '🌿' },
-  { key: 'stone', label: 'Stone', icon: '🪨' },
-  { key: 'grain', label: 'Grain', icon: '🌾' },
-  { key: 'vegetable', label: 'Veg', icon: '🥕' },
-  { key: 'food', label: 'Food', icon: '🍲' },
-  { key: 'sheep', label: 'Sheep', icon: '🐑' },
-  { key: 'boar', label: 'Boar', icon: '🐗' },
-  { key: 'cattle', label: 'Cattle', icon: '🐄' },
+const GOODS: { key: keyof Player; icon: string }[] = [
+  { key: 'wood', icon: '🪵' },
+  { key: 'clay', icon: '🧱' },
+  { key: 'reed', icon: '🌿' },
+  { key: 'stone', icon: '🪨' },
+  { key: 'grain', icon: '🌾' },
+  { key: 'vegetable', icon: '🥕' },
+  { key: 'food', icon: '🍲' },
+  { key: 'sheep', icon: '🐑' },
+  { key: 'boar', icon: '🐗' },
+  { key: 'cattle', icon: '🐄' },
 ]
 
 type PlayerPanelProps = {
@@ -26,6 +27,7 @@ type PlayerPanelProps = {
 }
 
 export function PlayerPanel({ player, isCurrent, showScore = false }: PlayerPanelProps) {
+  const { t } = useTranslation()
   const score = showScore ? scorePlayer(player) : null
 
   return (
@@ -35,12 +37,14 @@ export function PlayerPanel({ player, isCurrent, showScore = false }: PlayerPane
           {player.name}
           {isCurrent && (
             <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
-              To act
+              {t('game.toAct')}
             </span>
           )}
         </CardTitle>
         <span className="text-xs font-semibold text-muted-foreground">
-          {score ? `${score.total} pts` : `${workersLeft(player)} left`}
+          {score
+            ? t('game.points', { count: score.total })
+            : t('game.workersRemaining', { count: workersLeft(player) })}
         </span>
       </CardHeader>
 
@@ -48,11 +52,11 @@ export function PlayerPanel({ player, isCurrent, showScore = false }: PlayerPane
         <Farmyard player={player} />
 
         <ul className="grid grid-cols-5 gap-1 text-center text-[11px]">
-          {GOODS.map(({ key, label, icon }) => (
+          {GOODS.map(({ key, icon }) => (
             <li
               key={key}
               className="rounded-sm bg-muted px-1 py-1 font-semibold"
-              title={label}
+              title={t(`goods.${key}` as 'goods.wood')}
             >
               <span aria-hidden>{icon}</span> {String(player[key])}
             </li>
@@ -60,11 +64,18 @@ export function PlayerPanel({ player, isCurrent, showScore = false }: PlayerPane
         </ul>
 
         <p className="text-xs text-muted-foreground">
-          {player.people} {player.people === 1 ? 'person' : 'people'} · {player.house} house ·{' '}
-          {player.fencesRemaining} fences · {player.stablesRemaining} stables ·{' '}
-          {player.hand.occupations.length + player.hand.minors.length} in hand
+          {t('farm.summary', {
+            people: t('farm.people', { count: player.people }),
+            house: t(`house.${player.house}`),
+            fences: player.fencesRemaining,
+            stables: player.stablesRemaining,
+            hand: player.hand.occupations.length + player.hand.minors.length,
+          })}
           {player.beggingMarkers > 0 && (
-            <span className="font-semibold text-destructive"> · {player.beggingMarkers} begging</span>
+            <span className="font-semibold text-destructive">
+              {' · '}
+              {t('farm.begging', { count: player.beggingMarkers })}
+            </span>
           )}
         </p>
 
@@ -81,7 +92,10 @@ export function PlayerPanel({ player, isCurrent, showScore = false }: PlayerPane
                 >
                   {card.title}
                   {card.points !== 0 && (
-                    <span className="text-muted-foreground"> {card.points}pt</span>
+                    <span className="text-muted-foreground">
+                      {' '}
+                      {t('cards.pointsShort', { count: card.points })}
+                    </span>
                   )}
                 </li>
               )
@@ -95,9 +109,7 @@ export function PlayerPanel({ player, isCurrent, showScore = false }: PlayerPane
               .filter(([key]) => key !== 'total')
               .map(([key, value]) => (
                 <div key={key} className="flex justify-between gap-2">
-                  <dt className="text-muted-foreground capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
-                  </dt>
+                  <dt className="text-muted-foreground">{t(`score.${key}` as 'score.fields')}</dt>
                   <dd className={cn('font-semibold', value < 0 && 'text-destructive')}>{value}</dd>
                 </div>
               ))}

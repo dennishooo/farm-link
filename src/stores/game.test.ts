@@ -43,7 +43,7 @@ describe('game store', () => {
     const snapshot = useGameStore.getState().game
 
     useGameStore.getState().play('forest')
-    expect(useGameStore.getState().error).toBe('That action space is not available.')
+    expect(useGameStore.getState().error).toMatchObject({ key: 'spaceUnavailable' })
     expect(useGameStore.getState().game).toBe(snapshot)
   })
 

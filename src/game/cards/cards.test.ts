@@ -153,17 +153,17 @@ describe('playing cards through the engine', () => {
     const notInHand = OCCUPATIONS.find(
       (card) => !state.players[0].hand.occupations.includes(card.id),
     )!
-    expect(takeAction(state, 'lessons', { cardId: notInHand.id })).toEqual({
+    expect(takeAction(state, 'lessons', { cardId: notInHand.id })).toMatchObject({
       ok: false,
-      reason: 'That occupation is not in your hand.',
+      reason: 'occupationNotInHand',
     })
   })
 
   it('requires a card to be chosen', () => {
     const state = createGame({ names: ['Ann', 'Bo'], random: deterministic })
-    expect(takeAction(state, 'lessons', {})).toEqual({
+    expect(takeAction(state, 'lessons', {})).toMatchObject({
       ok: false,
-      reason: 'Choose an occupation to play.',
+      reason: 'chooseOccupation',
     })
   })
 

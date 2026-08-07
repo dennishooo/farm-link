@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { allSpacesFor } from '@/game/engine'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -21,6 +22,7 @@ type ActionBoardProps = {
 }
 
 export function ActionBoard({ game, onChoose, disabled = false }: ActionBoardProps) {
+  const { t } = useTranslation()
   const spaces = allSpacesFor(game.players.length).filter(
     (space) => space.stage === 0 || game.revealed.includes(space.id),
   )
@@ -46,17 +48,19 @@ export function ActionBoard({ game, onChoose, disabled = false }: ActionBoardPro
               )}
             >
               <span className="flex w-full items-center justify-between gap-2">
-                <span className="font-bold">{space.name}</span>
+                <span className="font-bold">{t(`spaces.${space.id}.name`, space.name)}</span>
                 {space.accumulates && amount > 0 && (
                   <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs text-accent-foreground">
                     {GOOD_ICON[space.accumulates.good] ?? ''} {amount}
                   </span>
                 )}
               </span>
-              <span className="text-xs font-normal text-muted-foreground">{space.description}</span>
+              <span className="text-xs font-normal text-muted-foreground">
+                {t(`spaces.${space.id}.description`, space.description)}
+              </span>
               {occupant && (
                 <span className="text-xs font-semibold text-destructive">
-                  Taken by {occupant.name}
+                  {t('game.takenBy', { name: occupant.name })}
                 </span>
               )}
             </Button>

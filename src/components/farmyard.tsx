@@ -1,15 +1,9 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { COLS, ROWS, edgesOfSpace, toIndex } from '@/game/geometry'
 import { pastureInfo } from '@/game/farm'
 import { cn } from '@/lib/utils'
 import type { Player } from '@/game/types'
-
-const SPACE_LABEL: Record<string, string> = {
-  empty: '',
-  room: 'Room',
-  field: 'Field',
-  stable: 'Stable',
-}
 
 type FarmyardProps = {
   player: Player
@@ -39,6 +33,7 @@ export function Farmyard({
   onToggleFence,
   className,
 }: FarmyardProps) {
+  const { t } = useTranslation()
   const built = useMemo(() => new Set(player.fences), [player.fences])
   const selectableSet = useMemo(() => new Set(selectable), [selectable])
   const selectedSet = useMemo(() => new Set(selected), [selected])
@@ -76,7 +71,10 @@ export function Farmyard({
               key={index}
               disabled={!isSelectable}
               onClick={() => onSelectSpace?.(index)}
-              aria-label={`Space ${index + 1}: ${SPACE_LABEL[space.kind] || 'empty'}`}
+              aria-label={t('farm.space', {
+                number: index + 1,
+                contents: space.kind === 'empty' ? t('farm.empty') : t(`farm.${space.kind}`),
+              })}
               className={cn(
                 'relative aspect-square rounded-sm border-2 border-transparent',
                 'flex flex-col items-center justify-center gap-0.5 text-center',
@@ -95,10 +93,15 @@ export function Farmyard({
               </span>
               {space.kind === 'field' && space.crop ? (
                 <span>
-                  {space.crop === 'grain' ? 'Grain' : 'Veg'} ×{space.cropCount}
+                  {t('farm.cropCount', {
+                    crop: t(`goods.${space.crop}`),
+                    count: space.cropCount ?? 0,
+                  })}
                 </span>
               ) : (
-                <span className="opacity-80">{SPACE_LABEL[space.kind]}</span>
+                <span className="opacity-80">
+                  {space.kind === 'empty' ? '' : t(`farm.${space.kind}`)}
+                </span>
               )}
               {animals && animals.count > 0 && pasture?.key && (
                 <span className="absolute right-0.5 bottom-0.5 rounded-sm bg-card/85 px-1 text-[9px]">
@@ -158,6 +161,7 @@ type FenceLayerProps = {
  * visible, so the board stays legible when no fencing action is in progress.
  */
 function FenceLayer({ built, options, staged, onToggle }: FenceLayerProps) {
+  const { t } = useTranslation()
   const slots: { edge: string; style: React.CSSProperties; horizontal: boolean }[] = []
 
   for (let row = 0; row <= ROWS; row++) {
@@ -200,7 +204,7 @@ function FenceLayer({ built, options, staged, onToggle }: FenceLayerProps) {
         return (
           <button
             key={`${edge}-${horizontal ? 'h' : 'v'}`}
-            aria-label={`Fence ${edge}${isBuilt ? ' (built)' : ''}`}
+            aria-label={t(isBuilt ? 'farm.fenceBuilt' : 'farm.fence', { edge })}
             disabled={!isOption || !onToggle}
             onClick={() => onToggle?.(edge)}
             style={style}
