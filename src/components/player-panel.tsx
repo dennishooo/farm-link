@@ -1,5 +1,6 @@
 import { Farmyard } from '@/components/farmyard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { cardById } from '@/game/cards'
 import { workersLeft } from '@/game/engine'
 import { scorePlayer } from '@/game/scoring'
 import { cn } from '@/lib/utils'
@@ -60,11 +61,33 @@ export function PlayerPanel({ player, isCurrent, showScore = false }: PlayerPane
 
         <p className="text-xs text-muted-foreground">
           {player.people} {player.people === 1 ? 'person' : 'people'} · {player.house} house ·{' '}
-          {player.fencesRemaining} fences · {player.stablesRemaining} stables
+          {player.fencesRemaining} fences · {player.stablesRemaining} stables ·{' '}
+          {player.hand.occupations.length + player.hand.minors.length} in hand
           {player.beggingMarkers > 0 && (
             <span className="font-semibold text-destructive"> · {player.beggingMarkers} begging</span>
           )}
         </p>
+
+        {player.played.length > 0 && (
+          <ul className="flex flex-wrap gap-1">
+            {player.played.map((id) => {
+              const card = cardById(id)
+              if (!card) return null
+              return (
+                <li
+                  key={id}
+                  title={card.text}
+                  className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[11px] font-semibold"
+                >
+                  {card.title}
+                  {card.points !== 0 && (
+                    <span className="text-muted-foreground"> {card.points}pt</span>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
 
         {score && (
           <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5 border-t border-border pt-2 text-xs">

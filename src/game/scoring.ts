@@ -20,7 +20,55 @@ import {
   VEGETABLE_SCORE,
   scoreFromTable,
 } from './rules'
+import { cardById } from './cards'
 import type { Player, ScoreBreakdown } from './types'
+
+/**
+ * Points from cards played face up: their printed value plus any bonus the
+ * engine can compute. Bonuses whose text the parser could not read are left
+ * out, since guessing them would silently distort the final score.
+ */
+export function cardPoints(player: Player): number {
+  let total = 0
+
+  for (const id of player.played) {
+    const card = cardById(id)
+    if (!card) continue
+    total += card.points
+
+    for (const effect of card.effects) {
+      if (effect.kind === 'points') total += effect.points
+      else if (effect.kind === 'pointsPer') {
+        total += Math.floor(countUnit(player, effect.per) / effect.each) * effect.points
+      }
+    }
+  }
+
+  return total
+}
+
+function countUnit(player: Player, per: string): number {
+  switch (per) {
+    case 'room':
+      return countKind(player.farm, 'room')
+    case 'field':
+      return countKind(player.farm, 'field')
+    case 'pasture':
+      return pastureInfo(player).length
+    case 'grain':
+      return cropTotal(player, 'grain')
+    case 'vegetable':
+      return cropTotal(player, 'vegetable')
+    case 'sheep':
+      return player.sheep
+    case 'boar':
+      return player.boar
+    case 'cattle':
+      return player.cattle
+    default:
+      return 0
+  }
+}
 
 /**
  * Grain and vegetables score from the player's supply *and* whatever is still
@@ -75,6 +123,7 @@ export function scorePlayer(player: Player): ScoreBreakdown {
     stoneRooms: player.house === 'stone' ? rooms * POINTS_PER_STONE_ROOM : 0,
     people: player.people * POINTS_PER_PERSON,
     beggingMarkers: player.beggingMarkers * BEGGING_PENALTY,
+    cards: cardPoints(player),
   }
 
   const total = Object.values(breakdown).reduce((sum, value) => sum + value, 0)

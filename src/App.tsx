@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ActionBoard } from '@/components/action-board'
 import { ActionDialog } from '@/components/action-dialog'
+import { CardPicker } from '@/components/card-picker'
 import { actionModeFor } from '@/lib/actions'
 import { PlayerPanel } from '@/components/player-panel'
 import { SetupScreen } from '@/components/setup-screen'
@@ -151,7 +152,20 @@ export default function App() {
         </ol>
       </details>
 
-      {pendingSpace && (
+      {pendingSpace && actionModeFor(pendingSpace) === 'card' && (
+        <CardPicker
+          spaceId={pendingSpace}
+          game={game}
+          player={active}
+          onConfirm={(cardId, costOption) => {
+            play(pendingSpace, { cardId, costOption })
+            setPendingSpace(null)
+          }}
+          onCancel={() => setPendingSpace(null)}
+        />
+      )}
+
+      {pendingSpace && actionModeFor(pendingSpace) !== 'card' && (
         <ActionDialog
           spaceId={pendingSpace}
           player={active}

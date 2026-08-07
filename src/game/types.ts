@@ -67,6 +67,11 @@ export type Player = {
 
   /** Animals assigned to a specific pasture/stable, keyed by pasture id. */
   animalPlacement: AnimalPlacement[]
+
+  /** Card ids still in hand, by deck. */
+  hand: { occupations: string[]; minors: string[] }
+  /** Card ids played face up in front of this player. */
+  played: string[]
 }
 
 export type AnimalPlacement = {
@@ -113,6 +118,8 @@ export type GameState = {
   occupied: Record<ActionSpaceId, string>
   /** Action spaces revealed so far, in reveal order. */
   revealed: ActionSpaceId[]
+  /** Major improvement card ids still available to build. */
+  majorsAvailable: string[]
   log: LogEntry[]
   harvest: { stage: HarvestStage; playerIndex: number } | null
 }
@@ -136,5 +143,6 @@ export type ScoreBreakdown = {
   stoneRooms: number
   people: number
   beggingMarkers: number
+  cards: number
   total: number
 }

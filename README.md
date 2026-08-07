@@ -53,14 +53,41 @@ src/
     farm       Placement legality, animal capacity and housing
     engine     Setup, worker placement, harvest phases, round flow
     scoring    End-game scoring and tie-breaking
+    cards/     Card data, cost/effect parsing, dealing and payment
   components/  React components
   stores/      Zustand state with localStorage persistence
   lib/         Shared helpers
+scripts/       Card data generator and its raw source dump
 legacy/        The original single-file v2.8 prototype, kept for reference
 ```
 
 The engine is deliberately independent of React, so the rules can be tested without rendering
 anything — see `src/game/*.test.ts`.
+
+## Cards
+
+All 394 base-game cards ship with the app — 202 occupations, 184 minor improvements, and 8 major
+improvements. Hands of 7 occupations and 7 minor improvements are dealt at setup; majors are a
+shared pool. Costs, victory points, and player-count restrictions are enforced, and the Lessons
+spaces charge the correct occupation cost for the player count.
+
+Card effects fall into two groups. Where the printed text maps cleanly onto a mechanic — an
+immediate gain, a bonus whenever a given action space is used, a flat or per-unit scoring bonus —
+the engine applies it automatically. The rest are dealt, played, and scored for their printed
+points, but their ongoing text is left to the players; those cards say so in the picker and the game
+log repeats the text when one is played. Enforcing the remainder would mean guessing at conditional
+and tiered wording, which would quietly distort scores.
+
+Card data is generated from the [agricolacards.com](https://www.agricolacards.com/list) community
+database into `src/game/cards/data.ts` and committed, so the app needs no network at runtime:
+
+```bash
+bun run cards:build
+```
+
+Note that the source database cannot identify the exact 120-card Revised Edition deck — it splits
+base-game cards between "Base" and "Base (Revised)" and carries no RE card codes. This build
+therefore uses the whole base-game pool rather than the precise RE subset.
 
 ## What is implemented
 
@@ -76,10 +103,9 @@ anything — see `src/game/*.test.ts`.
 
 ## Not yet implemented
 
-The 120-card deck — 48 occupations, 48 minor improvements, 10 major improvements — is not in this
-build. The relevant action spaces (Lessons, Major Improvement) are on the board and still consume a
-worker, so turn order and space contention stay accurate, but playing cards is a no-op. Bread baking
-depends on major improvements and is therefore also pending.
+- Bread baking, which depends on major improvement effects the engine does not yet apply
+- The ongoing text of cards outside the enforced patterns described above
+- Travelling minor improvements that pass to the player on your left
 
 ## Deployment
 

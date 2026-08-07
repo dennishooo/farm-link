@@ -7,6 +7,14 @@
 import { edgesOfSpace, findPastures, SPACE_COUNT } from './geometry'
 import { canPlace, countKind, houseAnimals, pastureInfo, syncAnimalTotals } from './farm'
 import {
+  actionBonuses,
+  affordableOptions,
+  applyImmediateEffects,
+  cardById,
+  dealCards,
+  payOption,
+} from './cards'
+import {
   BASE_ACTION_SPACES,
   FENCE_COST_WOOD,
   FOOD_PER_NEWBORN,
@@ -33,6 +41,7 @@ import type {
   Player,
   PlayerColor,
 } from './types'
+import type { Payable } from './cards/types'
 
 export type ActionResult = { ok: true } | { ok: false; reason: string }
 
@@ -41,7 +50,7 @@ const fail = (reason: string): ActionResult => ({ ok: false, reason })
 
 const COLORS: PlayerColor[] = ['green', 'blue', 'red', 'purple']
 
-export const STATE_VERSION = 3
+export const STATE_VERSION = 4
 
 /** Deterministic shuffle so a seed reproduces the same stage-card order. */
 export function shuffle<T>(items: T[], random: () => number): T[] {
@@ -61,7 +70,7 @@ function makeFarm(): FarmSpace[] {
   return farm
 }
 
-function makePlayer(name: string, index: number): Player {
+function makePlayer(name: string, index: number, hand: Player['hand']): Player {
   return {
     id: `p${index + 1}`,
     name,
@@ -87,6 +96,8 @@ function makePlayer(name: string, index: number): Player {
     fencesRemaining: MAX_FENCES,
     stablesRemaining: MAX_STABLES,
     animalPlacement: [],
+    hand,
+    played: [],
   }
 }
 
@@ -119,7 +130,8 @@ export type NewGameOptions = {
 
 export function createGame({ names, random = Math.random }: NewGameOptions): GameState {
   const playerCount = names.length
-  const players = names.map((name, index) => makePlayer(name, index))
+  const dealt = dealCards(playerCount, random)
+  const players = names.map((name, index) => makePlayer(name, index, dealt.hands[index]))
   const deck = buildDeck(playerCount, random)
 
   const state: GameState = {
@@ -134,6 +146,7 @@ export function createGame({ names, random = Math.random }: NewGameOptions): Gam
     accumulated: {},
     occupied: {},
     revealed: [],
+    majorsAvailable: dealt.majors,
     log: [],
     harvest: null,
   }
@@ -380,6 +393,10 @@ export type ActionPayload = {
   sow?: { spaceIndex: number; crop: 'grain' | 'vegetable' }[]
   /** Farm Expansion builds stables instead of rooms when set. */
   stables?: boolean
+  /** Card id to play on a Lessons or Major Improvement space. */
+  cardId?: string
+  /** Index of the chosen cost alternative, when a card offers a choice. */
+  costOption?: number
 }
 
 /**
@@ -400,10 +417,34 @@ export function takeAction(
   const result = applyAction(state, player, spaceId, payload)
   if (!result.ok) return result
 
+  applyActionBonuses(state, player, spaceId)
+
   state.occupied[spaceId] = player.id
   player.peoplePlaced += 1
   advanceTurn(state)
   return ok
+}
+
+/** Grant any bonus goods the player's played cards attach to this space. */
+function applyActionBonuses(state: GameState, player: Player, spaceId: ActionSpaceId): void {
+  const cards = player.played.map(cardById).filter((card) => card !== undefined)
+  const bonuses = actionBonuses(cards, spaceId)
+
+  const gained: string[] = []
+  for (const [good, amount] of Object.entries(bonuses)) {
+    if (!amount) continue
+    if (good === 'sheep' || good === 'boar' || good === 'cattle') {
+      houseAnimals(player, good, amount)
+      syncAnimalTotals(player)
+    } else {
+      player[good as Payable] += amount
+    }
+    gained.push(`${amount} ${good}`)
+  }
+
+  if (gained.length > 0) {
+    logMessage(state, `${player.name} gains ${gained.join(', ')} from their cards.`)
+  }
 }
 
 function applyAction(
@@ -485,11 +526,10 @@ function applyAction(
 
     case 'lessons':
     case 'lessons-2':
+      return playOccupation(state, player, spaceId, payload)
+
     case 'major-improvement':
-      // Cards are out of scope for the base-game build; the space is a no-op
-      // that still costs a worker, so the board stays rule-accurate.
-      logMessage(state, `${player.name} uses ${space.name} (cards not yet implemented).`)
-      return ok
+      return playImprovement(state, player, payload)
 
     default:
       return fail('That action is not implemented.')
@@ -664,6 +704,85 @@ function renovate(state: GameState, player: Player): ActionResult {
   player.reed -= 1
   player.house = target
   logMessage(state, `${player.name} renovates to a ${target} house.`)
+  return ok
+}
+
+/**
+ * Occupation cost, per the rulebook: on the base Lessons space the first
+ * occupation is free and later ones cost 1 food. The extra space in 3- and
+ * 4-player games charges more.
+ */
+export function occupationCost(
+  playerCount: number,
+  spaceId: ActionSpaceId,
+  occupationsPlayed: number,
+): number {
+  if (spaceId === 'lessons') return occupationsPlayed === 0 ? 0 : 1
+  if (playerCount === 3) return 2
+  if (playerCount === 4) return occupationsPlayed < 2 ? 1 : 2
+  return 1
+}
+
+function playOccupation(
+  state: GameState,
+  player: Player,
+  spaceId: ActionSpaceId,
+  payload: ActionPayload,
+): ActionResult {
+  if (!payload.cardId) return fail('Choose an occupation to play.')
+  if (!player.hand.occupations.includes(payload.cardId)) {
+    return fail('That occupation is not in your hand.')
+  }
+
+  const card = cardById(payload.cardId)
+  if (!card) return fail('Unknown card.')
+
+  const played = player.played.filter((id) => cardById(id)?.type === 'occupation').length
+  const cost = occupationCost(state.players.length, spaceId, played)
+  if (player.food < cost) return fail(`Playing this occupation costs ${cost} food.`)
+
+  player.food -= cost
+  player.hand.occupations = player.hand.occupations.filter((id) => id !== payload.cardId)
+  player.played.push(card.id)
+  applyImmediateEffects(player, card)
+
+  logMessage(state, `${player.name} plays the occupation ${card.title}.`)
+  if (!card.enforced) {
+    logMessage(state, `Apply ${card.title} yourselves: ${card.text}`)
+  }
+  return ok
+}
+
+/**
+ * Play a minor improvement from hand, or build a major improvement from the
+ * shared pool.
+ */
+function playImprovement(state: GameState, player: Player, payload: ActionPayload): ActionResult {
+  if (!payload.cardId) return fail('Choose an improvement to play.')
+
+  const card = cardById(payload.cardId)
+  if (!card) return fail('Unknown card.')
+
+  const fromHand = player.hand.minors.includes(card.id)
+  const fromPool = state.majorsAvailable.includes(card.id)
+  if (!fromHand && !fromPool) return fail('That improvement is not available to you.')
+
+  const options = affordableOptions(player, card)
+  if (options.length === 0) return fail(`You cannot afford ${card.title}.`)
+
+  const chosen = options[payload.costOption ?? 0] ?? options[0]
+  payOption(player, chosen)
+
+  if (fromHand) player.hand.minors = player.hand.minors.filter((id) => id !== card.id)
+  else state.majorsAvailable = state.majorsAvailable.filter((id) => id !== card.id)
+
+  player.played.push(card.id)
+  applyImmediateEffects(player, card)
+
+  logMessage(state, `${player.name} builds ${card.title}.`)
+  if (!card.enforced) {
+    logMessage(state, `Apply ${card.title} yourselves: ${card.text}`)
+  }
   return ok
 }
 

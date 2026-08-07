@@ -11,9 +11,14 @@ export type ActionMode =
   | 'sow'
   | 'expansion'
   | 'cultivate'
+  | 'card'
 
 export function actionModeFor(spaceId: ActionSpaceId): ActionMode {
   switch (spaceId) {
+    case 'lessons':
+    case 'lessons-2':
+    case 'major-improvement':
+      return 'card'
     case 'farmland':
       return 'plow'
     case 'farm-expansion':

@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "cards:build": "bun run scripts/build-cards.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
