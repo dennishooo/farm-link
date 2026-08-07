@@ -9,6 +9,26 @@ are looking at.
 
 ## [Unreleased]
 
+### Added
+
+- **Component and integration tests** — 144 of them, covering every component and the App shell.
+  There were none before, and the components are where nearly every bug this project has shipped
+  actually lived: the tooltip that never appeared on touch, Cultivation refusing to sow, Farm
+  Expansion looking unresponsive. Each fix from v4.2.0 now has a test that fails against the old
+  code.
+- Parser tests for `parseRoundDrip`, `parseDiscount` and `normaliseGood`, concentrating on the
+  wordings they are supposed to *refuse* — a parser that quietly guesses is the failure mode that
+  matters here.
+- Store tests for the no-game guards and the conversion paths, taking that layer from 64% to 97%.
+
+### Fixed
+
+- `type-check` ran `tsc --noEmit` against a root config with `"files": []`, so it checked nothing.
+  Type errors in test files only surfaced later, during the build. It now runs `tsc -b`, matching
+  what the build does.
+- jsdom has no `matchMedia`, so any test mounting the theme toggle died before asserting anything.
+  The shared test setup now provides it.
+
 ## [4.2.0] — 2026-08-08
 
 Fixes for the nine issues reported after v4.1.0. Two were rules-data errors checked against the

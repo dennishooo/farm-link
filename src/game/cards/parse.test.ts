@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  parseDiscount,
+  parseRoundDrip,
+  normaliseGood,
   makeCardId,
   parseConvert,
   parseTieredPoints,
@@ -270,5 +273,99 @@ describe('toCard', () => {
 
   it('skips card types the game does not use', () => {
     expect(toCard({ ...raw, type: 'Parent (Father)' }, new Map())).toBeNull()
+  })
+})
+
+describe('normaliseGood', () => {
+  it('accepts singular and plural forms', () => {
+    expect(normaliseGood('Wood')).toBe('wood')
+    expect(normaliseGood('vegetables')).toBe('vegetable')
+    expect(normaliseGood('Sheep')).toBe('sheep')
+  })
+
+  it('rejects a word that is not a good', () => {
+    expect(normaliseGood('point')).toBeNull()
+    expect(normaliseGood('')).toBeNull()
+  })
+})
+
+describe('parseRoundDrip', () => {
+  it('reads an explicit round range', () => {
+    const drip = parseRoundDrip('Place 1 Food on each of rounds 5 to 8.')
+    expect(drip).toMatchObject({ kind: 'roundDrip', good: 'food', amount: 1 })
+    expect(drip?.rounds).toEqual([5, 6, 7, 8])
+  })
+
+  it('clamps a range that runs past the last round', () => {
+    // There are only 14 round spaces.
+    const drip = parseRoundDrip('Place 1 Wood on each of rounds 12 to 20.')
+    expect(drip?.rounds).toEqual([12, 13, 14])
+  })
+
+  it('reads "the next N rounds"', () => {
+    const drip = parseRoundDrip('Place 2 Clay on each of the next 3 rounds.')
+    expect(drip?.rounds).toEqual([1, 2, 3])
+    expect(drip?.amount).toBe(2)
+  })
+
+  it('reads even and odd numbered rounds', () => {
+    expect(parseRoundDrip('Place 1 Food on each even-numbered round space.')?.rounds).toEqual([
+      2, 4, 6, 8, 10, 12, 14,
+    ])
+    expect(parseRoundDrip('Place 1 Food on each odd-numbered round space.')?.rounds).toEqual([
+      1, 3, 5, 7, 9, 11, 13,
+    ])
+  })
+
+  it('reads every remaining round space', () => {
+    expect(parseRoundDrip('Place 1 Reed on each remaining round space.')?.rounds).toHaveLength(14)
+  })
+
+  it('refuses a conditional drip rather than paying it out early', () => {
+    // These only start once a condition is met, which the engine cannot track;
+    // enforcing them immediately would overpay the player every round.
+    expect(parseRoundDrip('Once you live in a Clay hut, place 1 Food on each round space.')).toBeNull()
+    expect(parseRoundDrip('Whenever you renovate, place 1 Food on the next 3 rounds.')).toBeNull()
+    expect(parseRoundDrip('If you have 2 rooms, place 1 Food on each round space.')).toBeNull()
+  })
+
+  it('refuses text that places nothing on round spaces', () => {
+    expect(parseRoundDrip('You immediately get 1 Wood.')).toBeNull()
+  })
+
+  it('refuses a good it does not recognise', () => {
+    expect(parseRoundDrip('Place 1 Gold on each of the next 3 rounds.')).toBeNull()
+  })
+})
+
+describe('parseDiscount', () => {
+  it('reads a room discount', () => {
+    expect(parseDiscount('Rooms cost you 1 reed less to build.')).toEqual({
+      kind: 'discount',
+      good: 'reed',
+      amount: 1,
+      applies: 'room',
+    })
+  })
+
+  it('reads a renovation discount', () => {
+    expect(parseDiscount('Your next renovation costs 1 stone less.')).toMatchObject({
+      applies: 'renovation',
+      good: 'stone',
+    })
+  })
+
+  it('reads a discount that covers both', () => {
+    expect(
+      parseDiscount('Every improvement, room, and renovation costs you 1 stone less.'),
+    ).toMatchObject({ applies: 'both', amount: 1 })
+  })
+
+  it('refuses text with no discount', () => {
+    expect(parseDiscount('You immediately get 1 Wood.')).toBeNull()
+  })
+
+  it('refuses a discount on something that is not a good', () => {
+    expect(parseDiscount('Rooms cost you 1 point less.')).toBeNull()
   })
 })
