@@ -30,6 +30,7 @@ export default {
     workersLeft_one: '{{count}} worker left',
     workersLeft_other: '{{count}} workers left',
     passWorker: 'Pass worker',
+    undo: 'Undo',
     newGame: 'New game',
     gameLog: 'Game log',
     results: 'Results',
@@ -270,6 +271,11 @@ export default {
     convert: '{{name}} converts {{amount}} {{good}} into {{count}} food using {{cardId}}.',
     cardAdjustGain: '{{name}} takes {{amount}} {{good}} for {{cardId}}.',
     cardAdjustSpend: '{{name}} pays {{amount}} {{good}} for {{cardId}}.',
+    undo: '{{name}} takes back their move on {{space}}.',
+    undoPass: '{{name}} takes back passing a worker.',
+    undoHarvest: 'The harvest is taken back.',
+    undoCard: '{{name}} takes back the effect of {{cardId}}.',
+    undoAnimals: '{{name}} takes back moving animals.',
   },
 
   errors: {
