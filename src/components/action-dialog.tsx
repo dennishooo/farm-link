@@ -162,9 +162,9 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
       role="dialog"
       aria-modal="true"
       aria-label={t(`spaces.${spaceId}.name`, spaceName(spaceId))}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-3 sm:items-center"
+      className="animate-[var(--animate-fade-in)] fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 backdrop-blur-sm sm:items-center"
     >
-      <div className="max-h-[88vh] w-full max-w-lg overflow-auto rounded-lg border border-border bg-card p-4">
+      <div className="animate-[var(--animate-sheet-in)] surface-panel max-h-[88vh] w-full max-w-lg overflow-auto rounded-xl border border-border p-4 shadow-[var(--shadow-float)]">
         <h2 className="text-lg font-bold">{t(`spaces.${spaceId}.name`, spaceName(spaceId))}</h2>
 
         {mode === 'expansion' && (

@@ -28,11 +28,32 @@
   --color-vegetable: var(--vegetable);
   --color-pasture: var(--pasture);
   --color-field: var(--field);
+  --color-food: var(--food);
+  --color-sheep: var(--sheep);
+  --color-boar: var(--boar);
+  --color-cattle: var(--cattle);
+
+  /* The four player colours, as on the wooden pieces. */
+  --color-player-1: var(--player-1);
+  --color-player-2: var(--player-2);
+  --color-player-3: var(--player-3);
+  --color-player-4: var(--player-4);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
+
+  /* Elevation. Board pieces sit on a surface, so they cast a shadow that is
+     warm rather than neutral grey — a grey shadow over green reads as dirt. */
+  --shadow-tile: 0 1px 0 0 var(--edge-light) inset, 0 1px 2px 0 var(--shade);
+  --shadow-raised: 0 1px 0 0 var(--edge-light) inset, 0 2px 4px -1px var(--shade);
+  --shadow-panel: 0 1px 2px 0 var(--shade), 0 8px 24px -12px var(--shade-strong);
+  --shadow-float: 0 8px 12px -6px var(--shade), 0 24px 48px -16px var(--shade-strong);
+
+  --animate-tile-in: tile-in 0.18s ease-out;
+  --animate-sheet-in: sheet-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+  --animate-fade-in: fade-in 0.15s ease-out;
 }
 
 :root {
@@ -52,14 +73,33 @@
   --destructive: oklch(0.556 0.166 27);
   --destructive-foreground: oklch(0.985 0.008 118);
 
-  --wood: oklch(0.632 0.086 63);
+  --wood: oklch(0.598 0.088 63);
   --clay: oklch(0.612 0.116 42);
   --reed: oklch(0.788 0.088 116);
   --stone: oklch(0.652 0.014 250);
   --grain: oklch(0.804 0.132 88);
   --vegetable: oklch(0.674 0.152 52);
   --pasture: oklch(0.842 0.098 137);
-  --field: oklch(0.706 0.072 62);
+  --field: oklch(0.588 0.082 58);
+  --food: oklch(0.706 0.126 62);
+  --sheep: oklch(0.618 0.028 106);
+  --boar: oklch(0.552 0.062 46);
+  --cattle: oklch(0.472 0.048 42);
+
+  --player-1: oklch(0.552 0.166 27);
+  --player-2: oklch(0.542 0.128 252);
+  --player-3: oklch(0.512 0.116 148);
+  --player-4: oklch(0.508 0.142 312);
+
+  /* Light catches the top edge of a piece; the ground under it darkens. Both
+     are tinted, so shadows on the board look like shade and not like grey. */
+  --edge-light: oklch(1 0 0 / 0.55);
+  /* Hairline around a board piece. Dark mode needs it most: two dark tiles
+     with a dark gap between them read as one shape without it. */
+  --tile-edge: oklch(0.24 0.028 145 / 0.1);
+  --shade: oklch(0.32 0.04 140 / 0.14);
+  --shade-strong: oklch(0.28 0.05 140 / 0.3);
+  --ink: oklch(0.24 0.028 145);
 }
 
 .dark {
@@ -85,6 +125,21 @@
   --vegetable: oklch(0.606 0.138 52);
   --pasture: oklch(0.532 0.094 137);
   --field: oklch(0.512 0.062 62);
+  --food: oklch(0.616 0.108 62);
+  --sheep: oklch(0.652 0.022 106);
+  --boar: oklch(0.472 0.056 46);
+  --cattle: oklch(0.402 0.044 42);
+
+  --player-1: oklch(0.678 0.162 27);
+  --player-2: oklch(0.672 0.122 252);
+  --player-3: oklch(0.668 0.126 146);
+  --player-4: oklch(0.652 0.136 312);
+
+  --edge-light: oklch(1 0 0 / 0.09);
+  --tile-edge: oklch(1 0 0 / 0.09);
+  --shade: oklch(0 0 0 / 0.36);
+  --shade-strong: oklch(0 0 0 / 0.55);
+  --ink: oklch(0.14 0.02 148);
 }
 
 @layer base {
@@ -94,6 +149,20 @@
 
   body {
     background-color: var(--color-background);
+    /* Two soft pools of light, warm from the top and green from the bottom, so
+       the page reads as a table under a lamp rather than a flat fill. */
+    background-image:
+      radial-gradient(
+        ellipse 90rem 40rem at 50% -10%,
+        color-mix(in oklab, var(--color-primary) 12%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 70rem 32rem at 100% 100%,
+        color-mix(in oklab, var(--color-grain) 14%, transparent),
+        transparent 70%
+      );
+    background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -105,5 +174,188 @@
   /* The farmyard relies on drag-free tapping; stop double-tap zoom. */
   button {
     touch-action: manipulation;
+  }
+}
+
+@layer components {
+  /* --- Farmyard tiles ------------------------------------------------------
+     Each kind of space gets a material rather than a flat colour: soil has
+     furrows, pasture has tufts, a house has courses of its building material.
+     The patterns are pure gradients, so they cost nothing to load and stay
+     crisp at any tile size — this app has to work offline. */
+
+  .tile-fallow {
+    background-color: var(--color-muted);
+    background-image:
+      radial-gradient(
+        circle at 22% 28%,
+        color-mix(in oklab, var(--ink) 9%, transparent) 0 1.5px,
+        transparent 1.6px
+      ),
+      radial-gradient(
+        circle at 68% 62%,
+        color-mix(in oklab, var(--ink) 7%, transparent) 0 1.5px,
+        transparent 1.6px
+      ),
+      radial-gradient(
+        circle at 44% 82%,
+        color-mix(in oklab, var(--ink) 6%, transparent) 0 1.5px,
+        transparent 1.6px
+      ),
+      linear-gradient(
+        155deg,
+        color-mix(in oklab, var(--color-card) 45%, transparent),
+        transparent 60%
+      );
+  }
+
+  .tile-pasture {
+    background-color: var(--color-pasture);
+    /* Angled hatching at two frequencies reads as blades of grass; the wash on
+       top keeps the corners darker so the tile does not look like flat paper. */
+    background-image:
+      repeating-linear-gradient(
+        62deg,
+        color-mix(in oklab, var(--ink) 10%, transparent) 0 1px,
+        transparent 1px 6px
+      ),
+      repeating-linear-gradient(
+        118deg,
+        color-mix(in oklab, var(--color-card) 22%, transparent) 0 1px,
+        transparent 1px 9px
+      ),
+      radial-gradient(ellipse at 50% 25%, color-mix(in oklab, var(--color-card) 30%, transparent), transparent 70%);
+  }
+
+  .tile-field {
+    background-color: var(--color-field);
+    /* One thin furrow every 8px. An earlier version drew a dark line and a
+       light line per row, which at tile size stopped reading as soil and
+       started reading as decking. */
+    background-image:
+      radial-gradient(
+        circle at 30% 40%,
+        color-mix(in oklab, var(--ink) 12%, transparent) 0 1.5px,
+        transparent 1.6px
+      ),
+      radial-gradient(
+        circle at 74% 76%,
+        color-mix(in oklab, white 22%, transparent) 0 1.5px,
+        transparent 1.6px
+      ),
+      repeating-linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--ink) 11%, transparent) 0 1px,
+        transparent 1px 10px
+      ),
+      linear-gradient(180deg, color-mix(in oklab, white 14%, transparent), transparent 55%);
+  }
+
+  .tile-thatch {
+    /* Courses of building material — the house tiles. Tint comes from the
+       element's own background colour, so one pattern serves wood, clay and
+       stone and each still reads as its own material. */
+    background-image:
+      repeating-linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--ink) 15%, transparent) 0 1px,
+        transparent 1px 8px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        color-mix(in oklab, var(--ink) 9%, transparent) 0 1px,
+        transparent 1px 26px
+      ),
+      linear-gradient(165deg, color-mix(in oklab, white 24%, transparent), transparent 55%);
+  }
+
+  .tile-stable {
+    /* Timber bracing over the grass, not a solid roof — a stable is an open
+       shelter and the pasture underneath still has to show through. */
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        color-mix(in oklab, var(--color-wood) 60%, transparent) 0 1.5px,
+        transparent 1.5px 12px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        color-mix(in oklab, var(--color-wood) 45%, transparent) 0 1.5px,
+        transparent 1.5px 12px
+      );
+  }
+
+  /* A built fence rail: lit along the top, grained across its length. */
+  .rail-wood {
+    background-color: var(--color-wood);
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, white 45%, transparent),
+      transparent 45%,
+      color-mix(in oklab, var(--ink) 25%, transparent)
+    );
+    box-shadow: 0 1px 2px var(--shade);
+  }
+
+  .rail-wood-vertical {
+    background-image: linear-gradient(
+      90deg,
+      color-mix(in oklab, white 45%, transparent),
+      transparent 45%,
+      color-mix(in oklab, var(--ink) 25%, transparent)
+    );
+  }
+
+  /* --- Surfaces ----------------------------------------------------------- */
+
+  .surface-panel {
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-card) 100%, transparent),
+      color-mix(in oklab, var(--color-muted) 45%, var(--color-card))
+    );
+    box-shadow: var(--shadow-panel);
+  }
+
+  /* Diagonal hatch marking an action space another player has already taken. */
+  .hatch-taken {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklab, var(--ink) 7%, transparent) 0 3px,
+      transparent 3px 8px
+    );
+  }
+}
+
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Motion here is decorative — a tile popping in, a sheet sliding up. None of it
+   carries meaning, so it all goes away when the player has asked it to. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

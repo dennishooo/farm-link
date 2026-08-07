@@ -4,7 +4,10 @@ import { cn } from '@/lib/utils'
 export function Card({ className, ...props }: ComponentProps<'section'>) {
   return (
     <section
-      className={cn('rounded-lg border border-border bg-card text-card-foreground', className)}
+      className={cn(
+        'surface-panel rounded-xl border border-border text-card-foreground',
+        className,
+      )}
       {...props}
     />
   )

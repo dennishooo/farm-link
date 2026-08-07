@@ -11,6 +11,36 @@ are looking at.
 
 ### Changed
 
+- **Drew the board instead of colouring it in.** Every farmyard space now renders as its material —
+  soil with furrows, pasture with tufts of grass, courses of clay or stone for a house, timber
+  bracing over the grass for a stable — so a field reads as a field before its label is read. The
+  patterns are CSS gradients rather than images: nothing to fetch, sharp at any tile size, and the
+  app still cold-starts offline. Fences gained lit rails and a post at every corner where two rails
+  meet, which is what tells a closed pasture from four separate lines.
+- **Replaced every emoji with a drawn glyph** (`components/ui/icons.tsx`). Emoji are rendered by the
+  platform, so the board looked like a different game on each device, and they carry their own
+  colour — a wood chip could not be tinted with the wood token, so nothing on screen matched
+  anything else. The new glyphs are silhouettes in `currentColor`, which is what lets a resource
+  chip, an action space's stripe and the fence rails all come from one variable.
+- **One herd per pasture.** The animal chip repeated on every space of a pasture, so three sheep in
+  a 2x2 pasture drew four "×3" chips and read as four separate herds. It now draws once.
+- **Sown fields show their crop as pips** — one glyph per unit in the crop's own colour, the way the
+  goods sit on the physical card, falling back to a glyph and a number past four. The localised
+  "grain ×3" stays in the accessibility tree either way.
+- **A round track in the header.** Fourteen pips with the six harvests drawn wider: "Round 3 of 14"
+  said where you were but not how close the next feeding was.
+- **Player colours.** Each panel carries a band in its player's colour, so four farms side by side
+  can be told apart without reading the names.
+- **Depth and feedback throughout** — tinted elevation shadows (a grey shadow over green reads as
+  dirt), buttons that press on tap, tiles that lift when selectable, sheets that slide up, a
+  hatched fill on action spaces another player has taken, and stripes in the good's own colour on
+  the spaces that hand goods out. All motion is decorative and is dropped entirely under
+  `prefers-reduced-motion`.
+- **Legibility fixes found by looking at it.** Wood, field and sheep were too light for the white
+  text and pale chips sitting on them; field furrows were drawn as a dark line plus a light line
+  per row, which at tile size stopped reading as soil and started reading as decking; dark mode had
+  no hairline between a dark tile and the dark gap beside it, so a farmyard collapsed into one
+  shape.
 - **Split `engine.ts`** (1050 lines) into `result.ts` (the shared outcome type), `state.ts` (setup,
   round progression, harvest) and `actions.ts` (worker placement and the action handlers).
   `engine.ts` remains as a barrel, so every import site is untouched and the public surface is

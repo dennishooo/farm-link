@@ -10,6 +10,7 @@ import { SetupScreen } from '@/components/setup-screen'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { formatError, formatLogEntry } from '@/lib/i18n/format'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { currentPlayer, workersLeft, type ActionPayload } from '@/game/engine'
@@ -17,6 +18,37 @@ import { HARVEST_ROUNDS } from '@/game/rules'
 import { rankPlayers } from '@/game/scoring'
 import { useGameStore } from '@/stores/game'
 import type { ActionSpaceId } from '@/game/types'
+
+/**
+ * The fourteen rounds as a row of pips, with the six harvests drawn wider. The
+ * header only ever said "Round 3 of 14", which tells you where you are but not
+ * how close the next feeding is.
+ */
+function RoundTrack({ round, total }: { round: number; total: number }) {
+  return (
+    <ol aria-hidden className="mt-1.5 flex items-center gap-[3px]">
+      {Array.from({ length: total }, (_, index) => {
+        const number = index + 1
+        const isHarvest = HARVEST_ROUNDS.includes(number)
+        const isPast = number < round
+        const isCurrent = number === round
+
+        return (
+          <li
+            key={number}
+            className={cn(
+              'h-1.5 rounded-full transition-colors',
+              isHarvest ? 'w-3.5' : 'w-1.5',
+              isCurrent && 'bg-primary ring-2 ring-primary/30',
+              !isCurrent && isPast && 'bg-primary/45',
+              !isCurrent && !isPast && (isHarvest ? 'bg-grain' : 'bg-border'),
+            )}
+          />
+        )
+      })}
+    </ol>
+  )
+}
 
 export default function App() {
   const { t } = useTranslation()
@@ -55,9 +87,9 @@ export default function App() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 p-3">
-      <header className="flex flex-wrap items-center justify-between gap-2">
+      <header className="surface-panel sticky top-0 z-30 -mx-3 flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2 backdrop-blur">
         <div>
-          <p className="text-xs font-bold text-primary">
+          <p className="flex items-center gap-2 text-xs font-bold text-primary">
             {t('game.round', { round: game.round, total: game.maxRounds })}
             {HARVEST_ROUNDS.includes(game.round) && ` · ${t('game.harvestThisRound')}`}
           </p>
@@ -68,6 +100,10 @@ export default function App() {
                 ? t('game.harvest')
                 : t('game.turn', { name: active.name })}
           </h1>
+          {/* Fourteen rounds is the whole shape of a game of Agricola, and the
+              harvests are what everyone is planning around. A row of pips shows
+              both at a glance — the number alone never did. */}
+          <RoundTrack round={game.round} total={game.maxRounds} />
         </div>
         <div className="flex gap-2">
           <LanguageSwitcher />
@@ -86,7 +122,7 @@ export default function App() {
       {error && (
         <p
           role="alert"
-          className="rounded-md border border-destructive bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive"
+          className="animate-[var(--animate-fade-in)] rounded-lg border border-destructive border-l-4 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive shadow-[var(--shadow-tile)]"
         >
           {formatError(error, t)}
         </p>
@@ -114,12 +150,19 @@ export default function App() {
               {rankPlayers(game.players).map(({ player, score, rank }) => (
                 <li
                   key={player.id}
-                  className="flex justify-between border-b border-border py-1 text-sm last:border-0"
+                  className={cn(
+                    'flex items-center justify-between gap-2 rounded-md border-b border-border px-2 py-1.5 text-sm last:border-0',
+                    // The winner is the one thing this screen exists to say.
+                    rank === 1 &&
+                      'border-b-0 bg-grain/25 font-bold shadow-[var(--shadow-tile)] ring-1 ring-grain/50',
+                  )}
                 >
                   <span className="font-semibold">
                     {rank}. {player.name}
                   </span>
-                  <span className="font-bold">{t('game.points', { count: score.total })}</span>
+                  <span className="font-bold tabular-nums">
+                    {t('game.points', { count: score.total })}
+                  </span>
                 </li>
               ))}
             </ol>
@@ -157,12 +200,15 @@ export default function App() {
         </section>
       </div>
 
-      <details className="rounded-lg border border-border bg-card p-3">
+      <details className="surface-panel rounded-xl border border-border p-3">
         <summary className="cursor-pointer text-sm font-bold">{t('game.gameLog')}</summary>
         <ol className="mt-2 flex flex-col-reverse gap-1 text-xs text-muted-foreground">
           {game.log.slice(-40).map((entry, index) => (
-            <li key={index}>
-              <span className="font-semibold">R{entry.round}</span> · {formatLogEntry(entry, t)}
+            <li key={index} className="flex gap-1.5">
+              <span className="shrink-0 rounded-sm bg-muted px-1 font-semibold tabular-nums">
+                R{entry.round}
+              </span>
+              <span>{formatLogEntry(entry, t)}</span>
             </li>
           ))}
         </ol>
