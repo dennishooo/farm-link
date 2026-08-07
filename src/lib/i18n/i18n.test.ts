@@ -54,6 +54,7 @@ describe('translation bundles', () => {
     const shared = [
       'app.title', // The product name stays in Latin script.
       'farm.cropCount', // Placeholders and a multiplication sign only.
+      'app.version', // A version number is the same in every language.
     ]
 
     for (const [key, text] of leaves(zhHK)) {

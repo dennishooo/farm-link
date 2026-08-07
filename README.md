@@ -157,6 +157,15 @@ Travelling improvements — the cards that pass to the player on your left — a
 printed game with a left-arrow icon that the source card database does not carry, and no card in
 this 337-card deck has the passing text. There is nothing to implement for the base deck.
 
+## Versioning and changelog
+
+The app footer shows the running version and build date, linking to
+[CHANGELOG.md](CHANGELOG.md). The version is injected at build time from `package.json`, so what
+the footer reports always matches the bundle — useful because the service worker updates the app in
+the background and "latest" is otherwise ambiguous.
+
+Releases follow [Semantic Versioning](https://semver.org/) and are tagged `vX.Y.Z`.
+
 ## Offline and installing
 
 The build registers a service worker that precaches every asset, so after one visit the app opens

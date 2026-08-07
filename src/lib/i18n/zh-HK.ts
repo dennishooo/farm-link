@@ -9,6 +9,8 @@ export default {
     subtitle: '農家樂 · 修訂版',
     tagline: '單機輪流遊玩。十四回合、六次收成，建立你的農場。',
     offlineNote: '可離線遊玩，進度儲存在此瀏覽器。',
+    version: 'v{{version}}',
+    built: '建置於 {{date}}',
   },
 
   setup: {

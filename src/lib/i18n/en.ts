@@ -4,6 +4,8 @@ export default {
     subtitle: 'Agricola · Revised Edition',
     tagline: 'Pass-and-play on one device. Fourteen rounds, six harvests, one farm to build.',
     offlineNote: 'Works offline. Your game is saved in this browser.',
+    version: 'v{{version}}',
+    built: 'built {{date}}',
   },
 
   setup: {

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ActionBoard } from '@/components/action-board'
 import { ActionDialog } from '@/components/action-dialog'
 import { CardPicker } from '@/components/card-picker'
+import { AppFooter } from '@/components/app-footer'
 import { actionModeFor } from '@/lib/actions'
 import { PlayerPanel } from '@/components/player-panel'
 import { SetupScreen } from '@/components/setup-screen'
@@ -164,6 +165,8 @@ export default function App() {
           ))}
         </ol>
       </details>
+
+      <AppFooter />
 
       {pendingSpace && actionModeFor(pendingSpace) === 'card' && (
         <CardPicker
