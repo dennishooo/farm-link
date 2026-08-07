@@ -111,3 +111,38 @@ describe('game store', () => {
     expect(useGameStore.getState().game).toBeNull()
   })
 })
+
+describe('card adjustments through the store', () => {
+  beforeEach(reset)
+
+  function startWithCard() {
+    const { startGame } = useGameStore.getState()
+    startGame(['Ann', 'Bo'])
+    useGameStore.setState((state) => {
+      const game = structuredClone(state.game!)
+      game.players[0].played.push('occupation-academic')
+      return { game }
+    })
+  }
+
+  it('applies a card effect the engine cannot enforce', () => {
+    startWithCard()
+    const before = useGameStore.getState().game!.players[0].wood
+
+    useGameStore.getState().adjustForCard(0, 'occupation-academic', 'wood', 2)
+
+    const state = useGameStore.getState()
+    expect(state.game!.players[0].wood).toBe(before + 2)
+    expect(state.error).toBeNull()
+  })
+
+  it('surfaces a translatable error rather than mutating', () => {
+    startWithCard()
+
+    useGameStore.getState().adjustForCard(0, 'occupation-academic', 'grain', -5)
+
+    const state = useGameStore.getState()
+    expect(state.error?.key).toBe('notEnoughGoods')
+    expect(state.game!.players[0].grain).toBe(0)
+  })
+})

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
   accumulationRate,
+  adjustForCard,
   advanceTurn,
   breedAnimals,
   buildFences,
@@ -535,5 +536,99 @@ describe('game length', () => {
 
     expect(state.phase).toBe('finished')
     expect(state.round).toBe(14)
+  })
+})
+
+describe('card adjustments', () => {
+  // The parser refuses this card's wording by design, so the table settles what
+  // it does and records the outcome here.
+  const UNENFORCED = 'occupation-academic'
+
+  let state: GameState
+
+  beforeEach(() => {
+    state = game()
+    state.players[0].played.push(UNENFORCED)
+  })
+
+  it('grants goods for a card the engine does not enforce', () => {
+    const before = state.players[0].wood
+    const result = adjustForCard(state, 0, UNENFORCED, 'wood', 2)
+
+    expect(result.ok).toBe(true)
+    expect(state.players[0].wood).toBe(before + 2)
+  })
+
+  it('spends goods when the amount is negative', () => {
+    state.players[0].food = 5
+    const result = adjustForCard(state, 0, UNENFORCED, 'food', -3)
+
+    expect(result.ok).toBe(true)
+    expect(state.players[0].food).toBe(2)
+  })
+
+  it('names the card in the log so the history stays auditable', () => {
+    adjustForCard(state, 0, UNENFORCED, 'clay', 1)
+    const entry = state.log.at(-1)
+
+    expect(entry?.key).toBe('cardAdjustGain')
+    expect(entry?.values).toMatchObject({ name: 'Ann', amount: 1, good: 'clay', cardId: UNENFORCED })
+  })
+
+  it('logs a spend with its own key so the wording reads naturally', () => {
+    state.players[0].food = 2
+    adjustForCard(state, 0, UNENFORCED, 'food', -1)
+
+    expect(state.log.at(-1)?.key).toBe('cardAdjustSpend')
+    // The amount is logged unsigned; the key carries the direction.
+    expect(state.log.at(-1)?.values).toMatchObject({ amount: 1 })
+  })
+
+  it('refuses a card the player has not played', () => {
+    const result = adjustForCard(state, 1, UNENFORCED, 'wood', 1)
+
+    expect(result).toMatchObject({ ok: false, reason: 'noSuchCardAdjustment' })
+    expect(state.players[1].wood).toBe(0)
+  })
+
+  it('refuses a card that does not exist', () => {
+    expect(adjustForCard(state, 0, 'no-such-card', 'wood', 1)).toMatchObject({
+      ok: false,
+      reason: 'noSuchCardAdjustment',
+    })
+  })
+
+  it('never lets goods go negative', () => {
+    state.players[0].grain = 1
+    const result = adjustForCard(state, 0, UNENFORCED, 'grain', -2)
+
+    expect(result).toMatchObject({ ok: false, reason: 'notEnoughGoods' })
+    expect(state.players[0].grain).toBe(1)
+  })
+
+  it('rejects a zero or fractional amount', () => {
+    expect(adjustForCard(state, 0, UNENFORCED, 'wood', 0)).toMatchObject({
+      ok: false,
+      reason: 'adjustmentAmount',
+    })
+    expect(adjustForCard(state, 0, UNENFORCED, 'wood', 1.5)).toMatchObject({
+      ok: false,
+      reason: 'adjustmentAmount',
+    })
+  })
+
+  it('refuses animals, which belong to housing placements', () => {
+    // Granting a sheep here would leave the counter and the farm disagreeing.
+    const result = adjustForCard(state, 0, UNENFORCED, 'sheep' as 'wood', 1)
+
+    expect(result).toMatchObject({ ok: false, reason: 'adjustmentGood' })
+    expect(state.players[0].sheep).toBe(0)
+  })
+
+  it('works for an enforced card too, since rulings vary', () => {
+    state.players[0].played.push('major-fireplace-2')
+    const result = adjustForCard(state, 0, 'major-fireplace-2', 'food', 1)
+
+    expect(result.ok).toBe(true)
   })
 })

@@ -556,6 +556,68 @@ export function convertGoods(
   return ok
 }
 
+/** Goods a card adjustment may add or remove, in a stable display order. */
+export const ADJUSTABLE_GOODS = [
+  'wood',
+  'clay',
+  'reed',
+  'stone',
+  'grain',
+  'vegetable',
+  'food',
+] as const satisfies readonly Payable[]
+
+export type AdjustableGood = (typeof ADJUSTABLE_GOODS)[number]
+
+/**
+ * Apply a card effect the engine does not enforce.
+ *
+ * Most cards state their effect in prose the parser deliberately refuses to
+ * interpret (see cards/parse.ts), so those cards would otherwise be unplayable:
+ * readable, but with no way to act on them. This lets the table adjudicate the
+ * wording and record the outcome, with the card named in the log so the history
+ * stays auditable.
+ *
+ * Deliberately not validated against the card text — guessing at the wording is
+ * exactly what makes a parser dangerous. The constraints are only that the card
+ * is one the player actually holds and that goods never go negative.
+ *
+ * Animals are excluded: they live in housing placements with capacity rules, so
+ * granting them here would desync the farm from the counters. Use the animal
+ * panel for those.
+ */
+export function adjustForCard(
+  state: GameState,
+  playerIndex: number,
+  cardId: string,
+  good: AdjustableGood,
+  delta: number,
+): ActionResult {
+  const player = state.players[playerIndex]
+  if (!player) return fail('noSuchCardAdjustment')
+
+  const card = cardById(cardId)
+  if (!card || !player.played.includes(cardId)) return fail('noSuchCardAdjustment')
+
+  if (!Number.isInteger(delta) || delta === 0) return fail('adjustmentAmount')
+  if (!ADJUSTABLE_GOODS.includes(good)) return fail('adjustmentGood')
+
+  if (player[good] + delta < 0) {
+    return fail('notEnoughGoods', { good, count: player[good] })
+  }
+  player[good] += delta
+
+  // The good and card id go through raw so the renderer localises them; the
+  // sign picks the phrasing, since "gains -2 wood" reads badly in any language.
+  logMessage(state, delta > 0 ? 'cardAdjustGain' : 'cardAdjustSpend', {
+    name: player.name,
+    amount: Math.abs(delta),
+    good,
+    cardId: card.id,
+  })
+  return ok
+}
+
 /** The cards this player has in front of them, resolved from their ids. */
 function playedCards(player: Player) {
   return player.played.map(cardById).filter((card) => card !== undefined)

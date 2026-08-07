@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
+  adjustForCard,
   advanceTurn,
   completeHarvest,
   convertGoods,
@@ -10,6 +11,7 @@ import {
   takeAction,
   workersLeft,
   type ActionPayload,
+  type AdjustableGood,
 } from '@/game/engine'
 import type { ActionSpaceId, GameState } from '@/game/types'
 import type { Payable } from '@/game/cards/types'
@@ -30,6 +32,12 @@ type GameStore = {
   resolveHarvest: () => void
   skipWorker: () => void
   convert: (playerIndex: number, cardId: string, units: number, good?: Payable) => void
+  adjustForCard: (
+    playerIndex: number,
+    cardId: string,
+    good: AdjustableGood,
+    delta: number,
+  ) => void
   moveAnimals: (playerIndex: number, fromKey: string, toKey: string, count: number) => void
   clearError: () => void
   abandon: () => void
@@ -92,6 +100,20 @@ export const useGameStore = create<GameStore>()(
 
         const next = draft(current)
         const result = convertGoods(next, playerIndex, cardId, units, good)
+        if (!result.ok) {
+          set({ error: { key: result.reason, values: result.values } })
+          return
+        }
+        set({ game: next, error: null })
+      },
+
+      /** Record the outcome of a card the engine cannot enforce on its own. */
+      adjustForCard: (playerIndex, cardId, good, delta) => {
+        const current = get().game
+        if (!current) return
+
+        const next = draft(current)
+        const result = adjustForCard(next, playerIndex, cardId, good, delta)
         if (!result.ok) {
           set({ error: { key: result.reason, values: result.values } })
           return

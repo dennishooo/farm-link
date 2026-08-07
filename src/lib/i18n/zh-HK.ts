@@ -133,6 +133,14 @@ export default {
     translationPending: '中文翻譯尚未完成，暫顯示英文',
     exchanges: '換取食物',
     exchange: '1 {{from}} → {{count}} 食物',
+    adjust: '結算卡牌效果',
+    adjustHint: '適用於程式不會自動計算的卡牌，請玩家先議定效果，再在此記錄。',
+    adjustCard: '卡牌',
+    adjustGood: '物資',
+    adjustAmount: '數量',
+    adjustGain: '獲得',
+    adjustSpend: '支付',
+    adjustNoCards: '先打出卡牌，才能在此記錄其效果。',
   },
 
   score: {
@@ -229,6 +237,8 @@ export default {
     moveAnimals: '{{name}} 在農場內移動了 {{count}} 隻動物。',
     roundGoods: '{{name}} 從卡牌獲得 {{goods}}。',
     convert: '{{name}} 使用 {{cardId}} 將 {{amount}} {{good}} 轉換成 {{count}} 食物。',
+    cardAdjustGain: '{{name}} 依 {{cardId}} 獲得 {{amount}} {{good}}。',
+    cardAdjustSpend: '{{name}} 依 {{cardId}} 支付 {{amount}} {{good}}。',
   },
 
   errors: {
@@ -275,5 +285,9 @@ export default {
     slotFull: '該處空間不足。',
     noSuchConversion: '你沒有可以進行該轉換的卡牌。',
     notEnoughToConvert: '數量不足，無法轉換。',
+    noSuchCardAdjustment: '你並未打出該卡牌。',
+    adjustmentAmount: '請選擇非零的數量。',
+    adjustmentGood: '此物資不能在此調整。',
+    notEnoughGoods: '你只有 {{count}} {{good}}。',
   },
 } as const

@@ -27,6 +27,7 @@ export default function App() {
   const resolveHarvest = useGameStore((state) => state.resolveHarvest)
   const skipWorker = useGameStore((state) => state.skipWorker)
   const convert = useGameStore((state) => state.convert)
+  const adjustForCard = useGameStore((state) => state.adjustForCard)
   const moveAnimals = useGameStore((state) => state.moveAnimals)
   const clearError = useGameStore((state) => state.clearError)
   const abandon = useGameStore((state) => state.abandon)
@@ -139,6 +140,7 @@ export default function App() {
                 showScore={isFinished}
                 onConvert={convert}
                 onMoveAnimals={moveAnimals}
+                onAdjustForCard={adjustForCard}
               />
             ))}
           </div>
