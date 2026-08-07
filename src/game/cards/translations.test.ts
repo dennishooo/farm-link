@@ -31,6 +31,19 @@ describe('card translations', () => {
     }
   })
 
+  it('leaves no stray English words in the Chinese text', () => {
+    // Proper nouns and units legitimately stay in Latin script; anything else
+    // is a slip. Two have shipped this way, so it is checked rather than eyed.
+    const allowed = /^(FarmLink|Agricola|v?\d+(\.\d+)*)$/
+    for (const [id, translation] of Object.entries(CARD_TRANSLATIONS)) {
+      for (const field of [translation.title, translation.text]) {
+        const words = field.match(/[A-Za-z][A-Za-z'-]*/g) ?? []
+        const stray = words.filter((word) => !allowed.test(word))
+        expect(stray, `${id}: ${stray.join(', ')}`).toEqual([])
+      }
+    }
+  })
+
   it('translates every card whose effect the engine enforces', () => {
     // If the engine acts on a card, players must be able to read why in their
     // own language — otherwise goods appear with no explanation they can read.
