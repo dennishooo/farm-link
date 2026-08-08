@@ -82,6 +82,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
+    // The visual suite is Playwright's, and its specs would otherwise be
+    // picked up here and fail on the first import.
+    exclude: ['node_modules/**', 'visual/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

@@ -356,6 +356,58 @@ function runCardAction(
   }
 }
 
+/**
+ * Move goods from one player to another because of a card.
+ *
+ * Thirty of the unenforced cards work between players — one sells to another,
+ * or takes from each of the others — and none of that was expressible: the
+ * panel only ever touched the player in front of it. The engine still reads
+ * nothing off the card; the table agrees what it does, and this moves the
+ * goods and writes down who gave what to whom, and on which card's authority.
+ */
+export function transferForCard(
+  state: GameState,
+  fromIndex: number,
+  toIndex: number,
+  cardId: string,
+  good: AdjustableGood,
+  amount: number,
+): ActionResult {
+  const from = state.players[fromIndex]
+  const to = state.players[toIndex]
+  if (!from || !to || from === to) return fail('transferTarget')
+
+  const card = cardById(cardId)
+  // Either side may hold the card: "you may buy their grain" is played by the
+  // buyer, "give 1 food to each other player" by the giver.
+  if (!card || !(from.played.includes(cardId) || to.played.includes(cardId))) {
+    return fail('noSuchCardAdjustment')
+  }
+
+  if (!Number.isInteger(amount) || amount <= 0) return fail('adjustmentAmount')
+  if (!ADJUSTABLE_GOODS.includes(good)) return fail('adjustmentGood')
+  if (from[good] < amount) return fail('notEnoughGoods', { good, count: from[good] })
+
+  let strayed = 0
+  if (isAnimal(good)) {
+    removeAnimals(from, good, amount)
+    strayed = houseAnimals(to, good, amount)
+  } else {
+    from[good] -= amount
+    to[good] += amount
+  }
+
+  logMessage(state, strayed > 0 ? 'cardTransferStray' : 'cardTransfer', {
+    name: from.name,
+    target: to.name,
+    amount: amount - strayed,
+    lost: strayed,
+    good,
+    cardId: card.id,
+  })
+  return ok
+}
+
 /** The cards this player has in front of them, resolved from their ids. */
 function playedCards(player: Player) {
   return player.played.map(cardById).filter((card) => card !== undefined)

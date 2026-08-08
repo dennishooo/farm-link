@@ -21,6 +21,15 @@ type AdjustPanelProps = {
     good: AdjustableGood,
     delta: number,
   ) => void
+  /** The other players at the table, for card effects that move goods. */
+  opponents?: { index: number; name: string }[]
+  onTransfer?: (
+    fromIndex: number,
+    toIndex: number,
+    cardId: string,
+    good: AdjustableGood,
+    amount: number,
+  ) => void
   /** Everything a card can grant that is not a good. */
   onCardAction?: (
     playerIndex: number,
@@ -59,11 +68,14 @@ export function AdjustPanel({
   playerIndex,
   onAdjust,
   onCardAction,
+  opponents = [],
+  onTransfer,
 }: AdjustPanelProps) {
   const { t, i18n } = useTranslation()
   const [cardId, setCardId] = useState('')
   const [good, setGood] = useState<AdjustableGood>('food')
   const [amount, setAmount] = useState(1)
+  const [target, setTarget] = useState<number | null>(null)
 
   const cards = player.played.map(cardById).filter((card) => card !== undefined)
 
@@ -148,6 +160,43 @@ export function AdjustPanel({
               − {t('cards.adjustSpend')}
             </Button>
           </div>
+
+          {onTransfer && opponents.length > 0 && (
+            <>
+              <p className="eyebrow text-[10px] text-muted-foreground">{t('cards.adjustGive')}</p>
+              <div className="flex gap-1.5">
+                <select
+                  aria-label={t('cards.adjustTarget')}
+                  value={target ?? opponents[0].index}
+                  onChange={(event) => setTarget(Number(event.target.value))}
+                  className={SELECT_CLASS}
+                >
+                  {opponents.map((opponent) => (
+                    <option key={opponent.index} value={opponent.index}>
+                      {opponent.name}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!selectedId || player[good] < amount}
+                  onClick={() =>
+                    onTransfer(
+                      playerIndex,
+                      target ?? opponents[0].index,
+                      selectedId,
+                      good,
+                      amount,
+                    )
+                  }
+                  className="h-7 flex-1 text-[11px]"
+                >
+                  {t('cards.give')}
+                </Button>
+              </div>
+            </>
+          )}
 
           {onCardAction && (
             <>

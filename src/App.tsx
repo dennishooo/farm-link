@@ -75,6 +75,7 @@ export default function App() {
   const convert = useGameStore((state) => state.convert)
   const adjustForCard = useGameStore((state) => state.adjustForCard)
   const cardAction = useGameStore((state) => state.cardAction)
+  const transfer = useGameStore((state) => state.transfer)
   const moveAnimals = useGameStore((state) => state.moveAnimals)
   const undo = useGameStore((state) => state.undo)
   const canUndo = useGameStore((state) => state.history.length > 0)
@@ -177,7 +178,7 @@ export default function App() {
       {error && (
         <p
           role="alert"
-          className="animate-[var(--animate-fade-in)] rounded-lg border border-destructive border-l-4 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive shadow-[var(--shadow-tile)]"
+          className="animate-[var(--animate-fade-in)] rounded-lg border border-destructive border-l-4 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive-text shadow-[var(--shadow-tile)]"
         >
           {formatError(error, t)}
         </p>
@@ -240,6 +241,10 @@ export default function App() {
                 onMoveAnimals={moveAnimals}
                 onAdjustForCard={adjustForCard}
                 onCardAction={beginCardAction}
+                opponents={game.players
+                  .map((other, otherIndex) => ({ index: otherIndex, name: other.name }))
+                  .filter((other) => other.index !== index)}
+                onTransfer={transfer}
               />
             ))}
           </div>

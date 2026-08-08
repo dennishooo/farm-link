@@ -9,6 +9,8 @@ are looking at.
 
 ## [Unreleased]
 
+## [4.3.0] — 2026-08-08
+
 ### Changed
 
 - **Restyled to the Cloud Mountain / farmbank references.** The palette is now bone cream, deep
@@ -83,6 +85,25 @@ are looking at.
 
   Every one of these names the card in the log next to what it did, because the players adjudicated
   it rather than the engine reading it, and that log line is the whole audit trail.
+- **A visual suite, in `visual/`, run by Playwright against the built app.** Every bug the restyle
+  shipped was one no unit test could see, and all of them were caught by a person looking at a
+  screenshot, which is not a thing to rely on anyone remembering to do.
+
+  It has two halves, and the second exists because the first could not do the job. Screenshots
+  against committed baselines catch layout and large visual changes. They could not catch the
+  cream-on-cream header buttons: a proportional tolerance on a whole page is worth tens of thousands
+  of pixels, and even cropped to the header, the glyphs of "Pass worker" come to about four hundred
+  — under any tolerance loose enough to survive a font-hinting difference between Chromium builds.
+  Verified by putting the bug back and watching the suite pass. So the second half measures contrast
+  directly: it walks every piece of visible text, resolves what is painted behind it, and fails
+  under WCAG AA. No baseline, no drift, and it names the element and the ratio.
+- **Card effects between players.** Thirty of the unenforced cards work across the table — one
+  player sells to another, or takes from each of the others — and none of it was expressible: the
+  panel only ever touched the player in front of it. It can now give goods to a chosen player,
+  livestock included, rehoused on the receiving farm with anything that will not fit wandering off
+  as it does anywhere else. Either side may hold the card, since "you may buy their grain" is played
+  by the buyer and "give 1 food to each other player" by the giver. Both players and the card are
+  named in the log.
 - **Undo, on the record.** An "Undo" button in the header takes back the last move — a worker
   placement, a pass, an anytime card exchange, an animal move, a resolved harvest — and restores
   the board exactly as it was. The log is the exception: it never rewinds. What was taken back
@@ -106,6 +127,25 @@ are looking at.
 
 ### Fixed
 
+- **Seven places where text did not meet WCAG AA**, found by the new contrast check on its first
+  run — all of them introduced by the restyle. The terracotta accent was too dark to read on the
+  board ground and too light to carry cream text on a badge, so it moved lighter and the badge took
+  ink text instead. Clay was too light under the white room labels. A dark-mode pasture was too dark
+  under its ink labels. Red had to carry cream text as a button *and* be legible as text itself,
+  which one value can manage on cream but not on a dark ground, so the text variant became its own
+  token.
+- **Pickers that had nothing to pick said nothing about it.** A farm can genuinely have no space a
+  room may legally touch — the starting house with fields either side of it does — and the dialog
+  opened on a board where nothing was selectable, with a dead Confirm and no explanation. It now
+  says there is nowhere legal, for every mode including a spent fence supply.
+- **Fences were labelled with the engine's own shorthand.** A screen reader was handed "Fence
+  h:0:0". They are named by where they are now — "Fence between space 4 and space 9", or "Fence
+  above space 4" for an outer edge, which also has to name the side, since a corner space has two
+  outer edges and they would otherwise be indistinguishable.
+- **The exchange buttons named their card only in a `title`.** Two cooking improvements that
+  convert the same good produced two identical-looking buttons on a touch screen. The card is on
+  the button now — the third instance of the hover-only trap, after the card rules text in v4.2.0
+  and the resource chips.
 - **The stage-card shuffle was thrown away on the first move of every game.** The reveal order was
   held in a `WeakMap` keyed by the state object, but the store structured-clones the state on every
   move — so move one produced an object the map had never seen, and the order was rebuilt in
@@ -311,7 +351,8 @@ Revised Edition rulebook.
 [#11]: https://github.com/dennishooo/farm-link/issues/11
 [#1]: https://github.com/dennishooo/farm-link/issues/1
 [#2]: https://github.com/dennishooo/farm-link/issues/2
-[Unreleased]: https://github.com/dennishooo/farm-link/compare/v4.2.0...HEAD
+[Unreleased]: https://github.com/dennishooo/farm-link/compare/v4.3.0...HEAD
+[4.3.0]: https://github.com/dennishooo/farm-link/compare/v4.2.0...v4.3.0
 [4.2.0]: https://github.com/dennishooo/farm-link/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/dennishooo/farm-link/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/dennishooo/farm-link/compare/v3.5.0...v4.0.0

@@ -89,6 +89,17 @@ export function ActionDialog({
     player.stablesRemaining > 0 &&
     player.wood >= STABLE_COST_WOOD
 
+  /**
+   * Nothing legal to pick. A farm can genuinely have no room for another room,
+   * or no space a field may touch — and the dialog used to open on a dead board
+   * with a dead Confirm and no word about why.
+   */
+  function hasNothingToPick(): boolean {
+    if (mode === 'fence') return player.fencesRemaining === 0
+    if (mode === 'cultivate') return plowTargets.length === 0 && sowTargets.length === 0
+    return selectableSpaces().length === 0
+  }
+
   function selectableSpaces(): number[] {
     return selectableFor(mode, {
       plow: plowTargets,
@@ -207,7 +218,7 @@ export function ActionDialog({
             {/* Cost was only checked on confirm, so an unaffordable build looked
                 like the board simply refusing to respond. */}
             {(!canAffordRoom || !canAffordStable) && (
-              <p className="text-xs text-destructive">{t('dialog.cannotAffordBuild')}</p>
+              <p className="text-xs text-destructive-text">{t('dialog.cannotAffordBuild')}</p>
             )}
           </div>
         )}
@@ -230,6 +241,11 @@ export function ActionDialog({
         {mode !== 'expansion' && mode !== 'resource' && mode !== 'none' && (
           <>
             <p className="mt-1 text-sm text-muted-foreground">{instructionFor(mode, t)}</p>
+            {hasNothingToPick() && (
+              <p className="mt-2 text-sm font-semibold text-destructive-text">
+                {t('dialog.nothingToPick')}
+              </p>
+            )}
             <div className="mt-3">
               <Farmyard
                 player={player}
@@ -271,7 +287,7 @@ export function ActionDialog({
                   })}
                 </p>
                 {fences.length > 0 && danglingFences.length > 0 && (
-                  <p className="mt-1 text-xs font-semibold text-destructive">
+                  <p className="mt-1 text-xs font-semibold text-destructive-text">
                     {t('dialog.fenceDangling', { count: danglingFences.length })}
                   </p>
                 )}

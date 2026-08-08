@@ -39,12 +39,15 @@ export function ConvertPanel({ player, playerIndex, onConvert }: ConvertPanelPro
                 disabled={!affordable}
                 onClick={() => onConvert(playerIndex, conversion.cardId, 1, conversion.from)}
                 title={localised.title}
-                className="h-7 text-[11px]"
+                className="h-auto flex-col items-start gap-0 py-1 text-[11px]"
               >
                 {t('cards.exchange', {
                   from: t(`goods.${conversion.from}` as 'goods.wood'),
                   count: conversion.rate,
                 })}
+                {/* Which card grants this was in a `title` only, so on a touch
+                    screen two identical-looking exchanges were indistinguishable. */}
+                <span className="text-[10px] font-normal opacity-70">{localised.title}</span>
               </Button>
             </li>
           )

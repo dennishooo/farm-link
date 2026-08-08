@@ -18,6 +18,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-text: var(--destructive-text);
 
   /* Farm material palette — used by the farmyard and resource chips. */
   --color-wood: var(--wood);
@@ -76,12 +77,16 @@
   --primary-foreground: oklch(0.972 0.018 88);
   --accent: oklch(0.888 0.048 68);
   --accent-foreground: oklch(0.372 0.076 46);
-  --destructive: oklch(0.512 0.152 33);
+  --destructive: oklch(0.452 0.148 33);
   --destructive-foreground: oklch(0.975 0.016 88);
+  /* Red has to do two jobs that pull opposite ways: carry cream text as a
+     button, and be legible as text itself. One value can serve both on cream;
+     on a dark ground it cannot, so the text variant is its own token. */
+  --destructive-text: oklch(0.452 0.148 33);
 
   /* Terracotta: the accent both references use for anything that has to be
      found before it is read. */
-  --highlight: oklch(0.648 0.116 48);
+  --highlight: oklch(0.732 0.118 52);
   /* The ground the game sits on. Both references work the same way — a deep
      saturated field with light pieces on it — and it is what the app was
      missing: cream panels on a cream page left the board with nothing to sit
@@ -90,7 +95,7 @@
   --board-foreground: oklch(0.952 0.018 88);
 
   --wood: oklch(0.565 0.082 56);
-  --clay: oklch(0.588 0.114 40);
+  --clay: oklch(0.532 0.112 40);
   --reed: oklch(0.772 0.078 104);
   --stone: oklch(0.628 0.018 240);
   --grain: oklch(0.792 0.128 82);
@@ -133,10 +138,11 @@
   --primary-foreground: oklch(0.196 0.028 44);
   --accent: oklch(0.382 0.052 46);
   --accent-foreground: oklch(0.922 0.036 76);
-  --destructive: oklch(0.598 0.158 33);
+  --destructive: oklch(0.468 0.146 33);
   --destructive-foreground: oklch(0.975 0.016 88);
+  --destructive-text: oklch(0.772 0.128 38);
 
-  --highlight: oklch(0.702 0.122 52);
+  --highlight: oklch(0.762 0.116 54);
   /* Warm brown here rather than green, following farmbank's dark screens. */
   --board: oklch(0.268 0.036 44);
   --board-foreground: oklch(0.942 0.018 86);
@@ -147,7 +153,7 @@
   --stone: oklch(0.548 0.018 240);
   --grain: oklch(0.716 0.120 84);
   --vegetable: oklch(0.598 0.136 48);
-  --pasture: oklch(0.508 0.088 132);
+  --pasture: oklch(0.642 0.094 133);
   --field: oklch(0.492 0.062 56);
   --food: oklch(0.606 0.108 58);
   --sheep: oklch(0.648 0.024 96);

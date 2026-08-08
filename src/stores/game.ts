@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import {
   adjustForCard,
   applyCardAction,
+  transferForCard,
   advanceTurn,
   completeHarvest,
   convertGoods,
@@ -81,6 +82,13 @@ type GameStore = {
     cardId: string,
     action: CardAction,
     payload?: CardActionPayload,
+  ) => void
+  transfer: (
+    fromIndex: number,
+    toIndex: number,
+    cardId: string,
+    good: AdjustableGood,
+    amount: number,
   ) => void
   undo: () => void
   redo: () => void
@@ -244,6 +252,25 @@ export const useGameStore = create<GameStore>()(
         set(
           commit(current, next, get().history, 'undoCard', 'redoCard', {
             name: current.players[playerIndex].name,
+            cardId,
+          }),
+        )
+      },
+
+      /** Move goods between players because of a card. */
+      transfer: (fromIndex, toIndex, cardId, good, amount) => {
+        const current = get().game
+        if (!current) return
+
+        const next = draft(current)
+        const result = transferForCard(next, fromIndex, toIndex, cardId, good, amount)
+        if (!result.ok) {
+          set({ error: { key: result.reason, values: result.values } })
+          return
+        }
+        set(
+          commit(current, next, get().history, 'undoCard', 'redoCard', {
+            name: current.players[fromIndex].name,
             cardId,
           }),
         )

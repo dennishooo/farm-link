@@ -54,6 +54,14 @@ type PlayerPanelProps = {
     action: CardAction,
     payload?: CardActionPayload,
   ) => void
+  opponents?: { index: number; name: string }[]
+  onTransfer?: (
+    fromIndex: number,
+    toIndex: number,
+    cardId: string,
+    good: AdjustableGood,
+    amount: number,
+  ) => void
 }
 
 export function PlayerPanel({
@@ -65,6 +73,8 @@ export function PlayerPanel({
   onMoveAnimals,
   onAdjustForCard,
   onCardAction,
+  opponents,
+  onTransfer,
 }: PlayerPanelProps) {
   const { t, i18n } = useTranslation()
   // Scored every render, not just at the end: players asked to see where they
@@ -90,7 +100,7 @@ export function PlayerPanel({
           <PersonIcon className={cn('size-4', accent)} />
           {player.name}
           {isCurrent && (
-            <span className="eyebrow rounded-full bg-highlight px-2 py-0.5 text-[9px] text-primary-foreground shadow-[var(--shadow-tile)]">
+            <span className="eyebrow rounded-full bg-highlight px-2 py-0.5 text-[9px] text-[var(--ink)] shadow-[var(--shadow-tile)]">
               {t('game.toAct')}
             </span>
           )}
@@ -139,7 +149,7 @@ export function PlayerPanel({
             hand: player.hand.occupations.length + player.hand.minors.length,
           })}
           {player.beggingMarkers > 0 && (
-            <span className="font-semibold text-destructive">
+            <span className="font-semibold text-destructive-text">
               {' · '}
               {t('farm.begging', { count: player.beggingMarkers })}
             </span>
@@ -203,6 +213,8 @@ export function PlayerPanel({
             playerIndex={playerIndex}
             onAdjust={onAdjustForCard}
             onCardAction={onCardAction}
+            opponents={opponents}
+            onTransfer={onTransfer}
           />
         )}
 
@@ -214,7 +226,7 @@ export function PlayerPanel({
                 .map(([key, value]) => (
                   <div key={key} className="flex justify-between gap-2">
                     <dt className="text-muted-foreground">{t(`score.${key}` as 'score.fields')}</dt>
-                    <dd className={cn('font-semibold', value < 0 && 'text-destructive')}>
+                    <dd className={cn('font-semibold', value < 0 && 'text-destructive-text')}>
                       {value}
                     </dd>
                   </div>

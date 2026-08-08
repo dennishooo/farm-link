@@ -104,12 +104,12 @@ export function ActionBoard({ game, onChoose, disabled = false }: ActionBoardPro
                 </span>
               )}
               {!occupant && wouldStray > 0 && (
-                <span className="text-xs font-semibold text-destructive">
+                <span className="text-xs font-semibold text-destructive-text">
                   {t('game.animalsWouldStray', { count: wouldStray })}
                 </span>
               )}
               {occupant && (
-                <span className="text-xs font-semibold text-destructive">
+                <span className="text-xs font-semibold text-destructive-text">
                   {t('game.takenBy', { name: occupant.name })}
                 </span>
               )}
