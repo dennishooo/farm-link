@@ -9,6 +9,7 @@ import {
   completeHarvest,
   applyCardAction,
   createGame,
+  transferForCard,
   getDeckOrder,
   revealForRound,
   currentPlayer,
@@ -922,5 +923,88 @@ describe('card effects that grant more than goods', () => {
 
   it('refuses a pointless points adjustment', () => {
     expect(apply('points', { points: 0 })).toMatchObject({ ok: false })
+  })
+})
+
+describe('card effects between players', () => {
+  const CARD = 'occupation-net-fisherman'
+  let state: GameState
+
+  beforeEach(() => {
+    state = game()
+    state.players[0].played.push(CARD)
+    state.players[0].wood = 3
+  })
+
+  it('moves goods from one player to another', () => {
+    const result = transferForCard(state, 0, 1, CARD, 'wood', 2)
+
+    expect(result.ok).toBe(true)
+    expect(state.players[0].wood).toBe(1)
+    expect(state.players[1].wood).toBe(2)
+  })
+
+  it('names both players and the card in the log', () => {
+    transferForCard(state, 0, 1, CARD, 'wood', 2)
+
+    expect(state.log.at(-1)).toMatchObject({
+      key: 'cardTransfer',
+      values: { name: 'Ann', target: 'Bo', amount: 2, good: 'wood', cardId: CARD },
+    })
+  })
+
+  it('accepts the card from either side of the table', () => {
+    // "You may buy their grain" is played by the buyer, "give 1 food to each
+    // other player" by the giver, so either end may hold it.
+    state.players[0].played = []
+    state.players[1].played.push(CARD)
+
+    expect(transferForCard(state, 0, 1, CARD, 'wood', 1).ok).toBe(true)
+  })
+
+  it('refuses a card nobody involved has played', () => {
+    expect(transferForCard(state, 0, 1, 'occupation-academic', 'wood', 1)).toMatchObject({
+      ok: false,
+      reason: 'noSuchCardAdjustment',
+    })
+  })
+
+  it('refuses to give more than the giver holds', () => {
+    expect(transferForCard(state, 0, 1, CARD, 'wood', 4)).toMatchObject({
+      ok: false,
+      reason: 'notEnoughGoods',
+    })
+    expect(state.players[1].wood).toBe(0)
+  })
+
+  it('refuses a transfer to oneself', () => {
+    expect(transferForCard(state, 0, 0, CARD, 'wood', 1)).toMatchObject({
+      ok: false,
+      reason: 'transferTarget',
+    })
+  })
+
+  it('rehouses livestock on the receiving farm', () => {
+    state.players[0].fences = fenceRect(0, 0, 0, 0)
+    houseAnimals(state.players[0], 'sheep', 2)
+    state.players[1].fences = fenceRect(0, 0, 0, 0)
+
+    expect(transferForCard(state, 0, 1, CARD, 'sheep', 2).ok).toBe(true)
+
+    expect(state.players[0].sheep).toBe(0)
+    expect(state.players[0].animalPlacement).toEqual([])
+    expect(state.players[1].sheep).toBe(2)
+    expect(state.players[1].animalPlacement).toEqual([{ key: '0', type: 'sheep', count: 2 }])
+  })
+
+  it('says so when the receiving farm cannot house them all', () => {
+    state.players[0].fences = fenceRect(0, 0, 0, 1)
+    houseAnimals(state.players[0], 'cattle', 3)
+
+    expect(transferForCard(state, 0, 1, CARD, 'cattle', 3).ok).toBe(true)
+
+    // Bo has no pasture, so only the house pet survives the journey.
+    expect(state.players[1].cattle).toBe(1)
+    expect(state.log.at(-1)).toMatchObject({ key: 'cardTransferStray', values: { lost: 2 } })
   })
 })

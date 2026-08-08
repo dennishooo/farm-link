@@ -154,6 +154,9 @@ export default {
     adjustGoods: '物資',
     adjustPoints: '加分',
     adjustFarm: '農場',
+    adjustGive: '給予其他玩家',
+    adjustTarget: '接收的玩家',
+    give: '給予',
     actionPoints: '加分',
     actionPlow: '開墾田地',
     actionRoom: '興建房間',
@@ -277,6 +280,9 @@ export default {
     cardAdjustStray:
       '{{name}} 依 {{cardId}} 取得 {{amount}} {{good}}，但有 {{lost}} 因空間不足而走失。',
     cardActionApplied: '{{name}} 使用 {{cardId}}：{{action}}。',
+    cardTransfer: '{{name}} 依 {{cardId}} 給予 {{target}} {{amount}} {{good}}。',
+    cardTransferStray:
+      '{{name}} 依 {{cardId}} 給予 {{target}} {{amount}} {{good}}，但有 {{lost}} 因空間不足而走失。',
     undo: '{{name}} 收回在{{space}}的行動。',
     undoPass: '{{name}} 收回略過工人的操作。',
     undoHarvest: '收成已收回。',
@@ -337,6 +343,7 @@ export default {
     noSuchCardAdjustment: '你並未打出該卡牌。',
     adjustmentAmount: '請選擇非零的數量。',
     adjustmentGood: '此物資不能在此調整。',
+    transferTarget: '請選擇另一位玩家。',
     notEnoughGoods: '你只有 {{count}} {{good}}。',
   },
 } as const

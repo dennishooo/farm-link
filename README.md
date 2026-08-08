@@ -124,10 +124,10 @@ Those cards are not left as prose alone, though. **Apply a card effect**, under 
 what the table agreed a card did, attributed to the card in the game log. Ranked over the 271
 unenforced cards, what they hand out is: goods including livestock, bonus points (39 cards), a
 field (38), a person (29), a room (24), a renovation (15), fences (14) and a stable (11) — so the
-panel can do each of those. The farm ones reuse the action board's own picker and its placement
-rules: a card-granted room still has to touch the house, fences still have to enclose a pasture,
-stables still come out of your supply of four. Only the cost is skipped, which is what a card
-granting something is for.
+panel can do each of those, plus giving goods to another player, which a further 30 involve. The
+farm ones reuse the action board's own picker and its placement rules: a card-granted room still has
+to touch the house, fences still have to enclose a pasture, stables still come out of your supply of
+four. Only the cost is skipped, which is what a card granting something is for.
 
 Card data is generated from the [agricolacards.com](https://www.agricolacards.com/list) community
 database into `src/game/cards/data.ts` and committed, so the app needs no network at runtime:
@@ -164,8 +164,9 @@ for any card added later.
 
 - Automatic resolution of card text outside the enforced patterns described above — the table
   adjudicates the wording and records the outcome instead
-- Inter-player card effects (e.g. Corn Profiteer, where another player may buy your grain), which
-  30 of the unenforced cards involve
+- Automatic resolution of inter-player card effects (e.g. Corn Profiteer, where another player may
+  buy your grain), which 30 of the unenforced cards involve — the panel moves the goods and records
+  who gave what to whom, but the engine does not read the terms off the card
 
 Travelling improvements — the cards that pass to the player on your left — are marked in the
 printed game with a left-arrow icon that the source card database does not carry, and no card in

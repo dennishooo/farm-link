@@ -83,6 +83,13 @@ are looking at.
 
   Every one of these names the card in the log next to what it did, because the players adjudicated
   it rather than the engine reading it, and that log line is the whole audit trail.
+- **Card effects between players.** Thirty of the unenforced cards work across the table — one
+  player sells to another, or takes from each of the others — and none of it was expressible: the
+  panel only ever touched the player in front of it. It can now give goods to a chosen player,
+  livestock included, rehoused on the receiving farm with anything that will not fit wandering off
+  as it does anywhere else. Either side may hold the card, since "you may buy their grain" is played
+  by the buyer and "give 1 food to each other player" by the giver. Both players and the card are
+  named in the log.
 - **Undo, on the record.** An "Undo" button in the header takes back the last move — a worker
   placement, a pass, an anytime card exchange, an animal move, a resolved harvest — and restores
   the board exactly as it was. The log is the exception: it never rewinds. What was taken back

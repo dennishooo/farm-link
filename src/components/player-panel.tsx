@@ -54,6 +54,14 @@ type PlayerPanelProps = {
     action: CardAction,
     payload?: CardActionPayload,
   ) => void
+  opponents?: { index: number; name: string }[]
+  onTransfer?: (
+    fromIndex: number,
+    toIndex: number,
+    cardId: string,
+    good: AdjustableGood,
+    amount: number,
+  ) => void
 }
 
 export function PlayerPanel({
@@ -65,6 +73,8 @@ export function PlayerPanel({
   onMoveAnimals,
   onAdjustForCard,
   onCardAction,
+  opponents,
+  onTransfer,
 }: PlayerPanelProps) {
   const { t, i18n } = useTranslation()
   // Scored every render, not just at the end: players asked to see where they
@@ -203,6 +213,8 @@ export function PlayerPanel({
             playerIndex={playerIndex}
             onAdjust={onAdjustForCard}
             onCardAction={onCardAction}
+            opponents={opponents}
+            onTransfer={onTransfer}
           />
         )}
 

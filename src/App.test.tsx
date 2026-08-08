@@ -329,3 +329,38 @@ describe('applying card effects that are not goods', () => {
     expect(useGameStore.getState().game!.players[0].people).toBe(2)
   })
 })
+
+describe('card effects between players', () => {
+  beforeEach(reset)
+
+  it('gives goods to the chosen player and writes it down', async () => {
+    const user = userEvent.setup()
+    loadGame((game) => {
+      game.players[0].played.push('occupation-net-fisherman')
+      game.players[0].wood = 3
+    })
+    await renderUI(<App />)
+
+    await user.click(screen.getAllByText('Apply a card effect')[0])
+    await user.selectOptions(screen.getByLabelText('Good'), 'wood')
+    await user.selectOptions(screen.getByLabelText('Amount'), '2')
+    await user.click(screen.getByRole('button', { name: 'Give' }))
+
+    const players = useGameStore.getState().game!.players
+    expect(players[0].wood).toBe(1)
+    expect(players[1].wood).toBe(2)
+    expect(screen.getByText(/Ann gives 2 Wood to Bo for Net Fisherman/)).toBeInTheDocument()
+  })
+
+  it('offers no one to give to in a solo game', async () => {
+    const user = userEvent.setup()
+    const game = createGame({ names: ['Solo'], random: () => 0.42 })
+    game.players[0].played.push('occupation-net-fisherman')
+    useGameStore.setState({ game, error: null, history: [], future: [] })
+    await renderUI(<App />)
+
+    await user.click(screen.getAllByText('Apply a card effect')[0])
+
+    expect(screen.queryByRole('button', { name: 'Give' })).not.toBeInTheDocument()
+  })
+})

@@ -75,6 +75,7 @@ export default function App() {
   const convert = useGameStore((state) => state.convert)
   const adjustForCard = useGameStore((state) => state.adjustForCard)
   const cardAction = useGameStore((state) => state.cardAction)
+  const transfer = useGameStore((state) => state.transfer)
   const moveAnimals = useGameStore((state) => state.moveAnimals)
   const undo = useGameStore((state) => state.undo)
   const canUndo = useGameStore((state) => state.history.length > 0)
@@ -240,6 +241,10 @@ export default function App() {
                 onMoveAnimals={moveAnimals}
                 onAdjustForCard={adjustForCard}
                 onCardAction={beginCardAction}
+                opponents={game.players
+                  .map((other, otherIndex) => ({ index: otherIndex, name: other.name }))
+                  .filter((other) => other.index !== index)}
+                onTransfer={transfer}
               />
             ))}
           </div>

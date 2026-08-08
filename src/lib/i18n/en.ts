@@ -151,6 +151,9 @@ export default {
     adjustGoods: 'Goods',
     adjustPoints: 'Bonus points',
     adjustFarm: 'On the farm',
+    adjustGive: 'Give to another player',
+    adjustTarget: 'Receiving player',
+    give: 'Give',
     actionPoints: 'Bonus points',
     actionPlow: 'Plow a field',
     actionRoom: 'Build a room',
@@ -296,6 +299,9 @@ export default {
     cardAdjustStray:
       '{{name}} takes {{amount}} {{good}} for {{cardId}}, but {{lost}} wander off for lack of space.',
     cardActionApplied: '{{name}} applies {{cardId}}: {{action}}.',
+    cardTransfer: '{{name}} gives {{amount}} {{good}} to {{target}} for {{cardId}}.',
+    cardTransferStray:
+      '{{name}} gives {{amount}} {{good}} to {{target}} for {{cardId}}, but {{lost}} wander off for lack of space.',
     undo: '{{name}} takes back their move on {{space}}.',
     undoPass: '{{name}} takes back passing a worker.',
     undoHarvest: 'The harvest is taken back.',
@@ -356,6 +362,7 @@ export default {
     noSuchCardAdjustment: 'You have not played that card.',
     adjustmentAmount: 'Choose an amount other than zero.',
     adjustmentGood: 'That good cannot be adjusted here.',
+    transferTarget: 'Choose a different player to give to.',
     notEnoughGoods: 'You only have {{count}} {{good}}.',
   },
 } as const
