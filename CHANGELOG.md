@@ -9,6 +9,8 @@ are looking at.
 
 ## [Unreleased]
 
+## [4.3.0] — 2026-08-08
+
 ### Changed
 
 - **Restyled to the Cloud Mountain / farmbank references.** The palette is now bone cream, deep
@@ -349,7 +351,8 @@ Revised Edition rulebook.
 [#11]: https://github.com/dennishooo/farm-link/issues/11
 [#1]: https://github.com/dennishooo/farm-link/issues/1
 [#2]: https://github.com/dennishooo/farm-link/issues/2
-[Unreleased]: https://github.com/dennishooo/farm-link/compare/v4.2.0...HEAD
+[Unreleased]: https://github.com/dennishooo/farm-link/compare/v4.3.0...HEAD
+[4.3.0]: https://github.com/dennishooo/farm-link/compare/v4.2.0...v4.3.0
 [4.2.0]: https://github.com/dennishooo/farm-link/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/dennishooo/farm-link/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/dennishooo/farm-link/compare/v3.5.0...v4.0.0
