@@ -83,6 +83,18 @@ are looking at.
 
   Every one of these names the card in the log next to what it did, because the players adjudicated
   it rather than the engine reading it, and that log line is the whole audit trail.
+- **A visual suite, in `visual/`, run by Playwright against the built app.** Every bug the restyle
+  shipped was one no unit test could see, and all of them were caught by a person looking at a
+  screenshot, which is not a thing to rely on anyone remembering to do.
+
+  It has two halves, and the second exists because the first could not do the job. Screenshots
+  against committed baselines catch layout and large visual changes. They could not catch the
+  cream-on-cream header buttons: a proportional tolerance on a whole page is worth tens of thousands
+  of pixels, and even cropped to the header, the glyphs of "Pass worker" come to about four hundred
+  — under any tolerance loose enough to survive a font-hinting difference between Chromium builds.
+  Verified by putting the bug back and watching the suite pass. So the second half measures contrast
+  directly: it walks every piece of visible text, resolves what is painted behind it, and fails
+  under WCAG AA. No baseline, no drift, and it names the element and the ratio.
 - **Card effects between players.** Thirty of the unenforced cards work across the table — one
   player sells to another, or takes from each of the others — and none of it was expressible: the
   panel only ever touched the player in front of it. It can now give goods to a chosen player,
@@ -113,6 +125,13 @@ are looking at.
 
 ### Fixed
 
+- **Seven places where text did not meet WCAG AA**, found by the new contrast check on its first
+  run — all of them introduced by the restyle. The terracotta accent was too dark to read on the
+  board ground and too light to carry cream text on a badge, so it moved lighter and the badge took
+  ink text instead. Clay was too light under the white room labels. A dark-mode pasture was too dark
+  under its ink labels. Red had to carry cream text as a button *and* be legible as text itself,
+  which one value can manage on cream but not on a dark ground, so the text variant became its own
+  token.
 - **Pickers that had nothing to pick said nothing about it.** A farm can genuinely have no space a
   room may legally touch — the starting house with fields either side of it does — and the dialog
   opened on a board where nothing was selectable, with a dead Confirm and no explanation. It now

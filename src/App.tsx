@@ -178,7 +178,7 @@ export default function App() {
       {error && (
         <p
           role="alert"
-          className="animate-[var(--animate-fade-in)] rounded-lg border border-destructive border-l-4 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive shadow-[var(--shadow-tile)]"
+          className="animate-[var(--animate-fade-in)] rounded-lg border border-destructive border-l-4 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive-text shadow-[var(--shadow-tile)]"
         >
           {formatError(error, t)}
         </p>

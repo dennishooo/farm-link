@@ -218,7 +218,7 @@ export function ActionDialog({
             {/* Cost was only checked on confirm, so an unaffordable build looked
                 like the board simply refusing to respond. */}
             {(!canAffordRoom || !canAffordStable) && (
-              <p className="text-xs text-destructive">{t('dialog.cannotAffordBuild')}</p>
+              <p className="text-xs text-destructive-text">{t('dialog.cannotAffordBuild')}</p>
             )}
           </div>
         )}
@@ -242,7 +242,7 @@ export function ActionDialog({
           <>
             <p className="mt-1 text-sm text-muted-foreground">{instructionFor(mode, t)}</p>
             {hasNothingToPick() && (
-              <p className="mt-2 text-sm font-semibold text-destructive">
+              <p className="mt-2 text-sm font-semibold text-destructive-text">
                 {t('dialog.nothingToPick')}
               </p>
             )}
@@ -287,7 +287,7 @@ export function ActionDialog({
                   })}
                 </p>
                 {fences.length > 0 && danglingFences.length > 0 && (
-                  <p className="mt-1 text-xs font-semibold text-destructive">
+                  <p className="mt-1 text-xs font-semibold text-destructive-text">
                     {t('dialog.fenceDangling', { count: danglingFences.length })}
                   </p>
                 )}

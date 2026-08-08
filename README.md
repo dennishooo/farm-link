@@ -42,6 +42,8 @@ Then open http://localhost:5173.
 | `bun run build` | Type-check and produce a static `dist/` |
 | `bun run test` | Run the test suite |
 | `bun run test:coverage` | Tests with coverage |
+| `bun run test:visual` | Screenshot and contrast checks (Playwright) |
+| `bun run test:visual:update` | Rewrite the screenshot baselines |
 | `bun run lint` | ESLint |
 | `bun run type-check` | `tsc --noEmit` |
 
@@ -65,6 +67,18 @@ legacy/        The original single-file v2.8 prototype, kept for reference
 
 The engine is deliberately independent of React, so the rules can be tested without rendering
 anything — see `src/game/*.test.ts`.
+
+`visual/` holds a second suite, run by Playwright against the built app rather than jsdom. It exists
+because the bugs the last redesign shipped were ones no unit test could see: fields textured like
+decking, crop pips too pale to read, header buttons that ended up cream on cream. It has two halves:
+
+- **Screenshots** against committed baselines, for layout and large visual changes. These are
+  specific to the Chromium build that took them, so CI installs the one Playwright pins and
+  `bun run test:visual:update` has to run in the same place to produce baselines CI will agree with.
+- **A contrast check**, which walks every piece of visible text and measures it against what is
+  painted behind it. This exists because pixel diffing could not catch the cream-on-cream bug: a
+  whole-page tolerance is worth tens of thousands of pixels, and the glyphs of one button label come
+  to about four hundred. Measuring the colours directly needs no baseline and cannot drift.
 
 ## Languages
 
