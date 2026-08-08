@@ -58,6 +58,11 @@ export type Player = {
    */
   newborns: number
   beggingMarkers: number
+  /**
+   * Points a card awarded that the engine could not read off the card itself.
+   * Optional: games saved before this existed simply have none.
+   */
+  bonusPoints?: number
 
   farm: FarmSpace[]
   fences: FenceEdge[]
@@ -123,6 +128,14 @@ export type GameState = {
   occupied: Record<ActionSpaceId, string>
   /** Action spaces revealed so far, in reveal order. */
   revealed: ActionSpaceId[]
+  /**
+   * The stage cards in the order this game will reveal them, shuffled once at
+   * setup. Part of the state because the store copies the state on every move
+   * and the order has to survive the copy — and a reload.
+   *
+   * Optional only for games saved before it was stored; those rebuild it.
+   */
+  deck?: ActionSpaceId[]
   /** Major improvement card ids still available to build. */
   majorsAvailable: string[]
   log: LogEntry[]
@@ -154,5 +167,7 @@ export type ScoreBreakdown = {
   people: number
   beggingMarkers: number
   cards: number
+  /** Points the players awarded for a card the engine cannot enforce. */
+  bonus: number
   total: number
 }

@@ -14,14 +14,14 @@ import type { GameState } from '@/game/types'
 
 function reset() {
   localStorage.clear()
-  useGameStore.setState({ game: null, error: null, history: [] })
+  useGameStore.setState({ game: null, error: null, history: [], future: [] })
 }
 
 /** Put a deterministic game into the store, optionally tweaked first. */
 function loadGame(mutate?: (game: GameState) => void) {
   const game = createGame({ names: ['Ann', 'Bo'], random: () => 0.42 })
   mutate?.(game)
-  useGameStore.setState({ game, error: null, history: [] })
+  useGameStore.setState({ game, error: null, history: [], future: [] })
   return game
 }
 
@@ -259,5 +259,73 @@ describe('taking a move back', () => {
     await user.click(screen.getByRole('button', { name: /Undo/ }))
 
     expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('applying card effects that are not goods', () => {
+  beforeEach(reset)
+
+  /** A game where Ann has played a card the engine does not enforce. */
+  function withManualCard() {
+    return loadGame((game) => {
+      game.players[0].played.push('occupation-net-fisherman')
+    })
+  }
+
+  async function openPanel(user: ReturnType<typeof userEvent.setup>) {
+    const panels = screen.getAllByText('Apply a card effect')
+    await user.click(panels[0])
+  }
+
+  it('applies an effect that needs no target straight away', async () => {
+    const user = userEvent.setup()
+    withManualCard()
+    await renderUI(<App />)
+    await openPanel(user)
+
+    await user.click(screen.getByRole('button', { name: 'Family growth' }))
+
+    expect(useGameStore.getState().game!.players[0].people).toBe(3)
+    expect(screen.getByText(/applies Net Fisherman: Family growth/)).toBeInTheDocument()
+  })
+
+  it('asks where to put an effect that lands on the farm', async () => {
+    const user = userEvent.setup()
+    withManualCard()
+    await renderUI(<App />)
+    await openPanel(user)
+
+    await user.click(screen.getByRole('button', { name: 'Plow a field' }))
+
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByRole('heading')).toHaveTextContent('Plow a field')
+
+    await user.click(within(dialog).getByRole('button', { name: /^Space 7:/ }))
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm' }))
+
+    expect(useGameStore.getState().game!.players[0].farm[6]).toEqual({ kind: 'field' })
+  })
+
+  it('records bonus points against the score', async () => {
+    const user = userEvent.setup()
+    withManualCard()
+    await renderUI(<App />)
+    await openPanel(user)
+
+    await user.click(screen.getByRole('button', { name: '+ 1 pts' }))
+
+    expect(useGameStore.getState().game!.players[0].bonusPoints).toBe(1)
+  })
+
+  it('can be taken back like any other move', async () => {
+    const user = userEvent.setup()
+    withManualCard()
+    await renderUI(<App />)
+    await openPanel(user)
+
+    await user.click(screen.getByRole('button', { name: 'Family growth' }))
+    await user.click(screen.getByRole('button', { name: /Undo/ }))
+
+    expect(useGameStore.getState().game!.players[0].people).toBe(2)
   })
 })

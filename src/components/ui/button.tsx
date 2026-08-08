@@ -17,7 +17,10 @@ const VARIANTS: Record<NonNullable<ButtonProps['variant']>, string> = {
     'shadow-[var(--shadow-raised)] hover:shadow-[var(--shadow-panel)] active:shadow-[var(--shadow-tile)]',
   ),
   outline: cn(
-    'border border-border bg-card hover:bg-accent hover:text-accent-foreground',
+    // The text colour is explicit because this variant is used on the dark
+    // header, where inheriting the surrounding cream leaves it invisible.
+    'border border-border bg-card text-card-foreground',
+    'hover:bg-accent hover:text-accent-foreground',
     'shadow-[var(--shadow-tile)] hover:border-primary/40 hover:shadow-[var(--shadow-raised)]',
   ),
   ghost: 'hover:bg-accent hover:text-accent-foreground',

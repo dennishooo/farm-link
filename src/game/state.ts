@@ -134,13 +134,12 @@ export function createGame({ names, random = Math.random }: NewGameOptions): Gam
     accumulated: {},
     occupied: {},
     revealed: [],
+    deck,
     majorsAvailable: dealt.majors,
     log: [],
     harvest: null,
   }
 
-  // Stash the deck order on the state so later rounds reveal deterministically.
-  deckOrder.set(state, deck)
   revealForRound(state, deck)
   replenish(state, playerCount)
   logMessage(state, 'gameStart', { name: players[0].name })
@@ -148,31 +147,29 @@ export function createGame({ names, random = Math.random }: NewGameOptions): Gam
 }
 
 /**
- * Stage-card order per game. Kept outside the serialisable state and rebuilt
- * on load from the already-revealed list plus the remaining cards.
+ * The stage-card order for this game.
+ *
+ * This used to live in a `WeakMap` keyed by the state object, which the store
+ * defeated without anyone noticing: it structured-clones the state on every
+ * move, so the very first move produced an object the map had never seen and
+ * the order was rebuilt in canonical stage order. The rebuild was written for
+ * reloads and ran on move one instead, which meant every game revealed the
+ * same cards in the same sequence from round 2 on.
  */
-const deckOrder = new WeakMap<GameState, ActionSpaceId[]>()
-
-export function setDeckOrder(state: GameState, deck: ActionSpaceId[]): void {
-  deckOrder.set(state, deck)
-}
-
 export function getDeckOrder(state: GameState): ActionSpaceId[] {
-  const existing = deckOrder.get(state)
-  if (existing) return existing
+  if (state.deck?.length) return state.deck
 
-  // Rebuilt after a reload: keep what was revealed, append the rest in
-  // canonical stage order so play can continue.
+  // Only games saved before the order was part of the state get here: keep
+  // what was already revealed, then carry on in canonical stage order.
   const remaining = STAGE_ACTION_SPACES.filter(
     (space) =>
       !state.revealed.includes(space.id) && (space.minPlayers ?? 1) <= state.players.length,
   ).map((space) => space.id)
-  const rebuilt = [...state.revealed, ...remaining]
-  deckOrder.set(state, rebuilt)
-  return rebuilt
+  state.deck = [...state.revealed, ...remaining]
+  return state.deck
 }
 
-function revealForRound(state: GameState, deck = getDeckOrder(state)): void {
+export function revealForRound(state: GameState, deck = getDeckOrder(state)): void {
   const next = deck[state.round - 1]
   if (next && !state.revealed.includes(next)) {
     state.revealed.push(next)

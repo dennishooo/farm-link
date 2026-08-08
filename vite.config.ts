@@ -54,6 +54,25 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // The card database and its translations are ~200 KB of generated data
+        // that changes only when the deck is regenerated, while the app around
+        // it changes every release. Splitting them apart means a release
+        // invalidates the app chunk alone: the service worker re-downloads the
+        // code and keeps the cards it already has, which is most of the bytes.
+        //
+        // This does not defer the download — the cards are a static dependency
+        // of the engine and the app precaches everything anyway, by design. It
+        // is about what a returning player has to fetch on an update.
+        manualChunks: (id) =>
+          id.includes('/game/cards/data.ts') || id.includes('/game/cards/translations.ts')
+            ? 'cards'
+            : undefined,
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': new URL('./src', import.meta.url).pathname,

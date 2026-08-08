@@ -6,6 +6,12 @@ import { cn } from '@/lib/utils'
 import { GoodIcon, HouseIcon, StableIcon } from '@/components/ui/icons'
 import type { Player } from '@/game/types'
 
+/**
+ * The gutter between farmyard spaces. Shared by the grid and the fence layer,
+ * which has to know it to line rails up with the gaps they sit in.
+ */
+const FARM_GAP = '0.25rem'
+
 type FarmyardProps = {
   player: Player
   /** Spaces the player may currently act on, highlighted for selection. */
@@ -61,12 +67,16 @@ export function Farmyard({
 
   return (
     <div className={cn('w-full', className)}>
-      {/* The frame is the ground the farm sits on: the gaps between spaces read
-          as bare earth paths rather than as the page showing through. */}
-      <div className="tile-fallow rounded-lg p-1 shadow-[inset_0_1px_3px_var(--shade)]">
+      {/* The frame is the ground the farm sits on. Deep and stippled, so the
+          spaces read as pieces laid on a board rather than as panels cut out
+          of the panel behind them. */}
+      <div className="board-ground rounded-xl p-1.5 shadow-[inset_0_2px_6px_var(--shade-strong)]">
         <div
-          className="relative grid gap-1"
-          style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}
+          className="relative grid"
+          style={{
+            gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+            gap: FARM_GAP,
+          }}
         >
           {Array.from({ length: ROWS * COLS }, (_, index) => {
             const space = player.farm[index]
@@ -75,16 +85,29 @@ export function Farmyard({
             const isSelectable = selectableSet.has(index)
             const isSelected = selectedSet.has(index)
             const isPastureLike = Boolean(pasture) || space.kind === 'stable'
+            // The herd is drawn once per pasture, on its first space.
+            const showsHerd =
+              Boolean(animals?.count) && index === Math.min(...(pasture?.spaces ?? []))
+            const contents = space.kind === 'empty' ? t('farm.empty') : t(`farm.${space.kind}`)
 
             return (
               <button
                 key={index}
                 disabled={!isSelectable}
                 onClick={() => onSelectSpace?.(index)}
-                aria-label={t('farm.space', {
-                  number: index + 1,
-                  contents: space.kind === 'empty' ? t('farm.empty') : t(`farm.${space.kind}`),
-                })}
+                // The animals were drawn but never named: the chip is a glyph
+                // and a number, and a tile's label overrides anything inside
+                // it, so the herd has to be said here or not at all.
+                aria-label={
+                  showsHerd && animals
+                    ? t('farm.spaceWithAnimals', {
+                        number: index + 1,
+                        contents,
+                        count: animals.count,
+                        good: t(`goods.${animals.type}`),
+                      })
+                    : t('farm.space', { number: index + 1, contents })
+                }
                 className={cn(
                   'group relative aspect-square overflow-hidden rounded-md',
                   'flex flex-col items-center justify-center gap-0.5 text-center',
@@ -123,7 +146,7 @@ export function Farmyard({
                 {/* A herd lives in a pasture, not in each of its spaces. The
                     chip used to repeat on all four squares of a 2x2 pasture,
                     which read as four separate herds. */}
-                {animals && animals.count > 0 && index === Math.min(...(pasture?.spaces ?? [])) && (
+                {showsHerd && animals && (
                   <span
                     className={cn(
                       'absolute right-0.5 bottom-0.5 flex items-center gap-0.5 rounded-full',
@@ -220,6 +243,23 @@ type FenceLayerProps = {
 }
 
 /**
+ * Where grid line `index` sits across `count` tracks, as a CSS length.
+ *
+ * The obvious `index / count * 100%` is wrong once the grid has a gutter: the
+ * tracks are narrower than an even share of the container by the gaps between
+ * them, so every line after the first drifted, and by the right-hand edge the
+ * rails were visibly off their tiles. Each interior line sits half a gutter
+ * back from the track it precedes; the outer two are the container's own edges,
+ * which have no gutter to sit in.
+ */
+function gridLine(index: number, count: number): string {
+  if (index === 0) return '0%'
+  if (index === count) return '100%'
+  const track = `((100% - ${count - 1} * ${FARM_GAP}) / ${count})`
+  return `calc(${index} * (${track} + ${FARM_GAP}) - ${FARM_GAP} / 2)`
+}
+
+/**
  * Renders every fence slot as a thin hit target positioned over the gap
  * between two spaces. Only built, staged, or currently-buildable slots are
  * visible, so the board stays legible when no fencing action is in progress.
@@ -230,18 +270,15 @@ type FenceLayerProps = {
  */
 function FenceLayer({ built, options, staged, onToggle }: FenceLayerProps) {
   const { t } = useTranslation()
-  const slots: { edge: string; style: React.CSSProperties; horizontal: boolean }[] = []
+  const slots: { edge: string; row: number; col: number; horizontal: boolean }[] = []
 
   for (let row = 0; row <= ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
       slots.push({
         edge: edgesOfSpace(toIndex(Math.min(row, ROWS - 1), col))[row === ROWS ? 'bottom' : 'top'],
         horizontal: true,
-        style: {
-          left: `${(col / COLS) * 100}%`,
-          width: `${(1 / COLS) * 100}%`,
-          top: `${(row / ROWS) * 100}%`,
-        },
+        row,
+        col,
       })
     }
   }
@@ -251,37 +288,33 @@ function FenceLayer({ built, options, staged, onToggle }: FenceLayerProps) {
       slots.push({
         edge: edgesOfSpace(toIndex(row, Math.min(col, COLS - 1)))[col === COLS ? 'right' : 'left'],
         horizontal: false,
-        style: {
-          top: `${(row / ROWS) * 100}%`,
-          height: `${(1 / ROWS) * 100}%`,
-          left: `${(col / COLS) * 100}%`,
-        },
+        row,
+        col,
       })
     }
   }
 
-  // A post belongs at every corner where at least two built rails meet — that
-  // is what a real fence looks like, and it hides the mitre where two rails
-  // cross at right angles.
-  const percent = (value: React.CSSProperties[keyof React.CSSProperties]) =>
-    Number(String(value ?? '0').replace('%', ''))
-
-  const posts = new Map<string, React.CSSProperties>()
-  for (const { edge, style, horizontal } of slots) {
+  // A post belongs at every corner a built rail reaches — that is what a real
+  // fence looks like, and it hides the mitre where two rails cross.
+  const posts = new Map<string, { row: number; col: number }>()
+  for (const { edge, row, col, horizontal } of slots) {
     if (!built.has(edge)) continue
-    const start = percent(horizontal ? style.left : style.top)
-    const span = percent(horizontal ? style.width : style.height)
-    for (const position of [start, start + span]) {
-      const x = horizontal ? position : percent(style.left)
-      const y = horizontal ? percent(style.top) : position
-      // Keyed by corner, so the two rails meeting there share one post.
-      posts.set(`${x}|${y}`, { left: `${x}%`, top: `${y}%` })
-    }
+    const corners = horizontal
+      ? [
+          { row, col },
+          { row, col: col + 1 },
+        ]
+      : [
+          { row, col },
+          { row: row + 1, col },
+        ]
+    // Keyed by corner, so two rails meeting there share one post.
+    for (const corner of corners) posts.set(`${corner.row}|${corner.col}`, corner)
   }
 
   return (
     <>
-      {slots.map(({ edge, style, horizontal }) => {
+      {slots.map(({ edge, row, col, horizontal }) => {
         const isBuilt = built.has(edge)
         const isStaged = staged.has(edge)
         const isOption = options.has(edge) && !isBuilt
@@ -294,7 +327,19 @@ function FenceLayer({ built, options, staged, onToggle }: FenceLayerProps) {
             aria-label={t(isBuilt ? 'farm.fenceBuilt' : 'farm.fence', { edge })}
             disabled={!isOption || !onToggle}
             onClick={() => onToggle?.(edge)}
-            style={style}
+            style={
+              horizontal
+                ? {
+                    top: gridLine(row, ROWS),
+                    left: gridLine(col, COLS),
+                    right: `calc(100% - ${gridLine(col + 1, COLS)})`,
+                  }
+                : {
+                    left: gridLine(col, COLS),
+                    top: gridLine(row, ROWS),
+                    bottom: `calc(100% - ${gridLine(row + 1, ROWS)})`,
+                  }
+            }
             className={cn(
               'absolute z-10 rounded-full transition-[background-color,height,width]',
               horizontal ? 'h-1.5 -translate-y-1/2' : 'w-1.5 -translate-x-1/2',
@@ -311,11 +356,11 @@ function FenceLayer({ built, options, staged, onToggle }: FenceLayerProps) {
         )
       })}
 
-      {[...posts].map(([key, style]) => (
+      {[...posts].map(([key, { row, col }]) => (
         <span
           key={key}
           aria-hidden
-          style={style}
+          style={{ left: gridLine(col, COLS), top: gridLine(row, ROWS) }}
           className={cn(
             'absolute z-20 size-2 -translate-x-1/2 -translate-y-1/2 rounded-[2px] bg-wood',
             'shadow-[0_1px_2px_var(--shade),inset_0_1px_0_color-mix(in_oklab,white_35%,transparent)]',

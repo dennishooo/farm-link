@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { HISTORY_LIMIT, useGameStore } from './game'
+import { createGame, getDeckOrder } from '@/game/engine'
 import type { LogEntry } from '@/game/types'
 
 /** The entry just written — every revert appends exactly one. */
@@ -9,7 +10,7 @@ function last(log: LogEntry[]): LogEntry {
 
 function reset() {
   localStorage.clear()
-  useGameStore.setState({ game: null, error: null, history: [] })
+  useGameStore.setState({ game: null, error: null, history: [], future: [] })
 }
 
 describe('game store', () => {
@@ -373,6 +374,113 @@ describe('taking a move back', () => {
 
     const saved = JSON.parse(localStorage.getItem('farmlink-game')!)
     expect(saved.state.history).toHaveLength(1)
-    expect(saved.state.history[0].entry).toMatchObject({ key: 'undo' })
+    expect(saved.state.history[0].undone).toMatchObject({ key: 'undo' })
+  })
+})
+
+describe('the stage-card order across real moves', () => {
+  beforeEach(reset)
+
+  it('reveals the cards this game shuffled, not the canonical list', () => {
+    // The store copies the state on every move, which is exactly what used to
+    // lose the shuffle. Played through a whole round rather than asserted on
+    // the engine alone, because the engine was never the part that broke.
+    const game = createGame({ names: ['Ann', 'Bo'], random: () => 0.42 })
+    const deck = [...getDeckOrder(game)]
+    useGameStore.setState({ game, error: null, history: [], future: [] })
+
+    for (const space of ['forest', 'clay-pit', 'reed-bank', 'fishing'] as const) {
+      useGameStore.getState().play(space)
+    }
+
+    const after = useGameStore.getState().game!
+    expect(after.round).toBe(2)
+    expect(after.revealed).toEqual([deck[0], deck[1]])
+  })
+
+  it('reveals the same card again after the move that revealed it is taken back', () => {
+    const game = createGame({ names: ['Ann', 'Bo'], random: () => 0.42 })
+    const deck = [...getDeckOrder(game)]
+    useGameStore.setState({ game, error: null, history: [], future: [] })
+
+    for (const space of ['forest', 'clay-pit', 'reed-bank', 'fishing'] as const) {
+      useGameStore.getState().play(space)
+    }
+    useGameStore.getState().undo()
+    expect(useGameStore.getState().game!.revealed).toEqual([deck[0]])
+
+    useGameStore.getState().play('fishing')
+
+    // Undo must not let a player re-roll a stage card they did not like.
+    expect(useGameStore.getState().game!.revealed).toEqual([deck[0], deck[1]])
+  })
+})
+
+describe('putting a move back', () => {
+  beforeEach(reset)
+
+  it('restores the move and writes that down too', () => {
+    useGameStore.getState().startGame(['Ann', 'Bo'])
+    useGameStore.getState().play('forest')
+    useGameStore.getState().undo()
+
+    useGameStore.getState().redo()
+
+    const game = useGameStore.getState().game!
+    expect(game.players[0].wood).toBe(3)
+    expect(game.occupied.forest).toBe(game.players[0].id)
+    expect(last(game.log)).toMatchObject({
+      key: 'redo',
+      values: { name: 'Ann', space: 'forest' },
+    })
+  })
+
+  it('leaves the whole round trip on the record', () => {
+    useGameStore.getState().startGame(['Ann', 'Bo'])
+    useGameStore.getState().play('forest')
+    useGameStore.getState().undo()
+    useGameStore.getState().redo()
+
+    // Setup reveals the first stage card before it announces the start player.
+    expect(useGameStore.getState().game!.log.map((entry) => entry.key)).toEqual([
+      'spaceRevealed',
+      'gameStart',
+      'takeGoods',
+      'undo',
+      'redo',
+    ])
+  })
+
+  it('can be taken back again', () => {
+    useGameStore.getState().startGame(['Ann', 'Bo'])
+    useGameStore.getState().play('forest')
+    useGameStore.getState().undo()
+    useGameStore.getState().redo()
+    useGameStore.getState().undo()
+
+    expect(useGameStore.getState().game!.players[0].wood).toBe(0)
+    expect(useGameStore.getState().future).toHaveLength(1)
+  })
+
+  it('has nothing to put back until something is taken back', () => {
+    useGameStore.getState().startGame(['Ann', 'Bo'])
+    useGameStore.getState().play('forest')
+    const before = useGameStore.getState().game
+
+    useGameStore.getState().redo()
+
+    expect(useGameStore.getState().game).toBe(before)
+  })
+
+  it('drops the taken-back move once a different one is made', () => {
+    // Standard branch semantics: play down a new line and the old one is gone.
+    useGameStore.getState().startGame(['Ann', 'Bo'])
+    useGameStore.getState().play('forest')
+    useGameStore.getState().undo()
+    expect(useGameStore.getState().future).toHaveLength(1)
+
+    useGameStore.getState().play('clay-pit')
+
+    expect(useGameStore.getState().future).toEqual([])
   })
 })

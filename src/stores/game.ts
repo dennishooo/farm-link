@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
   adjustForCard,
+  applyCardAction,
   advanceTurn,
   completeHarvest,
   convertGoods,
@@ -12,6 +13,8 @@ import {
   workersLeft,
   type ActionPayload,
   type AdjustableGood,
+  type CardAction,
+  type CardActionPayload,
 } from '@/game/engine'
 import type { ActionSpaceId, GameState, LogEntry } from '@/game/types'
 import type { Payable } from '@/game/cards/types'
@@ -29,13 +32,17 @@ export type GameError = {
  */
 export type HistoryEntry = {
   state: GameState
-  entry: LogEntry
+  /** The line the log gets if this move is taken back. */
+  undone: LogEntry
+  /** The line it gets if it is put back. */
+  redone: LogEntry
 }
 
 /** The slice written to localStorage; the actions are rebuilt on every load. */
 type PersistedGame = {
   game: GameState | null
   history: HistoryEntry[]
+  future: HistoryEntry[]
 }
 
 /**
@@ -54,6 +61,8 @@ type GameStore = {
   error: GameError | null
   /** Most recent last. Empty when there is nothing to take back. */
   history: HistoryEntry[]
+  /** Moves taken back and not yet put back. Cleared by the next real move. */
+  future: HistoryEntry[]
 
   startGame: (names: string[]) => void
   play: (spaceId: ActionSpaceId, payload?: ActionPayload) => void
@@ -67,7 +76,14 @@ type GameStore = {
     delta: number,
   ) => void
   moveAnimals: (playerIndex: number, fromKey: string, toKey: string, count: number) => void
+  cardAction: (
+    playerIndex: number,
+    cardId: string,
+    action: CardAction,
+    payload?: CardActionPayload,
+  ) => void
   undo: () => void
+  redo: () => void
   clearError: () => void
   abandon: () => void
 }
@@ -92,19 +108,23 @@ function commit(
   previous: GameState,
   next: GameState,
   history: HistoryEntry[],
-  key: string,
+  undoKey: string,
+  redoKey: string,
   values?: Record<string, string | number>,
-): Pick<GameStore, 'game' | 'error' | 'history'> {
+): Pick<GameStore, 'game' | 'error' | 'history' | 'future'> {
   const remembered: HistoryEntry = {
     state: previous,
-    // Stamped with the round being returned to, so the line sits in the round
-    // play actually resumes in rather than the one the move led to.
-    entry: { round: previous.round, key, values },
+    // Each line is stamped with the round it returns play to, so it sits in
+    // the round that follows it rather than the one it came from.
+    undone: { round: previous.round, key: undoKey, values },
+    redone: { round: next.round, key: redoKey, values },
   }
   return {
     game: next,
     error: null,
     history: [...history, remembered].slice(-HISTORY_LIMIT),
+    // A fresh move is a new branch: whatever was taken back is not coming back.
+    future: [],
   }
 }
 
@@ -114,8 +134,10 @@ export const useGameStore = create<GameStore>()(
       game: null,
       error: null,
       history: [],
+      future: [],
 
-      startGame: (names) => set({ game: createGame({ names }), error: null, history: [] }),
+      startGame: (names) =>
+        set({ game: createGame({ names }), error: null, history: [], future: [] }),
 
       play: (spaceId, payload) => {
         const current = get().game
@@ -128,7 +150,7 @@ export const useGameStore = create<GameStore>()(
           set({ error: { key: result.reason, values: result.values } })
           return
         }
-        set(commit(current, next, get().history, 'undo', { name: actor, space: spaceId }))
+        set(commit(current, next, get().history, 'undo', 'redo', { name: actor, space: spaceId }))
       },
 
       resolveHarvest: () => {
@@ -136,7 +158,7 @@ export const useGameStore = create<GameStore>()(
         if (!current || current.phase !== 'harvest') return
         const next = draft(current)
         completeHarvest(next)
-        set(commit(current, next, get().history, 'undoHarvest'))
+        set(commit(current, next, get().history, 'undoHarvest', 'redoHarvest'))
       },
 
       /** Pass on a worker that has no legal action left. */
@@ -149,7 +171,7 @@ export const useGameStore = create<GameStore>()(
         player.peoplePlaced += 1
         next.log.push({ round: next.round, key: 'pass', values: { name: player.name } })
         advanceTurn(next)
-        set(commit(current, next, get().history, 'undoPass', { name: player.name }))
+        set(commit(current, next, get().history, 'undoPass', 'redoPass', { name: player.name }))
       },
 
       /** Exchange goods for food using a played card, at any time. */
@@ -164,7 +186,7 @@ export const useGameStore = create<GameStore>()(
           return
         }
         set(
-          commit(current, next, get().history, 'undoCard', {
+          commit(current, next, get().history, 'undoCard', 'redoCard', {
             name: current.players[playerIndex].name,
             cardId,
           }),
@@ -183,7 +205,7 @@ export const useGameStore = create<GameStore>()(
           return
         }
         set(
-          commit(current, next, get().history, 'undoCard', {
+          commit(current, next, get().history, 'undoCard', 'redoCard', {
             name: current.players[playerIndex].name,
             cardId,
           }),
@@ -202,8 +224,27 @@ export const useGameStore = create<GameStore>()(
           return
         }
         set(
-          commit(current, next, get().history, 'undoAnimals', {
+          commit(current, next, get().history, 'undoAnimals', 'redoAnimals', {
             name: current.players[playerIndex].name,
+          }),
+        )
+      },
+
+      /** Apply a card effect that grants something other than goods. */
+      cardAction: (playerIndex, cardId, action, payload) => {
+        const current = get().game
+        if (!current) return
+
+        const next = draft(current)
+        const result = applyCardAction(next, playerIndex, cardId, action, payload)
+        if (!result.ok) {
+          set({ error: { key: result.reason, values: result.values } })
+          return
+        }
+        set(
+          commit(current, next, get().history, 'undoCard', 'redoCard', {
+            name: current.players[playerIndex].name,
+            cardId,
           }),
         )
       },
@@ -217,31 +258,54 @@ export const useGameStore = create<GameStore>()(
        * record of it is the point, not a side effect.
        */
       undo: () => {
-        const { game, history } = get()
+        const { game, history, future } = get()
         const last = history[history.length - 1]
         if (!game || !last) return
 
         set({
-          game: { ...last.state, log: [...game.log, last.entry] },
+          game: { ...last.state, log: [...game.log, last.undone] },
           history: history.slice(0, -1),
+          // The state being left is what putting the move back returns to.
+          future: [...future, { ...last, state: game }],
+          error: null,
+        })
+      },
+
+      /**
+       * Put back a move that was taken back — for the undo that went one step
+       * too far. It gets its own line too, for the same reason the revert did.
+       */
+      redo: () => {
+        const { game, history, future } = get()
+        const next = future[future.length - 1]
+        if (!game || !next) return
+
+        set({
+          game: { ...next.state, log: [...game.log, next.redone] },
+          history: [...history, { ...next, state: game }].slice(-HISTORY_LIMIT),
+          future: future.slice(0, -1),
           error: null,
         })
       },
 
       clearError: () => set({ error: null }),
-      abandon: () => set({ game: null, error: null, history: [] }),
+      abandon: () => set({ game: null, error: null, history: [], future: [] }),
     }),
     {
       name: 'farmlink-game',
       version: STATE_VERSION,
       // A saved game from an older engine cannot be replayed safely, and
       // neither can the moves leading up to it.
-      migrate: (): PersistedGame => ({ game: null, history: [] }),
+      migrate: (): PersistedGame => ({ game: null, history: [], future: [] }),
       // Persist the game and what can be taken back. Undo survives a reload
       // because everything else about this app does — a saved game whose undo
       // silently evaporated would be a worse surprise than the few kilobytes
       // it costs.
-      partialize: (state): PersistedGame => ({ game: state.game, history: state.history }),
+      partialize: (state): PersistedGame => ({
+        game: state.game,
+        history: state.history,
+        future: state.future,
+      }),
       // Merge explicitly so rehydration never replaces the action functions
       // with the persisted slice alone.
       merge: (persisted, current) => {
@@ -251,6 +315,7 @@ export const useGameStore = create<GameStore>()(
           game: saved?.game ?? null,
           // Absent in saves written before undo existed.
           history: saved?.history ?? [],
+          future: saved?.future ?? [],
         }
       },
     },

@@ -44,6 +44,8 @@ const TRANSLATED_VALUES: Record<string, (value: string, t: TFunction) => string>
       .map((id) => t(`goods.${id.trim()}`, id.trim()))
       .join(t('game.listSeparator')),
   house: (value, t) => t(`house.${value}`, value),
+  // A card action id: 'plow' renders as whatever the panel's button says.
+  action: (value, t) => t(`cards.action${value.charAt(0).toUpperCase()}${value.slice(1)}`, value),
   resource: (value, t) => t(`goods.${value}`, value),
   material: (value, t) => t(`goods.${value}`, value),
   crop: (value, t) => t(`goods.${value}`, value),

@@ -24,7 +24,7 @@ export function ConvertPanel({ player, playerIndex, onConvert }: ConvertPanelPro
 
   return (
     <div className="flex flex-col gap-1.5 border-t border-border pt-2">
-      <p className="text-[11px] font-bold text-muted-foreground">{t('cards.exchanges')}</p>
+      <p className="eyebrow text-[10px] text-muted-foreground">{t('cards.exchanges')}</p>
       <ul className="flex flex-wrap gap-1.5">
         {conversions.map((conversion) => {
           const card = cardById(conversion.cardId)!

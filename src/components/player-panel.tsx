@@ -12,7 +12,7 @@ import { AdjustPanel } from '@/components/adjust-panel'
 import { GoodIcon, PersonIcon, type GoodIconName } from '@/components/ui/icons'
 import type { Player } from '@/game/types'
 import type { Payable } from '@/game/cards/types'
-import type { AdjustableGood } from '@/game/engine'
+import type { AdjustableGood, CardAction, CardActionPayload } from '@/game/engine'
 
 /**
  * The supply, in the order the goods appear on the player board: building
@@ -48,6 +48,12 @@ type PlayerPanelProps = {
     good: AdjustableGood,
     delta: number,
   ) => void
+  onCardAction?: (
+    playerIndex: number,
+    cardId: string,
+    action: CardAction,
+    payload?: CardActionPayload,
+  ) => void
 }
 
 export function PlayerPanel({
@@ -58,6 +64,7 @@ export function PlayerPanel({
   onConvert,
   onMoveAnimals,
   onAdjustForCard,
+  onCardAction,
 }: PlayerPanelProps) {
   const { t, i18n } = useTranslation()
   // Scored every render, not just at the end: players asked to see where they
@@ -76,14 +83,14 @@ export function PlayerPanel({
     >
       {/* A band in the player's colour, so four panels side by side can be told
           apart from across the table without reading the names. */}
-      <div aria-hidden className={cn('h-1 w-full bg-current', accent)} />
+      <div aria-hidden className={cn('h-1.5 w-full bg-current', accent)} />
 
       <CardHeader className="flex-row items-center justify-between gap-2">
         <CardTitle className="flex items-center gap-2">
           <PersonIcon className={cn('size-4', accent)} />
           {player.name}
           {isCurrent && (
-            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground shadow-[var(--shadow-tile)]">
+            <span className="eyebrow rounded-full bg-highlight px-2 py-0.5 text-[9px] text-primary-foreground shadow-[var(--shadow-tile)]">
               {t('game.toAct')}
             </span>
           )}
@@ -105,7 +112,7 @@ export function PlayerPanel({
               <li
                 key={key}
                 className={cn(
-                  'flex items-center justify-center gap-1 rounded-md border border-border/70',
+                  'flex items-center justify-center gap-1 rounded-full border border-border/70',
                   'bg-muted px-1 py-1 font-semibold shadow-[var(--shadow-tile)]',
                   // An empty pile should not compete with a full one.
                   count === 0 && 'opacity-45',
@@ -113,6 +120,10 @@ export function PlayerPanel({
                 title={t(`goods.${key}` as 'goods.wood')}
               >
                 <GoodIcon good={key} className={cn('size-3.5', tint)} />
+                {/* The name was only in `title`, which no touch screen ever
+                    shows — the same hover-only trap the card rules text fell
+                    into. The icon is decoration; this is the actual label. */}
+                <span className="sr-only">{t(`goods.${key}` as 'goods.wood')}: </span>
                 <span className="tabular-nums">{count}</span>
               </li>
             )
@@ -187,7 +198,12 @@ export function PlayerPanel({
         )}
 
         {onAdjustForCard && !showScore && (
-          <AdjustPanel player={player} playerIndex={playerIndex} onAdjust={onAdjustForCard} />
+          <AdjustPanel
+            player={player}
+            playerIndex={playerIndex}
+            onAdjust={onAdjustForCard}
+            onCardAction={onCardAction}
+          />
         )}
 
         {(() => {
@@ -211,7 +227,7 @@ export function PlayerPanel({
             <div className="border-t border-border pt-2">{breakdown}</div>
           ) : (
             <details className="border-t border-border pt-2">
-              <summary className="cursor-pointer text-[11px] font-bold text-muted-foreground">
+              <summary className="eyebrow cursor-pointer text-[10px] text-muted-foreground">
                 {t('score.liveBreakdown', { count: score.total })}
               </summary>
               <div className="mt-1.5">{breakdown}</div>
