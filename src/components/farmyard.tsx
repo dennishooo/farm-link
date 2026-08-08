@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { COLS, ROWS, edgesOfSpace, toIndex } from '@/game/geometry'
+import { COLS, ROWS, edgesOfSpace, spacesBesideEdge, toIndex } from '@/game/geometry'
 import { pastureInfo } from '@/game/farm'
 import { cn } from '@/lib/utils'
 import { GoodIcon, HouseIcon, StableIcon } from '@/components/ui/icons'
+import type { TFunction } from 'i18next'
 import type { Player } from '@/game/types'
 
 /**
@@ -235,6 +236,29 @@ function CropCount({ crop, count }: { crop: 'grain' | 'vegetable'; count: number
   )
 }
 
+/**
+ * Where a fence is, in words. The edge key is the engine's shorthand and means
+ * nothing read aloud, so the label names the spaces the fence runs between.
+ */
+function fenceLabel(edge: string, isBuilt: boolean, t: TFunction): string {
+  const [axis, row, col] = edge.split(':')
+  const [first, second] = spacesBesideEdge(edge).map((index) => index + 1)
+
+  if (second !== undefined) {
+    return t(isBuilt ? 'farm.fenceBetweenBuilt' : 'farm.fenceBetween', { first, second })
+  }
+
+  // An edge on the outside borders one space — and a corner space has two of
+  // them, so the side has to be named or the two are indistinguishable. Only
+  // the first and last row or column can get here, so 0 means top or left.
+  const side =
+    axis === 'h'
+      ? t(Number(row) === 0 ? 'farm.sideAbove' : 'farm.sideBelow')
+      : t(Number(col) === 0 ? 'farm.sideLeft' : 'farm.sideRight')
+
+  return t(isBuilt ? 'farm.fenceEdgeBuilt' : 'farm.fenceEdge', { first, side })
+}
+
 type FenceLayerProps = {
   built: Set<string>
   options: Set<string>
@@ -324,7 +348,7 @@ function FenceLayer({ built, options, staged, onToggle }: FenceLayerProps) {
         return (
           <button
             key={`${edge}-${horizontal ? 'h' : 'v'}`}
-            aria-label={t(isBuilt ? 'farm.fenceBuilt' : 'farm.fence', { edge })}
+            aria-label={fenceLabel(edge, isBuilt, t)}
             disabled={!isOption || !onToggle}
             onClick={() => onToggle?.(edge)}
             style={

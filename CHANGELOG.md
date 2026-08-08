@@ -106,6 +106,18 @@ are looking at.
 
 ### Fixed
 
+- **Pickers that had nothing to pick said nothing about it.** A farm can genuinely have no space a
+  room may legally touch — the starting house with fields either side of it does — and the dialog
+  opened on a board where nothing was selectable, with a dead Confirm and no explanation. It now
+  says there is nowhere legal, for every mode including a spent fence supply.
+- **Fences were labelled with the engine's own shorthand.** A screen reader was handed "Fence
+  h:0:0". They are named by where they are now — "Fence between space 4 and space 9", or "Fence
+  above space 4" for an outer edge, which also has to name the side, since a corner space has two
+  outer edges and they would otherwise be indistinguishable.
+- **The exchange buttons named their card only in a `title`.** Two cooking improvements that
+  convert the same good produced two identical-looking buttons on a touch screen. The card is on
+  the button now — the third instance of the hover-only trap, after the card rules text in v4.2.0
+  and the resource chips.
 - **The stage-card shuffle was thrown away on the first move of every game.** The reveal order was
   held in a `WeakMap` keyed by the state object, but the store structured-clones the state on every
   move — so move one produced an object the map had never seen, and the order was rebuilt in

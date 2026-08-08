@@ -89,6 +89,17 @@ export function ActionDialog({
     player.stablesRemaining > 0 &&
     player.wood >= STABLE_COST_WOOD
 
+  /**
+   * Nothing legal to pick. A farm can genuinely have no room for another room,
+   * or no space a field may touch — and the dialog used to open on a dead board
+   * with a dead Confirm and no word about why.
+   */
+  function hasNothingToPick(): boolean {
+    if (mode === 'fence') return player.fencesRemaining === 0
+    if (mode === 'cultivate') return plowTargets.length === 0 && sowTargets.length === 0
+    return selectableSpaces().length === 0
+  }
+
   function selectableSpaces(): number[] {
     return selectableFor(mode, {
       plow: plowTargets,
@@ -230,6 +241,11 @@ export function ActionDialog({
         {mode !== 'expansion' && mode !== 'resource' && mode !== 'none' && (
           <>
             <p className="mt-1 text-sm text-muted-foreground">{instructionFor(mode, t)}</p>
+            {hasNothingToPick() && (
+              <p className="mt-2 text-sm font-semibold text-destructive">
+                {t('dialog.nothingToPick')}
+              </p>
+            )}
             <div className="mt-3">
               <Farmyard
                 player={player}

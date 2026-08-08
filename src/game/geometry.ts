@@ -35,6 +35,35 @@ export function verticalEdge(row: number, col: number): FenceEdge {
   return `v:${row}:${col}`
 }
 
+/**
+ * The spaces an edge runs between: two for an interior edge, one for an edge
+ * on the outside of the farmyard.
+ *
+ * Used to say where a fence is in words. The edge key is the engine's own
+ * shorthand, and "Fence h:0:0" is what a screen reader was being handed.
+ */
+export function spacesBesideEdge(edge: FenceEdge): number[] {
+  const [axis, rowText, colText] = edge.split(':')
+  const row = Number(rowText)
+  const col = Number(colText)
+
+  const pairs: [number, number][] =
+    axis === 'h'
+      ? // A horizontal edge separates the space above it from the one below.
+        [
+          [row - 1, col],
+          [row, col],
+        ]
+      : [
+          [row, col - 1],
+          [row, col],
+        ]
+
+  return pairs
+    .filter(([r, c]) => r >= 0 && r < ROWS && c >= 0 && c < COLS)
+    .map(([r, c]) => toIndex(r, c))
+}
+
 /** Every fence slot that exists on the board (20 horizontal + 18 vertical). */
 export function allEdges(): FenceEdge[] {
   const edges: FenceEdge[] = []
