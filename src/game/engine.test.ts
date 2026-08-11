@@ -17,6 +17,7 @@ import {
   findSpace,
   foodRequiredFor,
   isSpaceAvailable,
+  passWorker,
   takeAction,
   workersLeft,
 } from './engine'
@@ -768,6 +769,30 @@ describe('breeding reports why it did not happen', () => {
 
     expect(player.sheep).toBe(3)
     expect(state.log.at(-1)?.key).toBe('breed')
+  })
+})
+
+describe('passing a worker', () => {
+  it('spends the worker and advances the turn', () => {
+    const state = game()
+    const result = passWorker(state)
+
+    expect(result.ok).toBe(true)
+    expect(state.players[0].peoplePlaced).toBe(1)
+    expect(state.currentPlayerIndex).toBe(1)
+    expect(state.log.at(-1)?.key).toBe('pass')
+  })
+
+  it('refuses outside the work phase', () => {
+    const state = game()
+    state.phase = 'harvest'
+    expect(passWorker(state)).toMatchObject({ ok: false, reason: 'notWorkPhase' })
+  })
+
+  it('refuses when the player has no workers left', () => {
+    const state = game()
+    state.players[0].peoplePlaced = state.players[0].people
+    expect(passWorker(state)).toMatchObject({ ok: false, reason: 'noWorkers' })
   })
 })
 

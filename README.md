@@ -1,11 +1,12 @@
 # FarmLink
 
-An offline-playable implementation of the **Agricola (Revised Edition)** base game, built for
-pass-and-play on a single device.
+An implementation of the **Agricola (Revised Edition)** base game with two ways to play:
+**single device** (offline pass-and-play) and **online** (each player on their own device,
+synced in real time through a small room server).
 
 Fourteen rounds, six harvests, real fence geometry, and the exact scoring tables from the official
-rulebook. No server, no network calls: it installs as a PWA, cold-starts with no connection, and
-saves your game to `localStorage`.
+rulebook. Single-device mode needs no server and no network calls: it installs as a PWA,
+cold-starts with no connection, and saves your game to `localStorage`.
 
 ## Stack
 
@@ -17,6 +18,7 @@ saves your game to `localStorage`.
 | State | Zustand 5 with `persist` |
 | i18n | i18next + react-i18next (English, 繁體中文) |
 | Offline | vite-plugin-pwa (Workbox precache, installable) |
+| Multiplayer | Bun WebSocket server (`server/`), zero dependencies |
 | Tests | Vitest 4 + Testing Library |
 
 The project mirrors the conventions of the Broadway client: `cn()` for class merging, `@/` path
@@ -32,13 +34,19 @@ bun install
 bun run dev
 ```
 
-Then open http://localhost:5173.
+Then open http://localhost:5173. For online play during development, also start the room server —
+the Vite dev server proxies `/ws` to it:
+
+```bash
+bun run server
+```
 
 ## Scripts
 
 | Command | Purpose |
 | --- | --- |
 | `bun run dev` | Dev server with HMR |
+| `bun run server` | Multiplayer room server (WebSocket on :8787, also serves `dist/` when built) |
 | `bun run build` | Type-check and produce a static `dist/` |
 | `bun run test` | Run the test suite |
 | `bun run test:coverage` | Tests with coverage |
@@ -46,6 +54,33 @@ Then open http://localhost:5173.
 | `bun run test:visual:update` | Rewrite the screenshot baselines |
 | `bun run lint` | ESLint |
 | `bun run type-check` | `tsc --noEmit` |
+
+## Online multiplayer
+
+Pick **Play online** on the setup screen. One player creates a room and shares its four-letter
+code; up to three others join from their own devices, and the creator starts the game from the
+lobby. Each device controls only its own seat: the action board unlocks on your turn, your farm's
+anytime actions (conversions, animal moves, card adjustments) stay yours alone, and the host
+resolves shared harvests and can end the room for everyone.
+
+The server is the authority. It runs the very same rules engine as the app (`server/rooms.ts`
+imports `src/game/engine`), validates every intent — seat, turn, and legality — and broadcasts the
+whole game state after each accepted action, so clients never replay or reconcile anything.
+Rejections travel back as translation keys and render in each device's own language. A dropped
+phone or a page reload reclaims its seat automatically via a token in `sessionStorage`.
+
+To host a game night from one machine:
+
+```bash
+BASE_PATH=/ bun run build
+bun run server
+```
+
+and point the other devices at `http://<your-ip>:8787`. During development, `bun run dev --host`
+plus `bun run server` does the same through Vite's proxy. A deployed static build (e.g. GitHub
+Pages) can point at a remote room server by setting `VITE_WS_URL` at build time. Rooms live in
+memory: a server restart ends running games, and abandoned rooms are swept after 10 minutes
+(2 hours if someone stays connected).
 
 ## Project layout
 
@@ -58,9 +93,11 @@ src/
     engine     Setup, worker placement, harvest phases, round flow
     scoring    End-game scoring and tie-breaking
     cards/     Card data, cost/effect parsing, dealing and payment
+  multiplayer/ Wire protocol and per-seat authorisation, shared by client and server
   components/  React components
-  stores/      Zustand state with localStorage persistence
+  stores/      Zustand state: local game (persisted) and online session (socket)
   lib/         Shared helpers
+server/        Bun WebSocket room server — same engine, authoritative state
 scripts/       Card data generator and its raw source dump
 legacy/        The original single-file v2.8 prototype, kept for reference
 ```

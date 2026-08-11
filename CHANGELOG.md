@@ -9,6 +9,28 @@ are looking at.
 
 ## [Unreleased]
 
+### Added
+
+- **Online multiplayer.** The setup screen now offers two modes: **Single device** (the existing
+  offline pass-and-play, unchanged) and **Play online**, where each player uses their own device.
+  One player creates a room and shares a four-letter code, up to four players join a lobby, and
+  the creator starts the game. A zero-dependency Bun WebSocket server (`bun run server`) runs the
+  same rules engine authoritatively: it validates every action against seat, turn, and the rules,
+  then broadcasts the full state, so all devices stay in lockstep. Per-seat enforcement means the
+  action board unlocks only on your turn, anytime actions work only on your own farm, and only the
+  host resolves harvests or ends the room. Server rejections arrive as translation keys and render
+  in each device's chosen language. Reloading (or losing signal) reclaims your seat automatically
+  through a `sessionStorage` token, and an online game never touches the locally saved
+  single-device game.
+- **`passWorker` moved into the engine** — the store's inline "skip a stuck worker" logic is now an
+  engine action, so the multiplayer server enforces exactly the same rule.
+- **Card effects and cross-table transfers work online too.** 4.3.0's card panel gained two intents
+  so a played card can be applied, and goods handed to another farm, in a room as well as on one
+  device. A transfer is authorised on either side of the exchange — a card may be held by the buyer
+  ("you may buy their grain") or the giver — but never by a bystander moving other people's goods.
+- Undo and redo stay single-device. They rewind this device's own store, which the authoritative
+  server knows nothing about, so offering them in a room would desync the board.
+
 ## [4.3.0] — 2026-08-08
 
 ### Changed

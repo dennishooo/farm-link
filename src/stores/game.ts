@@ -4,14 +4,13 @@ import {
   adjustForCard,
   applyCardAction,
   transferForCard,
-  advanceTurn,
   completeHarvest,
   convertGoods,
   createGame,
+  passWorker,
   rearrangeAnimals,
   STATE_VERSION,
   takeAction,
-  workersLeft,
   type ActionPayload,
   type AdjustableGood,
   type CardAction,
@@ -174,12 +173,12 @@ export const useGameStore = create<GameStore>()(
         const current = get().game
         if (!current || current.phase !== 'work') return
         const next = draft(current)
-        const player = next.players[next.currentPlayerIndex]
-        if (workersLeft(player) <= 0) return
-        player.peoplePlaced += 1
-        next.log.push({ round: next.round, key: 'pass', values: { name: player.name } })
-        advanceTurn(next)
-        set(commit(current, next, get().history, 'undoPass', 'redoPass', { name: player.name }))
+        // Read the name before passing: passWorker advances the turn, so
+        // afterwards currentPlayerIndex points at the next player, not the
+        // one whose worker was skipped.
+        const actor = next.players[next.currentPlayerIndex].name
+        if (!passWorker(next).ok) return
+        set(commit(current, next, get().history, 'undoPass', 'redoPass', { name: actor }))
       },
 
       /** Exchange goods for food using a played card, at any time. */
