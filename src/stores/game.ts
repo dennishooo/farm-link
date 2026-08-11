@@ -2,14 +2,13 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
   adjustForCard,
-  advanceTurn,
   completeHarvest,
   convertGoods,
   createGame,
+  passWorker,
   rearrangeAnimals,
   STATE_VERSION,
   takeAction,
-  workersLeft,
   type ActionPayload,
   type AdjustableGood,
 } from '@/game/engine'
@@ -85,11 +84,7 @@ export const useGameStore = create<GameStore>()(
         const current = get().game
         if (!current || current.phase !== 'work') return
         const next = draft(current)
-        const player = next.players[next.currentPlayerIndex]
-        if (workersLeft(player) <= 0) return
-        player.peoplePlaced += 1
-        next.log.push({ round: next.round, key: 'pass', values: { name: player.name } })
-        advanceTurn(next)
+        if (!passWorker(next).ok) return
         set({ game: next, error: null })
       },
 

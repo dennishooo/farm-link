@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
 import { renderUI } from '@/components/test-utils'
 import { useGameStore } from '@/stores/game'
+import { useSessionStore } from '@/stores/session'
 import { createGame } from '@/game/engine'
 import type { GameState } from '@/game/types'
 
@@ -219,5 +220,99 @@ describe('game log', () => {
     expect(screen.getByText(/第 1 回合開始/)).toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('語言'), 'en')
+  })
+})
+
+describe('online play', () => {
+  const originalSession = useSessionStore.getState()
+
+  beforeEach(reset)
+  afterEach(() => useSessionStore.setState(originalSession, true))
+
+  /** Put a server-broadcast game into the session store, seated as `seat`. */
+  function loadOnline(seat: number, mutate?: (game: GameState) => void) {
+    const game = createGame({ names: ['Ann', 'Bo'], random: () => 0.42 })
+    mutate?.(game)
+    useSessionStore.setState({
+      status: 'playing',
+      game,
+      seat,
+      code: 'ABCD',
+      players: [
+        { name: 'Ann', connected: true },
+        { name: 'Bo', connected: true },
+      ],
+    })
+    return game
+  }
+
+  it('shows the room code and your seat in the header', async () => {
+    loadOnline(1)
+    await renderUI(<App />)
+
+    expect(screen.getByText(/Room ABCD/)).toBeInTheDocument()
+    expect(screen.getByText(/You are Bo/)).toBeInTheDocument()
+  })
+
+  it('disables the board when it is not your turn', async () => {
+    loadOnline(1) // seat 1, but it is Ann's (seat 0) turn
+    await renderUI(<App />)
+
+    expect(screen.getByRole('button', { name: /Forest/ })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Pass worker' })).not.toBeInTheDocument()
+  })
+
+  it('sends your action as an intent instead of mutating locally', async () => {
+    const user = userEvent.setup()
+    const sendIntent = vi.fn()
+    loadOnline(0)
+    useSessionStore.setState({ sendIntent })
+    await renderUI(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Day Laborer/ }))
+
+    expect(sendIntent).toHaveBeenCalledWith({ kind: 'play', spaceId: 'day-laborer', payload: undefined })
+    expect(useGameStore.getState().game).toBeNull()
+  })
+
+  it('offers End game to the host and Leave game to a guest', async () => {
+    loadOnline(0)
+    const { unmount } = await renderUI(<App />)
+    expect(screen.getByRole('button', { name: 'End game' })).toBeInTheDocument()
+    unmount()
+
+    loadOnline(1)
+    await renderUI(<App />)
+    expect(screen.getByRole('button', { name: 'Leave game' })).toBeInTheDocument()
+  })
+
+  it('reserves the harvest button for the host', async () => {
+    loadOnline(1, (game) => {
+      game.phase = 'harvest'
+      game.round = 4
+      game.harvest = { stage: 'field', playerIndex: 0 }
+    })
+    await renderUI(<App />)
+
+    expect(screen.queryByRole('button', { name: 'Resolve harvest' })).not.toBeInTheDocument()
+    expect(
+      screen.getByText('The host resolves the harvest once everyone is ready.'),
+    ).toBeInTheDocument()
+  })
+
+  it('shows the lobby while waiting for the host to start', async () => {
+    useSessionStore.setState({
+      status: 'lobby',
+      code: 'ABCD',
+      seat: 1,
+      players: [
+        { name: 'Ann', connected: true },
+        { name: 'Bo', connected: true },
+      ],
+    })
+    await renderUI(<App />)
+
+    expect(screen.getByText('Room ABCD')).toBeInTheDocument()
+    expect(screen.getByText('Waiting for the host to start the game…')).toBeInTheDocument()
   })
 })

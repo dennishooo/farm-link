@@ -6,6 +6,12 @@
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "multiplayer-server",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "server"],
+      "port": 8787
     }
   ]
 }

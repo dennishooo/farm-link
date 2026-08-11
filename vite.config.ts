@@ -59,6 +59,16 @@ export default defineConfig({
       '@': new URL('./src', import.meta.url).pathname,
     },
   },
+  server: {
+    proxy: {
+      // The multiplayer server (bun run server) during development. Phones on
+      // the LAN then only need the Vite origin: run `bun run dev --host`.
+      '/ws': {
+        target: `ws://localhost:${process.env.WS_PORT ?? 8787}`,
+        ws: true,
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

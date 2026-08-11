@@ -17,6 +17,39 @@ export default {
     soloNote:
       'Solo game: your adults eat 3 food each and the Forest only grows 2 wood per round.',
     start: 'Start game',
+    modeSingle: 'Single device',
+    modeOnline: 'Play online',
+    yourName: 'Your name',
+    createRoom: 'Create a room',
+    roomCode: 'Room code',
+    joinRoom: 'Join room',
+    onlineNote:
+      'Each player uses their own device. One player creates a room and shares the code with the rest.',
+  },
+
+  lobby: {
+    title: 'Room {{code}}',
+    shareCode: 'Share this code with the other players.',
+    players: 'Players ({{count}}/{{max}})',
+    disconnected: 'reconnecting…',
+    host: 'host',
+    you: 'you',
+    start: 'Start game',
+    needTwo: 'Waiting for at least one more player…',
+    waitingForHost: 'Waiting for the host to start the game…',
+    leave: 'Leave room',
+  },
+
+  online: {
+    roomCode: 'Room {{code}}',
+    youAre: 'You are {{name}}',
+    reconnecting: 'Connection lost — reconnecting…',
+    hostResolves: 'The host resolves the harvest once everyone is ready.',
+    endedByHost: 'The host ended the game.',
+    endedExpired: 'The room has expired.',
+    backToSetup: 'Back to setup',
+    leaveGame: 'Leave game',
+    endGame: 'End game',
   },
 
   game: {
@@ -321,5 +354,22 @@ export default {
     adjustmentAmount: 'Choose an amount other than zero.',
     adjustmentGood: 'That good cannot be adjusted here.',
     notEnoughGoods: 'You only have {{count}} {{good}}.',
+
+    // Multiplayer: seat and room rules enforced by the server.
+    notYourTurn: "It isn't your turn.",
+    notYourFarm: 'You can only manage your own farm.',
+    hostOnly: 'Only the host can do that.',
+    notHarvestPhase: 'There is no harvest to resolve right now.',
+    roomNotFound: 'Room {{code}} was not found.',
+    roomFull: 'That room is already full.',
+    roomStarted: 'That game has already started.',
+    needTwoPlayers: 'You need at least two players to start.',
+    alreadyInRoom: 'You are already in a room.',
+    notInRoom: 'You are not in a room.',
+    gameNotStarted: 'The game has not started yet.',
+    cannotRejoin: 'Your seat in that room is no longer available.',
+    protocolMismatch: 'The app and server versions do not match. Refresh the page.',
+    connectionFailed: 'Could not reach the game server.',
+    badRequest: 'The server could not understand that request.',
   },
 } as const

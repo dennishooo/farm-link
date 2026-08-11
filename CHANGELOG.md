@@ -9,6 +9,22 @@ are looking at.
 
 ## [Unreleased]
 
+### Added
+
+- **Online multiplayer.** The setup screen now offers two modes: **Single device** (the existing
+  offline pass-and-play, unchanged) and **Play online**, where each player uses their own device.
+  One player creates a room and shares a four-letter code, up to four players join a lobby, and
+  the creator starts the game. A zero-dependency Bun WebSocket server (`bun run server`) runs the
+  same rules engine authoritatively: it validates every action against seat, turn, and the rules,
+  then broadcasts the full state, so all devices stay in lockstep. Per-seat enforcement means the
+  action board unlocks only on your turn, anytime actions work only on your own farm, and only the
+  host resolves harvests or ends the room. Server rejections arrive as translation keys and render
+  in each device's chosen language. Reloading (or losing signal) reclaims your seat automatically
+  through a `sessionStorage` token, and an online game never touches the locally saved
+  single-device game.
+- **`passWorker` moved into the engine** — the store's inline "skip a stuck worker" logic is now an
+  engine action, so the multiplayer server enforces exactly the same rule.
+
 ### Changed
 
 - **Split `engine.ts`** (1050 lines) into `result.ts` (the shared outcome type), `state.ts` (setup,

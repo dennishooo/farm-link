@@ -95,6 +95,22 @@ export function takeAction(
 }
 
 /**
+ * Pass on a worker that has no legal action left. The worker is spent without
+ * taking a space, and the turn moves on.
+ */
+export function passWorker(state: GameState): ActionResult {
+  if (state.phase !== 'work') return fail('notWorkPhase')
+
+  const player = currentPlayer(state)
+  if (workersLeft(player) <= 0) return fail('noWorkers')
+
+  player.peoplePlaced += 1
+  logMessage(state, 'pass', { name: player.name })
+  advanceTurn(state)
+  return ok
+}
+
+/**
  * Move animals between pastures, stables, and the house pet slot. Animals are
  * the only components a player may rearrange at any time, and doing so can
  * free capacity that automatic placement wasted.
