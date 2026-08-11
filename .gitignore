@@ -10,3 +10,5 @@ coverage/
 # Official rulebook PDFs are copyright Lookout Games — kept locally as a
 # reference for implementing the rules, never redistributed.
 docs/rulebook/
+# Playwright MCP transient artifacts (screenshots, traces)
+.playwright-artifacts/
