@@ -8,7 +8,12 @@
  */
 
 import type { ActionSpaceId, GameState } from '../game/types'
-import type { ActionPayload, AdjustableGood } from '../game/engine'
+import type {
+  ActionPayload,
+  AdjustableGood,
+  CardAction,
+  CardActionPayload,
+} from '../game/engine'
 import type { Payable } from '../game/cards/types'
 
 /**
@@ -38,6 +43,26 @@ export type Intent =
       delta: number
     }
   | { kind: 'moveAnimals'; playerIndex: number; fromKey: string; toKey: string; count: number }
+  | {
+      kind: 'cardAction'
+      playerIndex: number
+      cardId: string
+      action: CardAction
+      payload?: CardActionPayload
+    }
+  /**
+   * A card that moves goods between two farms. The sender must be one of the
+   * two seats — either side may hold the card, since "buy their grain" is
+   * played by the buyer and "give 1 food to each player" by the giver.
+   */
+  | {
+      kind: 'transfer'
+      fromIndex: number
+      toIndex: number
+      cardId: string
+      good: AdjustableGood
+      amount: number
+    }
 
 export type ClientMessage =
   | { type: 'create'; protocol: number; name: string }

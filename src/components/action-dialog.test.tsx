@@ -23,6 +23,19 @@ function open(spaceId: string, player: Player, onConfirm = vi.fn()) {
   }
 }
 
+/** Open straight into one mode, the way a card-granted build does. */
+function openInMode(mode: 'plow' | 'room' | 'stable' | 'fence', player: Player) {
+  return renderUI(
+    <ActionDialog
+      spaceId="farm-expansion"
+      mode={mode}
+      player={player}
+      onConfirm={vi.fn()}
+      onCancel={vi.fn()}
+    />,
+  )
+}
+
 describe('cultivation', () => {
   /** Two sown-able fields, two grain, and room to plow. */
   function farmer(): Player {
@@ -225,7 +238,8 @@ describe('fencing', () => {
     const user = userEvent.setup()
     await open('fences', testPlayer()).rendered
 
-    await user.click(screen.getByRole('button', { name: /^Fence h:0:0/ }))
+    // h:0:0 runs along the top of the farmyard, so it borders one space only.
+    await user.click(screen.getByRole('button', { name: 'Fence above space 1' }))
 
     expect(screen.getByText(/enclose nothing/)).toBeInTheDocument()
     expect(confirmButton()).toBeDisabled()
@@ -236,8 +250,14 @@ describe('fencing', () => {
     const { onConfirm, rendered } = open('fences', testPlayer())
     await rendered
 
-    for (const edge of fenceRect(0, 3, 0, 3)) {
-      await user.click(screen.getByRole('button', { name: new RegExp(`^Fence ${edge}`) }))
+    // The four edges around space 4, named the way a player would say them.
+    for (const name of [
+      'Fence above space 4',
+      'Fence between space 4 and space 9',
+      'Fence between space 3 and space 4',
+      'Fence between space 4 and space 5',
+    ]) {
+      await user.click(screen.getByRole('button', { name }))
     }
 
     expect(screen.getByText(/Encloses 1 pasture/)).toBeInTheDocument()
@@ -253,7 +273,7 @@ describe('fencing', () => {
     player.wood = 7
     await open('fences', player).rendered
 
-    await user.click(screen.getByRole('button', { name: /^Fence h:0:0/ }))
+    await user.click(screen.getByRole('button', { name: 'Fence above space 1' }))
     expect(screen.getByText(/1 fence\(s\) · 1 wood · you have 7/)).toBeInTheDocument()
   })
 })
@@ -325,5 +345,38 @@ describe('in Traditional Chinese', () => {
 
     expect(screen.getByRole('button', { name: '1 蘆葦 + 1 食物' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '1 石頭 + 1 食物' })).toBeInTheDocument()
+  })
+})
+
+describe('a farm with nowhere legal to put things', () => {
+  /** Every space touching the house is a field, so no room may be added. */
+  function boxedIn(): Player {
+    const player = testPlayer()
+    for (const index of [0, 1, 6, 11]) player.farm[index] = { kind: 'field' }
+    return player
+  }
+
+  it('says so rather than opening on a dead board', async () => {
+    // Every neighbour of the house is a field, so no room can legally be
+    // built. The dialog used to open with nothing selectable, a dead Confirm
+    // and no word about why.
+    await openInMode('room', boxedIn())
+
+    expect(screen.getByText(/nowhere on this farm that this can legally go/)).toBeInTheDocument()
+    expect(confirmButton()).toBeDisabled()
+  })
+
+  it('stays quiet when there is something to pick', async () => {
+    await openInMode('room', testPlayer())
+
+    expect(screen.queryByText(/nowhere on this farm/)).not.toBeInTheDocument()
+  })
+
+  it('says so when the fence supply has run out', async () => {
+    const player = testPlayer()
+    player.fencesRemaining = 0
+    await open('fences', player).rendered
+
+    expect(screen.getByText(/nowhere on this farm that this can legally go/)).toBeInTheDocument()
   })
 })

@@ -92,12 +92,20 @@ describe('engine keys', () => {
     // the surrounding push so it cannot pick up unrelated `key:` fields, such
     // as the housing-slot keys in farm.ts.
     const passKey = [...source.matchAll(/log\.push\(\{[^}]*?key:\s*'([\w-]+)'/g)].map((m) => m[1])
+    // The line a move gets in the log if it is taken back. Written by the
+    // store when the move is made, so it never reaches logMessage. Kept to a
+    // single line so it matches the call sites and not `commit`'s own return
+    // type, which names store keys in quotes a few lines further down.
+    const undoKeys = [...source.matchAll(/commit\([^'\n]*'([\w-]+)',\s*'([\w-]+)'/g)].flatMap(
+      (m) => [m[1], m[2]],
+    )
     const errorKeys = [...source.matchAll(/fail\('([\w-]+)'/g)].map((m) => m[1])
 
     expect(logKeys.length).toBeGreaterThan(10)
     expect(errorKeys.length).toBeGreaterThan(20)
+    expect(undoKeys.length).toBeGreaterThan(9)
 
-    for (const key of [...logKeys, ...passKey]) {
+    for (const key of [...logKeys, ...passKey, ...undoKeys]) {
       expect(Object.keys(en.log), `log.${key}`).toContain(key)
       expect(Object.keys(zhHK.log), `log.${key}`).toContain(key)
     }

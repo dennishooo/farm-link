@@ -42,7 +42,7 @@ import {
   logMessage,
   workersLeft,
 } from './state'
-import type { ActionSpace, ActionSpaceId, GameState, Player } from './types'
+import type { ActionSpace, ActionSpaceId, AnimalType, GameState, Player } from './types'
 import type { Payable } from './cards/types'
 
 /* ------------------------------------------------------------------ *
@@ -189,6 +189,12 @@ export const ADJUSTABLE_GOODS = [
   'grain',
   'vegetable',
   'food',
+  // Livestock was missing, and 40 of the 271 unenforced cards hand out animals.
+  // These do not just increment a counter: they have to be housed, so they go
+  // through the same placement the action spaces use.
+  'sheep',
+  'boar',
+  'cattle',
 ] as const satisfies readonly Payable[]
 
 export type AdjustableGood = (typeof ADJUSTABLE_GOODS)[number]
@@ -229,13 +235,189 @@ export function adjustForCard(
   if (player[good] + delta < 0) {
     return fail('notEnoughGoods', { good, count: player[good] })
   }
-  player[good] += delta
+
+  if (isAnimal(good)) {
+    if (delta > 0) {
+      const strayed = houseAnimals(player, good, delta)
+      if (strayed > 0) {
+        // Same rule as taking animals from a space: anything with nowhere to
+        // live wanders off, and saying so beats a number that silently differs
+        // from what was asked for.
+        logMessage(state, 'cardAdjustStray', {
+          name: player.name,
+          amount: delta - strayed,
+          lost: strayed,
+          good,
+          cardId: card.id,
+        })
+        return ok
+      }
+    } else {
+      removeAnimals(player, good, -delta)
+    }
+  } else {
+    player[good] += delta
+  }
 
   // The good and card id go through raw so the renderer localises them; the
   // sign picks the phrasing, since "gains -2 wood" reads badly in any language.
   logMessage(state, delta > 0 ? 'cardAdjustGain' : 'cardAdjustSpend', {
     name: player.name,
     amount: Math.abs(delta),
+    good,
+    cardId: card.id,
+  })
+  return ok
+}
+
+/** Livestock has to be housed rather than counted. */
+function isAnimal(good: AdjustableGood): good is AnimalType {
+  return good === 'sheep' || good === 'boar' || good === 'cattle'
+}
+
+/**
+ * The things a card can grant that are not goods.
+ *
+ * Two thirds of the deck states its effect in prose the parser refuses to
+ * interpret, and the goods adjustment only ever covered part of what those
+ * cards actually say. Ranked over the 271 unenforced cards, the rest is: bonus
+ * points (39 cards), a field (38), a person (29), a room (24), a renovation
+ * (15), fences (14) and a stable (11). Each one here does exactly what its
+ * action space does, minus the cost — the placement rules still apply, because
+ * a card granting a room never grants a room in an illegal place.
+ */
+export const CARD_ACTIONS = [
+  'points',
+  'plow',
+  'room',
+  'stable',
+  'fence',
+  'renovate',
+  'growth',
+] as const
+
+export type CardAction = (typeof CARD_ACTIONS)[number]
+
+/** The card actions that put something somewhere, so need a space picked. */
+export type TargetedCardAction = Extract<CardAction, 'plow' | 'room' | 'stable' | 'fence'>
+
+export type CardActionPayload = {
+  spaceIndex?: number
+  spaceIndices?: number[]
+  fences?: string[]
+  points?: number
+}
+
+/** Does this action need a place on the board picked before it can run? */
+export function cardActionNeedsTarget(action: CardAction): action is TargetedCardAction {
+  return action === 'plow' || action === 'room' || action === 'stable' || action === 'fence'
+}
+
+export function applyCardAction(
+  state: GameState,
+  playerIndex: number,
+  cardId: string,
+  action: CardAction,
+  payload: CardActionPayload = {},
+): ActionResult {
+  const player = state.players[playerIndex]
+  if (!player) return fail('noSuchCardAdjustment')
+
+  const card = cardById(cardId)
+  if (!card || !player.played.includes(cardId)) return fail('noSuchCardAdjustment')
+
+  const targets = payload.spaceIndices ?? (payload.spaceIndex !== undefined ? [payload.spaceIndex] : [])
+  const result = runCardAction(state, player, action, payload, targets)
+  if (!result.ok) return result
+
+  // Every one of these is a rule the players adjudicated rather than one the
+  // engine read off the card, so the card is named in the log next to what it
+  // did. That is the whole audit trail for an effect the engine cannot check.
+  logMessage(state, 'cardActionApplied', {
+    name: player.name,
+    cardId: card.id,
+    action,
+  })
+  return ok
+}
+
+function runCardAction(
+  state: GameState,
+  player: Player,
+  action: CardAction,
+  payload: CardActionPayload,
+  targets: number[],
+): ActionResult {
+  switch (action) {
+    case 'points': {
+      const points = payload.points
+      if (!Number.isInteger(points) || !points) return fail('adjustmentAmount')
+      player.bonusPoints = (player.bonusPoints ?? 0) + points
+      return ok
+    }
+    case 'plow':
+      return plowField(state, player, targets[0])
+    case 'room':
+      return targets.length ? placeRooms(state, player, targets) : fail('chooseWhereToBuild')
+    case 'stable':
+      return targets.length ? placeStables(state, player, targets) : fail('chooseWhereToBuild')
+    case 'fence':
+      return placeFences(state, player, payload.fences ?? [])
+    case 'renovate':
+      return upgradeHouse(state, player)
+    case 'growth':
+      // Cards that grow the family are precisely the ones that do it without a
+      // room, so this is the roomless variant.
+      return familyGrowth(state, player, { requireRoom: false })
+  }
+}
+
+/**
+ * Move goods from one player to another because of a card.
+ *
+ * Thirty of the unenforced cards work between players — one sells to another,
+ * or takes from each of the others — and none of that was expressible: the
+ * panel only ever touched the player in front of it. The engine still reads
+ * nothing off the card; the table agrees what it does, and this moves the
+ * goods and writes down who gave what to whom, and on which card's authority.
+ */
+export function transferForCard(
+  state: GameState,
+  fromIndex: number,
+  toIndex: number,
+  cardId: string,
+  good: AdjustableGood,
+  amount: number,
+): ActionResult {
+  const from = state.players[fromIndex]
+  const to = state.players[toIndex]
+  if (!from || !to || from === to) return fail('transferTarget')
+
+  const card = cardById(cardId)
+  // Either side may hold the card: "you may buy their grain" is played by the
+  // buyer, "give 1 food to each other player" by the giver.
+  if (!card || !(from.played.includes(cardId) || to.played.includes(cardId))) {
+    return fail('noSuchCardAdjustment')
+  }
+
+  if (!Number.isInteger(amount) || amount <= 0) return fail('adjustmentAmount')
+  if (!ADJUSTABLE_GOODS.includes(good)) return fail('adjustmentGood')
+  if (from[good] < amount) return fail('notEnoughGoods', { good, count: from[good] })
+
+  let strayed = 0
+  if (isAnimal(good)) {
+    removeAnimals(from, good, amount)
+    strayed = houseAnimals(to, good, amount)
+  } else {
+    from[good] -= amount
+    to[good] += amount
+  }
+
+  logMessage(state, strayed > 0 ? 'cardTransferStray' : 'cardTransfer', {
+    name: from.name,
+    target: to.name,
+    amount: amount - strayed,
+    lost: strayed,
     good,
     cardId: card.id,
   })
@@ -459,9 +641,25 @@ function buildRooms(state: GameState, player: Player, targets: number[]): Action
     draft[index] = { kind: 'room' }
   }
 
-  player.farm = draft
   player[cost.resource] -= totalMaterial
   player.reed -= totalReed
+  return placeRooms(state, player, targets)
+}
+
+/**
+ * Put rooms on the board without charging for them. Split out of `buildRooms`
+ * so a card that grants a room can reuse the adjacency rules — which are the
+ * part that must never be skipped — while skipping the cost, which is exactly
+ * what such a card is for.
+ */
+function placeRooms(state: GameState, player: Player, targets: number[]): ActionResult {
+  const draft = player.farm.map((space) => ({ ...space }))
+  for (const index of targets) {
+    if (!canPlace(draft, index, 'room')) return fail('roomAdjacency')
+    draft[index] = { kind: 'room' }
+  }
+
+  player.farm = draft
   logMessage(state, 'buildRooms', { name: player.name, count: targets.length, house: player.house })
   return ok
 }
@@ -473,12 +671,20 @@ function buildStables(state: GameState, player: Player, targets: number[]): Acti
   const cost = STABLE_COST_WOOD * targets.length
   if (player.wood < cost) return fail('stableCost', { count: targets.length, cost })
 
+  player.wood -= cost
+  return placeStables(state, player, targets)
+}
+
+/** Stables on the board, supply checked but unpaid for. See `placeRooms`. */
+function placeStables(state: GameState, player: Player, targets: number[]): ActionResult {
+  if (targets.length > player.stablesRemaining) {
+    return fail('stablesRemaining', { count: player.stablesRemaining })
+  }
   for (const index of targets) {
     if (!canPlace(player.farm, index, 'stable')) return fail('stableNeedsSpace')
   }
 
   for (const index of targets) player.farm[index] = { kind: 'stable' }
-  player.wood -= cost
   player.stablesRemaining -= targets.length
   logMessage(state, 'buildStables', { name: player.name, count: targets.length })
   return ok
@@ -490,13 +696,24 @@ function buildStables(state: GameState, player: Player, targets: number[]): Acti
  */
 export function buildFences(state: GameState, player: Player, edges: string[]): ActionResult {
   const additions = edges.filter((edge) => !player.fences.includes(edge))
+  const cost = additions.length * FENCE_COST_WOOD
+  if (additions.length > 0 && player.wood < cost) {
+    return fail('fenceCost', { count: additions.length, cost })
+  }
+
+  const result = placeFences(state, player, edges)
+  if (!result.ok) return result
+  player.wood -= cost
+  return result
+}
+
+/** Fencing with every enclosure rule enforced but nothing charged for it. */
+function placeFences(state: GameState, player: Player, edges: string[]): ActionResult {
+  const additions = edges.filter((edge) => !player.fences.includes(edge))
   if (additions.length === 0) return fail('chooseFence')
   if (additions.length > player.fencesRemaining) {
     return fail('fencesRemaining', { count: player.fencesRemaining })
   }
-
-  const cost = additions.length * FENCE_COST_WOOD
-  if (player.wood < cost) return fail('fenceCost', { count: additions.length, cost })
 
   const proposed = [...player.fences, ...additions]
   // Fences must always complete a new enclosure or subdivide an existing one,
@@ -526,7 +743,6 @@ export function buildFences(state: GameState, player: Player, edges: string[]): 
 
   player.fences = proposed
   player.fencesRemaining -= additions.length
-  player.wood -= cost
   logMessage(state, 'buildFences', { name: player.name, count: additions.length })
   return ok
 }
@@ -548,8 +764,14 @@ function renovate(state: GameState, player: Player): ActionResult {
 
   player[material] -= rooms
   player.reed -= reedCost
-  player.house = target
-  logMessage(state, 'renovate', { name: player.name, house: target })
+  return upgradeHouse(state, player)
+}
+
+/** The renovation itself, with no materials taken. See `placeRooms`. */
+function upgradeHouse(state: GameState, player: Player): ActionResult {
+  if (player.house === 'stone') return fail('alreadyStone')
+  player.house = RENOVATION_TARGET[player.house]
+  logMessage(state, 'renovate', { name: player.name, house: player.house })
   return ok
 }
 

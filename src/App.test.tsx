@@ -15,14 +15,14 @@ import type { GameState } from '@/game/types'
 
 function reset() {
   localStorage.clear()
-  useGameStore.setState({ game: null, error: null })
+  useGameStore.setState({ game: null, error: null, history: [], future: [] })
 }
 
 /** Put a deterministic game into the store, optionally tweaked first. */
 function loadGame(mutate?: (game: GameState) => void) {
   const game = createGame({ names: ['Ann', 'Bo'], random: () => 0.42 })
   mutate?.(game)
-  useGameStore.setState({ game, error: null })
+  useGameStore.setState({ game, error: null, history: [], future: [] })
   return game
 }
 
@@ -314,5 +314,148 @@ describe('online play', () => {
 
     expect(screen.getByText('Room ABCD')).toBeInTheDocument()
     expect(screen.getByText('Waiting for the host to start the game…')).toBeInTheDocument()
+  })
+})
+
+describe('taking a move back', () => {
+  beforeEach(reset)
+
+  it('offers nothing to undo until a move has been made', async () => {
+    loadGame()
+    await renderUI(<App />)
+
+    expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument()
+  })
+
+  it('reverts the move and says so in the log', async () => {
+    const user = userEvent.setup()
+    loadGame()
+    await renderUI(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Forest/ }))
+    expect(screen.getByRole('button', { name: /Forest/ })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: /Undo/ }))
+
+    // The space is free again, and the board is back on Ann's turn.
+    expect(screen.getByRole('button', { name: /Forest/ })).toBeEnabled()
+    expect(screen.getByText("Ann's turn")).toBeInTheDocument()
+    expect(screen.getByText(/Ann takes back their move on Forest/)).toBeInTheDocument()
+    // What was taken back stays on the record.
+    expect(screen.getByText(/Ann takes 3 Wood/)).toBeInTheDocument()
+  })
+
+  it('stops offering undo once the history runs out', async () => {
+    const user = userEvent.setup()
+    loadGame()
+    await renderUI(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Forest/ }))
+    await user.click(screen.getByRole('button', { name: /Undo/ }))
+
+    expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('applying card effects that are not goods', () => {
+  beforeEach(reset)
+
+  /** A game where Ann has played a card the engine does not enforce. */
+  function withManualCard() {
+    return loadGame((game) => {
+      game.players[0].played.push('occupation-net-fisherman')
+    })
+  }
+
+  async function openPanel(user: ReturnType<typeof userEvent.setup>) {
+    const panels = screen.getAllByText('Apply a card effect')
+    await user.click(panels[0])
+  }
+
+  it('applies an effect that needs no target straight away', async () => {
+    const user = userEvent.setup()
+    withManualCard()
+    await renderUI(<App />)
+    await openPanel(user)
+
+    await user.click(screen.getByRole('button', { name: 'Family growth' }))
+
+    expect(useGameStore.getState().game!.players[0].people).toBe(3)
+    expect(screen.getByText(/applies Net Fisherman: Family growth/)).toBeInTheDocument()
+  })
+
+  it('asks where to put an effect that lands on the farm', async () => {
+    const user = userEvent.setup()
+    withManualCard()
+    await renderUI(<App />)
+    await openPanel(user)
+
+    await user.click(screen.getByRole('button', { name: 'Plow a field' }))
+
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByRole('heading')).toHaveTextContent('Plow a field')
+
+    await user.click(within(dialog).getByRole('button', { name: /^Space 7:/ }))
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm' }))
+
+    expect(useGameStore.getState().game!.players[0].farm[6]).toEqual({ kind: 'field' })
+  })
+
+  it('records bonus points against the score', async () => {
+    const user = userEvent.setup()
+    withManualCard()
+    await renderUI(<App />)
+    await openPanel(user)
+
+    await user.click(screen.getByRole('button', { name: '+ 1 pts' }))
+
+    expect(useGameStore.getState().game!.players[0].bonusPoints).toBe(1)
+  })
+
+  it('can be taken back like any other move', async () => {
+    const user = userEvent.setup()
+    withManualCard()
+    await renderUI(<App />)
+    await openPanel(user)
+
+    await user.click(screen.getByRole('button', { name: 'Family growth' }))
+    await user.click(screen.getByRole('button', { name: /Undo/ }))
+
+    expect(useGameStore.getState().game!.players[0].people).toBe(2)
+  })
+})
+
+describe('card effects between players', () => {
+  beforeEach(reset)
+
+  it('gives goods to the chosen player and writes it down', async () => {
+    const user = userEvent.setup()
+    loadGame((game) => {
+      game.players[0].played.push('occupation-net-fisherman')
+      game.players[0].wood = 3
+    })
+    await renderUI(<App />)
+
+    await user.click(screen.getAllByText('Apply a card effect')[0])
+    await user.selectOptions(screen.getByLabelText('Good'), 'wood')
+    await user.selectOptions(screen.getByLabelText('Amount'), '2')
+    await user.click(screen.getByRole('button', { name: 'Give' }))
+
+    const players = useGameStore.getState().game!.players
+    expect(players[0].wood).toBe(1)
+    expect(players[1].wood).toBe(2)
+    expect(screen.getByText(/Ann gives 2 Wood to Bo for Net Fisherman/)).toBeInTheDocument()
+  })
+
+  it('offers no one to give to in a solo game', async () => {
+    const user = userEvent.setup()
+    const game = createGame({ names: ['Solo'], random: () => 0.42 })
+    game.players[0].played.push('occupation-net-fisherman')
+    useGameStore.setState({ game, error: null, history: [], future: [] })
+    await renderUI(<App />)
+
+    await user.click(screen.getAllByText('Apply a card effect')[0])
+
+    expect(screen.queryByRole('button', { name: 'Give' })).not.toBeInTheDocument()
   })
 })

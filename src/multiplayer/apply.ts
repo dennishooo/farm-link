@@ -9,11 +9,13 @@
 
 import {
   adjustForCard,
+  applyCardAction,
   completeHarvest,
   convertGoods,
   passWorker,
   rearrangeAnimals,
   takeAction,
+  transferForCard,
   type ActionResult,
 } from '../game/engine'
 import { fail, ok } from '../game/result'
@@ -60,6 +62,32 @@ export function applyIntent(state: GameState, intent: Intent, ctx: IntentContext
         intent.fromKey,
         intent.toKey,
         intent.count,
+      )
+
+    case 'cardAction':
+      if (intent.playerIndex !== ctx.seat) return fail('notYourFarm')
+      return applyCardAction(
+        state,
+        intent.playerIndex,
+        intent.cardId,
+        intent.action,
+        intent.payload,
+      )
+
+    case 'transfer':
+      // Either seat in the exchange may hold the card, so the sender only has
+      // to be one of the two — but never a bystander moving other people's
+      // goods around.
+      if (intent.fromIndex !== ctx.seat && intent.toIndex !== ctx.seat) {
+        return fail('notYourFarm')
+      }
+      return transferForCard(
+        state,
+        intent.fromIndex,
+        intent.toIndex,
+        intent.cardId,
+        intent.good,
+        intent.amount,
       )
   }
 }

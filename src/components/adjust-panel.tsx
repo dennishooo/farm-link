@@ -2,7 +2,13 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { cardById } from '@/game/cards'
-import { ADJUSTABLE_GOODS, type AdjustableGood } from '@/game/engine'
+import {
+  ADJUSTABLE_GOODS,
+  CARD_ACTIONS,
+  type AdjustableGood,
+  type CardAction,
+  type CardActionPayload,
+} from '@/game/engine'
 import { localiseCard } from '@/lib/i18n/format'
 import type { Player } from '@/game/types'
 
@@ -15,6 +21,33 @@ type AdjustPanelProps = {
     good: AdjustableGood,
     delta: number,
   ) => void
+  /** The other players at the table, for card effects that move goods. */
+  opponents?: { index: number; name: string }[]
+  onTransfer?: (
+    fromIndex: number,
+    toIndex: number,
+    cardId: string,
+    good: AdjustableGood,
+    amount: number,
+  ) => void
+  /** Everything a card can grant that is not a good. */
+  onCardAction?: (
+    playerIndex: number,
+    cardId: string,
+    action: CardAction,
+    payload?: CardActionPayload,
+  ) => void
+}
+
+/** Written out so Tailwind and the translator both see every key. */
+const ACTION_LABEL: Record<CardAction, string> = {
+  points: 'cards.actionPoints',
+  plow: 'cards.actionPlow',
+  room: 'cards.actionRoom',
+  stable: 'cards.actionStable',
+  fence: 'cards.actionFence',
+  renovate: 'cards.actionRenovate',
+  growth: 'cards.actionGrowth',
 }
 
 const AMOUNTS = [1, 2, 3, 4, 5] as const
@@ -30,11 +63,19 @@ const SELECT_CLASS =
  * table agrees what the card does; this writes the result into the game and
  * names the card in the log.
  */
-export function AdjustPanel({ player, playerIndex, onAdjust }: AdjustPanelProps) {
+export function AdjustPanel({
+  player,
+  playerIndex,
+  onAdjust,
+  onCardAction,
+  opponents = [],
+  onTransfer,
+}: AdjustPanelProps) {
   const { t, i18n } = useTranslation()
   const [cardId, setCardId] = useState('')
   const [good, setGood] = useState<AdjustableGood>('food')
   const [amount, setAmount] = useState(1)
+  const [target, setTarget] = useState<number | null>(null)
 
   const cards = player.played.map(cardById).filter((card) => card !== undefined)
 
@@ -44,7 +85,7 @@ export function AdjustPanel({ player, playerIndex, onAdjust }: AdjustPanelProps)
 
   return (
     <details className="border-t border-border pt-2">
-      <summary className="cursor-pointer text-[11px] font-bold text-muted-foreground">
+      <summary className="eyebrow cursor-pointer text-[10px] text-muted-foreground">
         {t('cards.adjust')}
       </summary>
 
@@ -68,6 +109,8 @@ export function AdjustPanel({ player, playerIndex, onAdjust }: AdjustPanelProps)
               ))}
             </select>
           </div>
+
+          <p className="eyebrow text-[10px] text-muted-foreground">{t('cards.adjustGoods')}</p>
 
           <div className="flex gap-1.5">
             <select
@@ -117,6 +160,93 @@ export function AdjustPanel({ player, playerIndex, onAdjust }: AdjustPanelProps)
               − {t('cards.adjustSpend')}
             </Button>
           </div>
+
+          {onTransfer && opponents.length > 0 && (
+            <>
+              <p className="eyebrow text-[10px] text-muted-foreground">{t('cards.adjustGive')}</p>
+              <div className="flex gap-1.5">
+                <select
+                  aria-label={t('cards.adjustTarget')}
+                  value={target ?? opponents[0].index}
+                  onChange={(event) => setTarget(Number(event.target.value))}
+                  className={SELECT_CLASS}
+                >
+                  {opponents.map((opponent) => (
+                    <option key={opponent.index} value={opponent.index}>
+                      {opponent.name}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!selectedId || player[good] < amount}
+                  onClick={() =>
+                    onTransfer(
+                      playerIndex,
+                      target ?? opponents[0].index,
+                      selectedId,
+                      good,
+                      amount,
+                    )
+                  }
+                  className="h-7 flex-1 text-[11px]"
+                >
+                  {t('cards.give')}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {onCardAction && (
+            <>
+              <p className="eyebrow text-[10px] text-muted-foreground">
+                {t('cards.adjustPoints')}
+              </p>
+              <div className="flex gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!selectedId}
+                  onClick={() => onCardAction(playerIndex, selectedId, 'points', { points: amount })}
+                  className="h-7 flex-1 text-[11px]"
+                >
+                  + {t('game.points', { count: amount })}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!selectedId}
+                  onClick={() =>
+                    onCardAction(playerIndex, selectedId, 'points', { points: -amount })
+                  }
+                  className="h-7 flex-1 text-[11px]"
+                >
+                  − {t('game.points', { count: amount })}
+                </Button>
+              </div>
+
+              <p className="eyebrow text-[10px] text-muted-foreground">{t('cards.adjustFarm')}</p>
+              <ul className="grid grid-cols-2 gap-1.5">
+                {CARD_ACTIONS.filter((action) => action !== 'points').map((action) => (
+                  <li key={action}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!selectedId}
+                      onClick={() => onCardAction(playerIndex, selectedId, action)}
+                      className="h-7 w-full text-[11px]"
+                    >
+                      {t(ACTION_LABEL[action] as 'cards.actionPlow')}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-[10px] leading-snug text-muted-foreground">
+                {t('cards.actionFree')}
+              </p>
+            </>
+          )}
         </div>
       )}
     </details>

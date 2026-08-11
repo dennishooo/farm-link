@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { housingSlots, type HousingSlot } from '@/game/farm'
+import { GoodIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/utils'
 import type { Player } from '@/game/types'
 
-const ANIMAL_ICON: Record<string, string> = {
-  sheep: '🐑',
-  boar: '🐗',
-  cattle: '🐄',
+const ANIMAL_TINT: Record<string, string> = {
+  sheep: 'text-sheep',
+  boar: 'text-boar',
+  cattle: 'text-cattle',
 }
 
 type AnimalPanelProps = {
@@ -58,7 +59,7 @@ export function AnimalPanel({ player, playerIndex, onMove }: AnimalPanelProps) {
 
   return (
     <div className="flex flex-col gap-1.5 border-t border-border pt-2">
-      <p className="text-[11px] font-bold text-muted-foreground">
+      <p className="eyebrow text-[10px] text-muted-foreground">
         {source ? t('animals.chooseTarget') : t('animals.title')}
       </p>
       <ul className="flex flex-wrap gap-1.5">
@@ -74,9 +75,9 @@ export function AnimalPanel({ player, playerIndex, onMove }: AnimalPanelProps) {
                 variant={isSource ? 'default' : 'outline'}
                 disabled={!selectable}
                 onClick={() => handleSlot(slot)}
-                className={cn('h-7 text-[11px]', isTarget && 'border-primary')}
+                className={cn('h-7 gap-1 text-[11px]', isTarget && 'border-primary')}
               >
-                {slotLabel(slot, t)}
+                <SlotLabel slot={slot} />
               </Button>
             </li>
           )
@@ -94,7 +95,9 @@ export function AnimalPanel({ player, playerIndex, onMove }: AnimalPanelProps) {
   )
 }
 
-function slotLabel(slot: HousingSlot, t: ReturnType<typeof useTranslation>['t']): string {
+function SlotLabel({ slot }: { slot: HousingSlot }) {
+  const { t } = useTranslation()
+
   const where =
     slot.kind === 'pet'
       ? t('animals.house')
@@ -102,9 +105,19 @@ function slotLabel(slot: HousingSlot, t: ReturnType<typeof useTranslation>['t'])
         ? t('farm.stable')
         : t('animals.pastureAt', { spaces: slot.spaces.map((i) => i + 1).join(',') })
 
-  const occupants = slot.type
-    ? `${ANIMAL_ICON[slot.type] ?? ''}${slot.count}/${slot.capacity}`
-    : t('animals.emptySlot', { capacity: slot.capacity })
-
-  return `${where} ${occupants}`
+  return (
+    <>
+      {where}{' '}
+      {slot.type ? (
+        <span className="flex items-center gap-0.5">
+          <GoodIcon good={slot.type} className={cn('size-3.5', ANIMAL_TINT[slot.type])} />
+          <span className="tabular-nums">
+            {slot.count}/{slot.capacity}
+          </span>
+        </span>
+      ) : (
+        t('animals.emptySlot', { capacity: slot.capacity })
+      )}
+    </>
+  )
 }

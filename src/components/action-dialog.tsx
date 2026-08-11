@@ -16,12 +16,27 @@ type ActionDialogProps = {
   player: Player
   onConfirm: (payload: ActionPayload) => void
   onCancel: () => void
+  /**
+   * Force the mode instead of deriving it from the space. A card that grants a
+   * room needs the same board picker the action space uses, without being an
+   * action space — the picking is identical, only the cost differs.
+   */
+  mode?: ActionMode
+  /** Heading to show when the dialog is not opened from an action space. */
+  title?: string
 }
 
-export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDialogProps) {
+export function ActionDialog({
+  spaceId,
+  player,
+  onConfirm,
+  onCancel,
+  mode: forcedMode,
+  title,
+}: ActionDialogProps) {
   const { t } = useTranslation()
-  const initialMode = actionModeFor(spaceId)
-  const [mode, setMode] = useState<ActionMode>(initialMode === 'expansion' ? 'expansion' : initialMode)
+  const initialMode = forcedMode ?? actionModeFor(spaceId)
+  const [mode, setMode] = useState<ActionMode>(initialMode)
   const [spaces, setSpaces] = useState<number[]>([])
   const [fences, setFences] = useState<string[]>([])
   const [sowPlan, setSowPlan] = useState<{ spaceIndex: number; crop: 'grain' | 'vegetable' }[]>([])
@@ -73,6 +88,17 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
     stableTargets.length > 0 &&
     player.stablesRemaining > 0 &&
     player.wood >= STABLE_COST_WOOD
+
+  /**
+   * Nothing legal to pick. A farm can genuinely have no room for another room,
+   * or no space a field may touch — and the dialog used to open on a dead board
+   * with a dead Confirm and no word about why.
+   */
+  function hasNothingToPick(): boolean {
+    if (mode === 'fence') return player.fencesRemaining === 0
+    if (mode === 'cultivate') return plowTargets.length === 0 && sowTargets.length === 0
+    return selectableSpaces().length === 0
+  }
 
   function selectableSpaces(): number[] {
     return selectableFor(mode, {
@@ -161,11 +187,13 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={t(`spaces.${spaceId}.name`, spaceName(spaceId))}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-3 sm:items-center"
+      aria-label={title ?? t(`spaces.${spaceId}.name`, spaceName(spaceId))}
+      className="animate-[var(--animate-fade-in)] fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 backdrop-blur-sm sm:items-center"
     >
-      <div className="max-h-[88vh] w-full max-w-lg overflow-auto rounded-lg border border-border bg-card p-4">
-        <h2 className="text-lg font-bold">{t(`spaces.${spaceId}.name`, spaceName(spaceId))}</h2>
+      <div className="animate-[var(--animate-sheet-in)] surface-panel max-h-[88vh] w-full max-w-lg overflow-auto rounded-xl border border-border p-4 shadow-[var(--shadow-float)]">
+        <h2 className="text-lg font-bold">
+          {title ?? t(`spaces.${spaceId}.name`, spaceName(spaceId))}
+        </h2>
 
         {mode === 'expansion' && (
           <div className="mt-3 flex flex-col gap-2">
@@ -190,7 +218,7 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
             {/* Cost was only checked on confirm, so an unaffordable build looked
                 like the board simply refusing to respond. */}
             {(!canAffordRoom || !canAffordStable) && (
-              <p className="text-xs text-destructive">{t('dialog.cannotAffordBuild')}</p>
+              <p className="text-xs text-destructive-text">{t('dialog.cannotAffordBuild')}</p>
             )}
           </div>
         )}
@@ -213,6 +241,11 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
         {mode !== 'expansion' && mode !== 'resource' && mode !== 'none' && (
           <>
             <p className="mt-1 text-sm text-muted-foreground">{instructionFor(mode, t)}</p>
+            {hasNothingToPick() && (
+              <p className="mt-2 text-sm font-semibold text-destructive-text">
+                {t('dialog.nothingToPick')}
+              </p>
+            )}
             <div className="mt-3">
               <Farmyard
                 player={player}
@@ -254,7 +287,7 @@ export function ActionDialog({ spaceId, player, onConfirm, onCancel }: ActionDia
                   })}
                 </p>
                 {fences.length > 0 && danglingFences.length > 0 && (
-                  <p className="mt-1 text-xs font-semibold text-destructive">
+                  <p className="mt-1 text-xs font-semibold text-destructive-text">
                     {t('dialog.fenceDangling', { count: danglingFences.length })}
                   </p>
                 )}

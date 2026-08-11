@@ -24,7 +24,7 @@ export function ConvertPanel({ player, playerIndex, onConvert }: ConvertPanelPro
 
   return (
     <div className="flex flex-col gap-1.5 border-t border-border pt-2">
-      <p className="text-[11px] font-bold text-muted-foreground">{t('cards.exchanges')}</p>
+      <p className="eyebrow text-[10px] text-muted-foreground">{t('cards.exchanges')}</p>
       <ul className="flex flex-wrap gap-1.5">
         {conversions.map((conversion) => {
           const card = cardById(conversion.cardId)!
@@ -39,12 +39,15 @@ export function ConvertPanel({ player, playerIndex, onConvert }: ConvertPanelPro
                 disabled={!affordable}
                 onClick={() => onConvert(playerIndex, conversion.cardId, 1, conversion.from)}
                 title={localised.title}
-                className="h-7 text-[11px]"
+                className="h-auto flex-col items-start gap-0 py-1 text-[11px]"
               >
                 {t('cards.exchange', {
                   from: t(`goods.${conversion.from}` as 'goods.wood'),
                   count: conversion.rate,
                 })}
+                {/* Which card grants this was in a `title` only, so on a touch
+                    screen two identical-looking exchanges were indistinguishable. */}
+                <span className="text-[10px] font-normal opacity-70">{localised.title}</span>
               </Button>
             </li>
           )

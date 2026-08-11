@@ -146,6 +146,7 @@ export function scorePlayer(player: Player): ScoreBreakdown {
     people: player.people * POINTS_PER_PERSON,
     beggingMarkers: player.beggingMarkers * BEGGING_PENALTY,
     cards: cardPoints(player),
+    bonus: player.bonusPoints ?? 0,
   }
 
   const total = Object.values(breakdown).reduce((sum, value) => sum + value, 0)

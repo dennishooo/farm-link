@@ -16,6 +16,13 @@ type CardPickerProps = {
   onCancel: () => void
 }
 
+/** Spelled out per type so Tailwind can see the classes it has to generate. */
+function stripeForType(type: Card['type']): string {
+  if (type === 'major') return 'border-l-stone'
+  if (type === 'minor') return 'border-l-reed'
+  return 'border-l-clay'
+}
+
 export function CardPicker({ spaceId, game, player, onConfirm, onCancel }: CardPickerProps) {
   const { t, i18n } = useTranslation()
 
@@ -55,9 +62,9 @@ export function CardPicker({ spaceId, game, player, onConfirm, onCancel }: CardP
       role="dialog"
       aria-modal="true"
       aria-label={isOccupation ? t('cards.playOccupation') : t('cards.buildImprovement')}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-3 sm:items-center"
+      className="animate-[var(--animate-fade-in)] fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 backdrop-blur-sm sm:items-center"
     >
-      <div className="flex max-h-[88vh] w-full max-w-lg flex-col rounded-lg border border-border bg-card">
+      <div className="animate-[var(--animate-sheet-in)] surface-panel flex max-h-[88vh] w-full max-w-lg flex-col rounded-xl border border-border shadow-[var(--shadow-float)]">
         <div className="border-b border-border p-4">
           <h2 className="text-lg font-bold">
             {isOccupation ? t('cards.playOccupation') : t('cards.buildImprovement')}
@@ -88,9 +95,16 @@ export function CardPicker({ spaceId, game, player, onConfirm, onCancel }: CardP
                   }}
                   disabled={!affordable}
                   className={cn(
-                    'mb-2 w-full rounded-md border p-3 text-left transition-colors',
-                    isSelected ? 'border-primary bg-accent' : 'border-border',
-                    !affordable && 'opacity-45',
+                    'mb-2 w-full rounded-lg border border-l-4 bg-card p-3 text-left',
+                    'shadow-[var(--shadow-tile)] transition-[transform,box-shadow,border-color,background-color]',
+                    // A stripe in the deck's own colour: occupations, minor
+                    // improvements and majors are three different piles on the
+                    // table and should not look like one scrolling list.
+                    stripeForType(card.type),
+                    isSelected
+                      ? 'border-primary bg-accent shadow-[var(--shadow-raised)]'
+                      : 'hover:-translate-y-px hover:border-primary/40 hover:shadow-[var(--shadow-raised)]',
+                    !affordable && 'opacity-45 shadow-none hover:translate-y-0',
                   )}
                 >
                   <span className="flex items-baseline justify-between gap-2">

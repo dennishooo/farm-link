@@ -9,22 +9,31 @@ import { localiseCard } from '@/lib/i18n/format'
 import { ConvertPanel } from '@/components/convert-panel'
 import { AnimalPanel } from '@/components/animal-panel'
 import { AdjustPanel } from '@/components/adjust-panel'
+import { GoodIcon, PersonIcon, type GoodIconName } from '@/components/ui/icons'
 import type { Player } from '@/game/types'
 import type { Payable } from '@/game/cards/types'
-import type { AdjustableGood } from '@/game/engine'
+import type { AdjustableGood, CardAction, CardActionPayload } from '@/game/engine'
 
-const GOODS: { key: keyof Player; icon: string }[] = [
-  { key: 'wood', icon: '🪵' },
-  { key: 'clay', icon: '🧱' },
-  { key: 'reed', icon: '🌿' },
-  { key: 'stone', icon: '🪨' },
-  { key: 'grain', icon: '🌾' },
-  { key: 'vegetable', icon: '🥕' },
-  { key: 'food', icon: '🍲' },
-  { key: 'sheep', icon: '🐑' },
-  { key: 'boar', icon: '🐗' },
-  { key: 'cattle', icon: '🐄' },
+/**
+ * The supply, in the order the goods appear on the player board: building
+ * materials, then crops, then food, then livestock. Each carries its own tint
+ * so a chip can be found by colour before its number is read.
+ */
+const GOODS: { key: GoodIconName & keyof Player; tint: string }[] = [
+  { key: 'wood', tint: 'text-wood' },
+  { key: 'clay', tint: 'text-clay' },
+  { key: 'reed', tint: 'text-reed' },
+  { key: 'stone', tint: 'text-stone' },
+  { key: 'grain', tint: 'text-grain' },
+  { key: 'vegetable', tint: 'text-vegetable' },
+  { key: 'food', tint: 'text-food' },
+  { key: 'sheep', tint: 'text-sheep' },
+  { key: 'boar', tint: 'text-boar' },
+  { key: 'cattle', tint: 'text-cattle' },
 ]
+
+/** Written out in full so Tailwind can see each class in the source. */
+const PLAYER_ACCENT = ['text-player-1', 'text-player-2', 'text-player-3', 'text-player-4']
 
 type PlayerPanelProps = {
   player: Player
@@ -39,6 +48,20 @@ type PlayerPanelProps = {
     good: AdjustableGood,
     delta: number,
   ) => void
+  onCardAction?: (
+    playerIndex: number,
+    cardId: string,
+    action: CardAction,
+    payload?: CardActionPayload,
+  ) => void
+  opponents?: { index: number; name: string }[]
+  onTransfer?: (
+    fromIndex: number,
+    toIndex: number,
+    cardId: string,
+    good: AdjustableGood,
+    amount: number,
+  ) => void
 }
 
 export function PlayerPanel({
@@ -49,6 +72,9 @@ export function PlayerPanel({
   onConvert,
   onMoveAnimals,
   onAdjustForCard,
+  onCardAction,
+  opponents,
+  onTransfer,
 }: PlayerPanelProps) {
   const { t, i18n } = useTranslation()
   // Scored every render, not just at the end: players asked to see where they
@@ -56,13 +82,25 @@ export function PlayerPanel({
   // playing, open once the game is over.
   const score = scorePlayer(player)
 
+  const accent = PLAYER_ACCENT[playerIndex % PLAYER_ACCENT.length]
+
   return (
-    <Card className={cn('overflow-hidden', isCurrent && 'ring-2 ring-primary')}>
+    <Card
+      className={cn(
+        'overflow-hidden transition-shadow',
+        isCurrent && 'ring-2 ring-primary shadow-[var(--shadow-float)]',
+      )}
+    >
+      {/* A band in the player's colour, so four panels side by side can be told
+          apart from across the table without reading the names. */}
+      <div aria-hidden className={cn('h-1.5 w-full bg-current', accent)} />
+
       <CardHeader className="flex-row items-center justify-between gap-2">
         <CardTitle className="flex items-center gap-2">
+          <PersonIcon className={cn('size-4', accent)} />
           {player.name}
           {isCurrent && (
-            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+            <span className="eyebrow rounded-full bg-highlight px-2 py-0.5 text-[9px] text-[var(--ink)] shadow-[var(--shadow-tile)]">
               {t('game.toAct')}
             </span>
           )}
@@ -78,15 +116,28 @@ export function PlayerPanel({
         <Farmyard player={player} />
 
         <ul className="grid grid-cols-5 gap-1 text-center text-[11px]">
-          {GOODS.map(({ key, icon }) => (
-            <li
-              key={key}
-              className="rounded-sm bg-muted px-1 py-1 font-semibold"
-              title={t(`goods.${key}` as 'goods.wood')}
-            >
-              <span aria-hidden>{icon}</span> {String(player[key])}
-            </li>
-          ))}
+          {GOODS.map(({ key, tint }) => {
+            const count = Number(player[key])
+            return (
+              <li
+                key={key}
+                className={cn(
+                  'flex items-center justify-center gap-1 rounded-full border border-border/70',
+                  'bg-muted px-1 py-1 font-semibold shadow-[var(--shadow-tile)]',
+                  // An empty pile should not compete with a full one.
+                  count === 0 && 'opacity-45',
+                )}
+                title={t(`goods.${key}` as 'goods.wood')}
+              >
+                <GoodIcon good={key} className={cn('size-3.5', tint)} />
+                {/* The name was only in `title`, which no touch screen ever
+                    shows — the same hover-only trap the card rules text fell
+                    into. The icon is decoration; this is the actual label. */}
+                <span className="sr-only">{t(`goods.${key}` as 'goods.wood')}: </span>
+                <span className="tabular-nums">{count}</span>
+              </li>
+            )
+          })}
         </ul>
 
         <p className="text-xs text-muted-foreground">
@@ -98,7 +149,7 @@ export function PlayerPanel({
             hand: player.hand.occupations.length + player.hand.minors.length,
           })}
           {player.beggingMarkers > 0 && (
-            <span className="font-semibold text-destructive">
+            <span className="font-semibold text-destructive-text">
               {' · '}
               {t('farm.begging', { count: player.beggingMarkers })}
             </span>
@@ -116,7 +167,16 @@ export function PlayerPanel({
                   {/* The rules text used to live only in a `title` tooltip,
                       which never appears on a touch screen — the card's effect
                       was unreadable on a phone. */}
-                  <details className="rounded-sm border border-border bg-muted px-1.5 py-0.5">
+                  <details
+                    className={cn(
+                      'rounded-md border border-border bg-muted px-1.5 py-1',
+                      'shadow-[var(--shadow-tile)] transition-colors hover:border-primary/40',
+                      // A played card is a tile on the table; the stripe says
+                      // at a glance whether the engine is applying it for you.
+                      'border-l-4',
+                      card.enforced ? 'border-l-primary' : 'border-l-border',
+                    )}
+                  >
                     <summary className="cursor-pointer text-[11px] font-semibold">
                       {localised.title}
                       {card.points !== 0 && (
@@ -148,7 +208,14 @@ export function PlayerPanel({
         )}
 
         {onAdjustForCard && !showScore && (
-          <AdjustPanel player={player} playerIndex={playerIndex} onAdjust={onAdjustForCard} />
+          <AdjustPanel
+            player={player}
+            playerIndex={playerIndex}
+            onAdjust={onAdjustForCard}
+            onCardAction={onCardAction}
+            opponents={opponents}
+            onTransfer={onTransfer}
+          />
         )}
 
         {(() => {
@@ -159,7 +226,7 @@ export function PlayerPanel({
                 .map(([key, value]) => (
                   <div key={key} className="flex justify-between gap-2">
                     <dt className="text-muted-foreground">{t(`score.${key}` as 'score.fields')}</dt>
-                    <dd className={cn('font-semibold', value < 0 && 'text-destructive')}>
+                    <dd className={cn('font-semibold', value < 0 && 'text-destructive-text')}>
                       {value}
                     </dd>
                   </div>
@@ -172,7 +239,7 @@ export function PlayerPanel({
             <div className="border-t border-border pt-2">{breakdown}</div>
           ) : (
             <details className="border-t border-border pt-2">
-              <summary className="cursor-pointer text-[11px] font-bold text-muted-foreground">
+              <summary className="eyebrow cursor-pointer text-[10px] text-muted-foreground">
                 {t('score.liveBreakdown', { count: score.total })}
               </summary>
               <div className="mt-1.5">{breakdown}</div>

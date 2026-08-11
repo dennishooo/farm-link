@@ -24,9 +24,66 @@ are looking at.
   single-device game.
 - **`passWorker` moved into the engine** — the store's inline "skip a stuck worker" logic is now an
   engine action, so the multiplayer server enforces exactly the same rule.
+- **Card effects and cross-table transfers work online too.** 4.3.0's card panel gained two intents
+  so a played card can be applied, and goods handed to another farm, in a room as well as on one
+  device. A transfer is authorised on either side of the exchange — a card may be held by the buyer
+  ("you may buy their grain") or the giver — but never by a bystander moving other people's goods.
+- Undo and redo stay single-device. They rewind this device's own store, which the authoritative
+  server knows nothing about, so offering them in a room would desync the board.
+
+## [4.3.0] — 2026-08-08
 
 ### Changed
 
+- **Restyled to the Cloud Mountain / farmbank references.** The palette is now bone cream, deep
+  forest green and terracotta — three colours doing the work, with the material palette pulled into
+  the same family rather than sitting beside it. Dark mode follows farmbank's warm brown ground
+  instead of a green-black one, and carries the same cream, so the two themes read as one product.
+  Labels are set in the references' heavy tracked uppercase, which cost nothing here: Geist is
+  already variable, so no second font enters a bundle that has to work offline.
+- **The board sits on a ground now.** Cream panels on a cream page left the farmyard with nothing
+  to sit against, which is the one thing both references never do — each puts light pieces on a
+  deep saturated field. The farmyard and the header share a stippled deep ground, so the spaces
+  read as pieces laid on a board rather than panels cut out of the panel behind them. The stipple
+  is Cloud Mountain's, and the setup screen's illustration became the oval badge that identity is
+  built out of.
+- **Drew the board instead of colouring it in.** Every farmyard space now renders as its material —
+  soil with furrows, pasture with tufts of grass, courses of clay or stone for a house, timber
+  bracing over the grass for a stable — so a field reads as a field before its label is read. The
+  patterns are CSS gradients rather than images: nothing to fetch, sharp at any tile size, and the
+  app still cold-starts offline. Fences gained lit rails and a post at every corner where two rails
+  meet, which is what tells a closed pasture from four separate lines.
+- **Replaced every emoji with a drawn glyph** (`components/ui/icons.tsx`). Emoji are rendered by the
+  platform, so the board looked like a different game on each device, and they carry their own
+  colour — a wood chip could not be tinted with the wood token, so nothing on screen matched
+  anything else. The new glyphs are silhouettes in `currentColor`, which is what lets a resource
+  chip, an action space's stripe and the fence rails all come from one variable.
+- **One herd per pasture.** The animal chip repeated on every space of a pasture, so three sheep in
+  a 2x2 pasture drew four "×3" chips and read as four separate herds. It now draws once.
+- **Sown fields show their crop as pips** — one glyph per unit in the crop's own colour, the way the
+  goods sit on the physical card, falling back to a glyph and a number past four. The localised
+  "grain ×3" stays in the accessibility tree either way.
+- **A round track in the header.** Fourteen pips with the six harvests drawn wider: "Round 3 of 14"
+  said where you were but not how close the next feeding was.
+- **Player colours.** Each panel carries a band in its player's colour, so four farms side by side
+  can be told apart without reading the names.
+- **Depth and feedback throughout** — tinted elevation shadows (a grey shadow over green reads as
+  dirt), buttons that press on tap, tiles that lift when selectable, sheets that slide up, a
+  hatched fill on action spaces another player has taken, and stripes in the good's own colour on
+  the spaces that hand goods out. All motion is decorative and is dropped entirely under
+  `prefers-reduced-motion`.
+- **Legibility fixes found by looking at it.** Wood, field and sheep were too light for the white
+  text and pale chips sitting on them; field furrows were drawn as a dark line plus a light line
+  per row, which at tile size stopped reading as soil and started reading as decking; dark mode had
+  no hairline between a dark tile and the dark gap beside it, so a farmyard collapsed into one
+  shape.
+- **Split the card database into its own bundle chunk.** The deck and its translations are ~200 KB
+  of generated data that changes only when the deck is regenerated, while the app around it changes
+  every release. Keeping them apart means a release invalidates the app chunk alone, so a returning
+  player's service worker re-downloads ~118 KB gzipped instead of ~150 KB and keeps the cards it
+  already has. It does not defer the download — the cards are a static dependency of the engine, and
+  the app precaches everything by design; deferring them would need a loading gate that would cost
+  more on every reload than it saved on first visit.
 - **Split `engine.ts`** (1050 lines) into `result.ts` (the shared outcome type), `state.ts` (setup,
   round progression, harvest) and `actions.ts` (worker placement and the action handlers).
   `engine.ts` remains as a barrel, so every import site is untouched and the public surface is
@@ -35,6 +92,51 @@ are looking at.
 
 ### Added
 
+- **"Apply a card effect" covers what the cards actually say.** It could only move seven goods,
+  which left most of the two thirds of the deck the engine cannot enforce with no way to act on
+  them. Ranking what the 271 unenforced cards ask for: livestock (40 cards), bonus points (39), a
+  field (38), a person (29), a room (24), a renovation (15), fences (14), a stable (11). The panel
+  now does each of those.
+
+  The farm ones reuse the action board's own picker and its placement rules — a card-granted room
+  still has to touch the house, fences still have to enclose a real pasture, stables still come out
+  of your supply of four. Only the cost is skipped, which is the whole point of a card that grants
+  something. Livestock goes through the same housing placement the action spaces use, so the
+  counters and the board cannot drift apart, and animals with nowhere to live wander off and are
+  said to have done so. Bonus points get their own line in the score breakdown.
+
+  Every one of these names the card in the log next to what it did, because the players adjudicated
+  it rather than the engine reading it, and that log line is the whole audit trail.
+- **A visual suite, in `visual/`, run by Playwright against the built app.** Every bug the restyle
+  shipped was one no unit test could see, and all of them were caught by a person looking at a
+  screenshot, which is not a thing to rely on anyone remembering to do.
+
+  It has two halves, and the second exists because the first could not do the job. Screenshots
+  against committed baselines catch layout and large visual changes. They could not catch the
+  cream-on-cream header buttons: a proportional tolerance on a whole page is worth tens of thousands
+  of pixels, and even cropped to the header, the glyphs of "Pass worker" come to about four hundred
+  — under any tolerance loose enough to survive a font-hinting difference between Chromium builds.
+  Verified by putting the bug back and watching the suite pass. So the second half measures contrast
+  directly: it walks every piece of visible text, resolves what is painted behind it, and fails
+  under WCAG AA. No baseline, no drift, and it names the element and the ratio.
+- **Card effects between players.** Thirty of the unenforced cards work across the table — one
+  player sells to another, or takes from each of the others — and none of it was expressible: the
+  panel only ever touched the player in front of it. It can now give goods to a chosen player,
+  livestock included, rehoused on the receiving farm with anything that will not fit wandering off
+  as it does anywhere else. Either side may hold the card, since "you may buy their grain" is played
+  by the buyer and "give 1 food to each other player" by the giver. Both players and the card are
+  named in the log.
+- **Undo, on the record.** An "Undo" button in the header takes back the last move — a worker
+  placement, a pass, an anytime card exchange, an animal move, a resolved harvest — and restores
+  the board exactly as it was. The log is the exception: it never rewinds. What was taken back
+  keeps its line and the revert is written underneath it ("Ann takes back their move on Forest"),
+  because on a shared device anyone can quietly rewind anyone's turn, and the record of that is the
+  point rather than a side effect. The last ten moves are kept, and they persist with the save, so
+  undo survives a reload like everything else in this app. Actions the engine refused are not
+  remembered — there is nothing to take back from a move that never happened.
+- **Redo**, for the undo that went one step too far. It gets its own line in the log for the same
+  reason the revert does, so a taken-back-and-put-back move reads as the round trip it was. Making
+  a different move drops what was taken back, as undo stacks normally do.
 - **Component and integration tests** — 144 of them, covering every component and the App shell.
   There were none before, and the components are where nearly every bug this project has shipped
   actually lived: the tooltip that never appeared on touch, Cultivation refusing to sow, Farm
@@ -47,6 +149,41 @@ are looking at.
 
 ### Fixed
 
+- **Seven places where text did not meet WCAG AA**, found by the new contrast check on its first
+  run — all of them introduced by the restyle. The terracotta accent was too dark to read on the
+  board ground and too light to carry cream text on a badge, so it moved lighter and the badge took
+  ink text instead. Clay was too light under the white room labels. A dark-mode pasture was too dark
+  under its ink labels. Red had to carry cream text as a button *and* be legible as text itself,
+  which one value can manage on cream but not on a dark ground, so the text variant became its own
+  token.
+- **Pickers that had nothing to pick said nothing about it.** A farm can genuinely have no space a
+  room may legally touch — the starting house with fields either side of it does — and the dialog
+  opened on a board where nothing was selectable, with a dead Confirm and no explanation. It now
+  says there is nowhere legal, for every mode including a spent fence supply.
+- **Fences were labelled with the engine's own shorthand.** A screen reader was handed "Fence
+  h:0:0". They are named by where they are now — "Fence between space 4 and space 9", or "Fence
+  above space 4" for an outer edge, which also has to name the side, since a corner space has two
+  outer edges and they would otherwise be indistinguishable.
+- **The exchange buttons named their card only in a `title`.** Two cooking improvements that
+  convert the same good produced two identical-looking buttons on a touch screen. The card is on
+  the button now — the third instance of the hover-only trap, after the card rules text in v4.2.0
+  and the resource chips.
+- **The stage-card shuffle was thrown away on the first move of every game.** The reveal order was
+  held in a `WeakMap` keyed by the state object, but the store structured-clones the state on every
+  move — so move one produced an object the map had never seen, and the order was rebuilt in
+  canonical stage order. The rebuild was written for reloads and ran on move one instead, which
+  meant every game revealed the same cards in the same sequence from round 2 on. The order is now
+  part of the state, so it survives a copy, a reload and an undo. Games saved without one still
+  rebuild it, so nothing in progress breaks.
+- **The resource chips said what they were only in a `title` tooltip** — the same hover-only trap
+  the card rules text fell into in v4.2.0, and one this pass made easier to hit by replacing the
+  emoji with icons. Each chip now carries its own label. The animals in a pasture had the same
+  problem and no fix available inside the tile, since a tile's own label overrides anything within
+  it, so the herd is named in the label itself: "Space 4: empty, 2 Sheep".
+- **Fence rails sat slightly off the edges they mark.** They were positioned as a fraction of the
+  grid, which stops being the boundary once the grid has a gutter — the tracks are narrower than an
+  even share by the gaps between them, so every rail after the first drifted, by up to two pixels at
+  the right-hand edge. The gutter is now part of the arithmetic; measured drift is zero.
 - `type-check` ran `tsc --noEmit` against a root config with `"files": []`, so it checked nothing.
   Type errors in test files only surfaced later, during the build. It now runs `tsc -b`, matching
   what the build does.
@@ -236,7 +373,8 @@ Revised Edition rulebook.
 [#11]: https://github.com/dennishooo/farm-link/issues/11
 [#1]: https://github.com/dennishooo/farm-link/issues/1
 [#2]: https://github.com/dennishooo/farm-link/issues/2
-[Unreleased]: https://github.com/dennishooo/farm-link/compare/v4.2.0...HEAD
+[Unreleased]: https://github.com/dennishooo/farm-link/compare/v4.3.0...HEAD
+[4.3.0]: https://github.com/dennishooo/farm-link/compare/v4.2.0...v4.3.0
 [4.2.0]: https://github.com/dennishooo/farm-link/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/dennishooo/farm-link/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/dennishooo/farm-link/compare/v3.5.0...v4.0.0

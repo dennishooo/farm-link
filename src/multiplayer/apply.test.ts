@@ -7,6 +7,9 @@ function game(): GameState {
   return createGame({ names: ['Ann', 'Bo'], random: () => 0.42 })
 }
 
+/** A card the engine does not enforce, so its effect is applied by hand. */
+const CARD = 'occupation-net-fisherman'
+
 describe('turn ownership', () => {
   it('lets the current seat place a worker', () => {
     const state = game()
@@ -67,6 +70,82 @@ describe('farm ownership', () => {
       { seat: 1, isHost: false },
     )
     expect(result).toMatchObject({ ok: false, reason: 'notYourFarm' })
+  })
+
+  it('rejects playing a card effect on someone else’s farm', () => {
+    const state = game()
+    const result = applyIntent(
+      state,
+      { kind: 'cardAction', playerIndex: 0, cardId: CARD, action: 'points' },
+      { seat: 1, isHost: false },
+    )
+    expect(result).toMatchObject({ ok: false, reason: 'notYourFarm' })
+  })
+
+  it('lets a seat play a card effect on its own farm', () => {
+    const state = game()
+    state.players[1].played.push(CARD)
+
+    const result = applyIntent(
+      state,
+      { kind: 'cardAction', playerIndex: 1, cardId: CARD, action: 'points', payload: { points: 2 } },
+      { seat: 1, isHost: false },
+    )
+
+    expect(result.ok).toBe(true)
+    expect(state.players[1].bonusPoints).toBe(2)
+  })
+})
+
+describe('transfers between farms', () => {
+  /**
+   * Either side of an exchange may hold the card, so both the giver and the
+   * receiver are allowed to send the intent — but nobody else is.
+   */
+  it('lets the giving seat hand goods over', () => {
+    const state = game()
+    state.players[0].played.push(CARD)
+    state.players[0].food = 3
+
+    const result = applyIntent(
+      state,
+      { kind: 'transfer', fromIndex: 0, toIndex: 1, cardId: CARD, good: 'food', amount: 2 },
+      { seat: 0, isHost: true },
+    )
+
+    expect(result.ok).toBe(true)
+    expect(state.players[0].food).toBe(1)
+  })
+
+  it('lets the receiving seat buy from another farm', () => {
+    const state = game()
+    // The buyer holds the card ("you may buy their grain"), so seat 1 sends it.
+    state.players[1].played.push(CARD)
+    state.players[0].grain = 2
+
+    const result = applyIntent(
+      state,
+      { kind: 'transfer', fromIndex: 0, toIndex: 1, cardId: CARD, good: 'grain', amount: 1 },
+      { seat: 1, isHost: false },
+    )
+
+    expect(result.ok).toBe(true)
+    expect(state.players[1].grain).toBe(1)
+  })
+
+  it('rejects a bystander moving other people’s goods', () => {
+    const state = createGame({ names: ['Ann', 'Bo', 'Cy'], random: () => 0.42 })
+    state.players[0].played.push(CARD)
+    state.players[0].food = 3
+
+    const result = applyIntent(
+      state,
+      { kind: 'transfer', fromIndex: 0, toIndex: 1, cardId: CARD, good: 'food', amount: 2 },
+      { seat: 2, isHost: false },
+    )
+
+    expect(result).toMatchObject({ ok: false, reason: 'notYourFarm' })
+    expect(state.players[0].food).toBe(3)
   })
 })
 

@@ -50,6 +50,8 @@ bun run server
 | `bun run build` | Type-check and produce a static `dist/` |
 | `bun run test` | Run the test suite |
 | `bun run test:coverage` | Tests with coverage |
+| `bun run test:visual` | Screenshot and contrast checks (Playwright) |
+| `bun run test:visual:update` | Rewrite the screenshot baselines |
 | `bun run lint` | ESLint |
 | `bun run type-check` | `tsc --noEmit` |
 
@@ -102,6 +104,18 @@ legacy/        The original single-file v2.8 prototype, kept for reference
 
 The engine is deliberately independent of React, so the rules can be tested without rendering
 anything — see `src/game/*.test.ts`.
+
+`visual/` holds a second suite, run by Playwright against the built app rather than jsdom. It exists
+because the bugs the last redesign shipped were ones no unit test could see: fields textured like
+decking, crop pips too pale to read, header buttons that ended up cream on cream. It has two halves:
+
+- **Screenshots** against committed baselines, for layout and large visual changes. These are
+  specific to the Chromium build that took them, so CI installs the one Playwright pins and
+  `bun run test:visual:update` has to run in the same place to produce baselines CI will agree with.
+- **A contrast check**, which walks every piece of visible text and measures it against what is
+  painted behind it. This exists because pixel diffing could not catch the cream-on-cream bug: a
+  whole-page tolerance is worth tens of thousands of pixels, and the glyphs of one button label come
+  to about four hundred. Measuring the colours directly needs no baseline and cannot drift.
 
 ## Languages
 
@@ -157,6 +171,15 @@ wood"), player choices ("either 1 stone or 1 reed"), conditions ("once you live 
 effects that count things the engine does not track. Guessing at those would quietly corrupt scores,
 which is worse than asking players to apply them.
 
+Those cards are not left as prose alone, though. **Apply a card effect**, under each farm, records
+what the table agreed a card did, attributed to the card in the game log. Ranked over the 271
+unenforced cards, what they hand out is: goods including livestock, bonus points (39 cards), a
+field (38), a person (29), a room (24), a renovation (15), fences (14) and a stable (11) — so the
+panel can do each of those, plus giving goods to another player, which a further 30 involve. The
+farm ones reuse the action board's own picker and its placement rules: a card-granted room still has
+to touch the house, fences still have to enclose a pasture, stables still come out of your supply of
+four. Only the cost is skipped, which is what a card granting something is for.
+
 Card data is generated from the [agricolacards.com](https://www.agricolacards.com/list) community
 database into `src/game/cards/data.ts` and committed, so the app needs no network at runtime:
 
@@ -185,12 +208,16 @@ for any card added later.
 - Family growth with and without rooms, capped at five people
 - All three harvest phases: field, feeding (with begging markers), and breeding
 - Moving animals between pastures, stables and the house at any time
+- Taking back the last ten moves, and putting them back, each written into the game log
 - Exact Revised Edition scoring, including the -1 penalties and category caps
 
 ## Not yet implemented
 
-- The ongoing text of cards outside the enforced patterns described above
-- Inter-player card effects (e.g. Corn Profiteer, where another player may buy your grain)
+- Automatic resolution of card text outside the enforced patterns described above — the table
+  adjudicates the wording and records the outcome instead
+- Automatic resolution of inter-player card effects (e.g. Corn Profiteer, where another player may
+  buy your grain), which 30 of the unenforced cards involve — the panel moves the goods and records
+  who gave what to whom, but the engine does not read the terms off the card
 
 Travelling improvements — the cards that pass to the player on your left — are marked in the
 printed game with a left-arrow icon that the source card database does not carry, and no card in
